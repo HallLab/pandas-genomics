@@ -7,3 +7,6 @@ __all__ = [
     'GenotypeDtype',
     'GenotypeArray'
 ]
+
+# Simple version tracking for now until Poetry has a solution
+__version__ = "v0.1.0"
