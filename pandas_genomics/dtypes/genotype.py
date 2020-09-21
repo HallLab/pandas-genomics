@@ -293,6 +293,10 @@ class GenotypeArray(ExtensionArray):
         -------
         GenotypeArray
         """
+        if type(scalars) == Genotype:
+            # Despite the documentation, scalars is not always a sequence of objects, sometimes it is just one
+            scalars = [scalars]
+
         if len(scalars) == 0:
             # Pass the scalars object anyway, in case it is an empty GenotypeArray
             return cls(values=scalars, dtype=dtype)
