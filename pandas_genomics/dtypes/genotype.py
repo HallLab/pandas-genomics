@@ -108,7 +108,7 @@ class GenotypeDtype(PandasExtensionDtype):
             except Exception:
                 raise TypeError(msg.format(string))
         else:
-            raise TypeError("Could not construct a 'GenotypeDtype'")
+            raise TypeError(f"'construct_from_string' expects a string, got {type(string)}>")
 
     @classmethod
     def from_genotype(cls, genotype: Genotype):
