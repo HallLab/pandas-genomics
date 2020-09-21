@@ -5,16 +5,22 @@ from dataclasses import dataclass, field
 @dataclass(order=True)
 class Variant:
     """
-    Information about a variant
+    Information about a variant.
 
     Parameters
     ----------
     chromosome: str
-    coordinate: int (1-based, 0 for none/unknown)
+    coordinate: int
+        (1-based, 0 for none/unknown)
     variant_id: str
-    alleles: List[str] - what alleles are possible
+    alleles: List[str]
+        List of possible alleles
 
-
+    Examples
+    --------
+    >>> variant = Variant('12', 112161652, 'rs12462', alleles=['C', 'T'])
+    >>> print(variant)
+    rs12462[chr=12;pos=112161652;2 alleles]
     """
     # Order by chromosome then coordinate for sorting reasons
     chromosome: str
@@ -23,9 +29,7 @@ class Variant:
     alleles: List[str] = field(default_factory=list)
 
     def __post_init__(self):
-        self.validate_params()
-
-    def validate_params(self):
+        # Validate the passed parameters
         if ';' in self.variant_id or ',' in self.variant_id:
             raise ValueError(f"The variant_id cannot contain ';' or ',': '{self.variant_id}'")
         if ';' in self.chromosome or ',' in self.chromosome:
@@ -36,6 +40,18 @@ class Variant:
             raise ValueError(f"The coordinate value may not exceed 2^31-2, {self.coordinate:,} was specified")
 
     def add_allele(self, allele):
+        """
+        Add a potential allele to the variant
+
+        Parameters
+        ----------
+        allele: str
+
+        Returns
+        -------
+        None
+
+        """
         if len(self.alleles) < 255:
             self.alleles.append(allele)
         else:
@@ -49,6 +65,19 @@ class Variant:
         """
         Get the integer value for an allele based on this variant's list of alleles,
         optionally adding it as a new allele
+
+        Parameters
+        ----------
+        allele: str
+        add: bool
+            If `add` is True and the allele doesn't exist in the variant, add it
+            If 'add' is False and the allele doesn't exist in the variant, return 255
+
+        Returns
+        -------
+        int
+            The integer value for the allele in the variant
+
         """
         if allele is None:
             return 255
@@ -66,7 +95,21 @@ class Variant:
             return allele_idx
 
     def is_valid_allele_idx(self, idx: int) -> bool:
-        """Validate the integer value for an allele with respect to this variant"""
+        """
+        Validate the integer value for an allele with respect to this variant
+
+        Parameters
+        ----------
+        idx: int
+            allele index value to be checked
+
+        Returns
+        -------
+        bool
+            True if the index value is valid (including 255 for None/Missing)
+            False if the index value is not valid (negative or a nonexistent allele index)
+
+        """
         if idx == 255:
             # None/Missing
             return True
@@ -80,6 +123,18 @@ class Variant:
     def is_same_variant(self, other):
         """
         Confirms this is the same variant, other than the allele list.
+
+        Parameters
+        ----------
+        other: Variant
+            Another variant to compare
+
+        Returns
+        -------
+        bool
+            True if the variant_id, chromosome, and coordinate all match.
+            False otherwise.
+
         """
         if isinstance(other, Variant):
             return (self.variant_id == other.variant_id and
@@ -90,32 +145,37 @@ class Variant:
 
     def make_genotype(self, allele1: Optional[str] = None, allele2: Optional[str] = None) -> 'Genotype':
         """
-        Create a Genotype object associated with this variant, adding alleles if needed
+        Create a Genotype object associated with this variant using the specified allele(s)
 
         Parameters
         ----------
-        allele1
-        allele2
+        allele1: Optional[str]
+        allele2: Optional[str]
 
         Returns
         -------
         Genotype
+            A Genotype based on this variant with the specified alleles
         """
         a1 = self.get_allele_idx(allele1, add=True)
         a2 = self.get_allele_idx(allele2, add=True)
         return Genotype(self, a1, a2)
 
-    def make_genotype_from_str(self, gt_str: str, sep="/") -> 'Genotype':
+    def make_genotype_from_str(self, gt_str: str, sep: str = "/") -> 'Genotype':
         """
-        Create a genotype from a string
+        Create a Genotype object associated with this variant using the specified allele string
 
         Parameters
         ----------
-        gt_str, for example 'A/C
+        gt_str: str
+            A string containing two alleles separated by a delimiter character
+        sep: str
+            The delimiter used to separate alleles in the gt_str ('/' by default)
 
         Returns
         -------
         Genotype
+            A Genotype based on this variant with the specified alleles
         """
         # Process Allele String
         alleles = gt_str.split(sep)
@@ -141,11 +201,13 @@ class Variant:
 
         Parameters
         ----------
-        plink_bits, one of '00', '01', '10', '11'
+        plink_bits: str
+            A string with allele indices as encoded in plink format, one of {'00', '01', '10', '11'}
 
         Returns
         -------
         Genotype
+            A Genotype based on this variant with the specified alleles
         """
         # Process Allele String
         if plink_bits == '00':
@@ -171,12 +233,26 @@ class Genotype:
     """
     Genotype information associated with a specific variant.
     Defaults to using an anonymous variant with unknown alleles.
+    Usually created with methods on ~Variant
 
     Parameters
     ----------
     variant: Variant
-    allele1, allele2: int
-        Indices to the alleles in the variant, defaults to 255 (missing)
+    allele1: int
+        The first allele encoded as an index into the variant allele list
+    allele2: int
+        The second allele encoded as an index into the variant allele list
+
+    Examples
+    --------
+    >>> variant = Variant('12', 112161652, 'rs12462')
+    >>> genotype = variant.make_genotype_from_str('C/T')
+    >>> print(genotype)
+    C/T
+
+    >>> missing_genotype = Genotype()
+    >>> print(missing_genotype)
+    <Missing>
     """
     variant: Variant
     allele1: int = 255
@@ -188,9 +264,7 @@ class Genotype:
             a1, a2 = self.allele2, self.allele1
             self.__setattr__('allele1', a1)
             self.__setattr__('allele2', a2)
-        self.validate_params()
-
-    def validate_params(self):
+        # Validate parameters
         if not self.variant.is_valid_allele_idx(self.allele1):
             raise ValueError(f"Invalid allele1 for {self.variant}: {self.allele1}")
         if not self.variant.is_valid_allele_idx(self.allele2):
@@ -209,6 +283,9 @@ class Genotype:
 
     def is_missing(self) -> bool:
         """
-        Return True if the genotype is missing
+        Returns
+        -------
+        bool
+            True if the variant is missing (both alleles are None), otherwise False
         """
         return (self.allele1 == 255) and (self.allele2 == 255)

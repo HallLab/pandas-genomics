@@ -56,10 +56,10 @@ def from_plink(bed_file: str):
     print(f"\tLoaded information for {num_variants} variants from '{bim_file.name}'")
 
     # Load bed file (PLINK binary biallelic genotype table) and add info to the df
-    correct_bytes = b"\x6c\x1b\x01"
+    CORRECT_FIRST_BYTES = b"\x6c\x1b\x01"
     with bed_file.open('rb') as f:
         first3bytes = f.read(3)  # Read first three bytes and confirm they are correct
-        if first3bytes != correct_bytes:
+        if first3bytes != CORRECT_FIRST_BYTES:
             raise ValueError(f"The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted.")
         # Determine chunk size
         chunk_size = num_samples // 4

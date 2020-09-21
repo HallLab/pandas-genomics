@@ -13,19 +13,16 @@ from .scalars import Variant, Genotype
 @register_extension_dtype
 class GenotypeDtype(PandasExtensionDtype):
     """
-    An ExtensionDtype for genotype data
+    An ExtensionDtype for genotype data.
 
     Parameters
     ----------
     variant: Variant
+        The ~Variant associated with the genotype
 
     Attributes
     ----------
     variant
-
-    Methods
-    -------
-    None
 
     Examples
     --------
@@ -115,6 +112,20 @@ class GenotypeDtype(PandasExtensionDtype):
 
     @classmethod
     def from_genotype(cls, genotype: Genotype):
+        """
+        Construct a GenotypeDtype from a Genotype.
+
+        Parameters
+        ----------
+        genotype: Genotype
+
+        Examples
+        -------
+        >>> variant = Variant('12', 112161652, 'rs12462')
+        >>> genotype = variant.make_genotype_from_str('C/T')
+        >>> GenotypeDtype.from_genotype(genotype)
+        genotype[rs12462; 12; 112161652; T,C]
+        """
         return cls(genotype.variant)
 
     @classmethod
@@ -184,7 +195,7 @@ class GenotypeArray(ExtensionArray):
     """
     Holder for genotypes
 
-    Variant information is stored as part of the type, and the genotype is stored as a pair of integers
+    Variant information is stored as part of the type, and the genotype is stored as a pair of integer arrays
 
     Parameters
     ----------
