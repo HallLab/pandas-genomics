@@ -4,8 +4,9 @@ from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
-from pandas.core.arrays import ExtensionArray
+from pandas.core.arrays import ExtensionArray, BooleanArray
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
+from pandas.core.dtypes.inference import is_list_like
 
 from .scalars import Variant, Genotype
 
@@ -17,8 +18,9 @@ class GenotypeDtype(PandasExtensionDtype):
 
     Parameters
     ----------
-    variant: Variant
-        The ~Variant associated with the genotype
+    variant: Variant or None
+        The ~Variant associated with the genotype.
+        If None, use an anonymous variant
 
     Attributes
     ----------
@@ -60,7 +62,9 @@ class GenotypeDtype(PandasExtensionDtype):
 
     # init
     # ----
-    def __init__(self, variant: Variant):
+    def __init__(self, variant: Optional[Variant] = None):
+        if variant is None:
+            variant = Variant.get_anonymous()
         self.variant = variant
 
     # ExtensionDtype Methods
@@ -218,7 +222,6 @@ class GenotypeArray(ExtensionArray):
     --------
 
     """
-
     def __init__(self, values: Union[List[Genotype], 'GenotypeArray', np.ndarray],
                  dtype: Optional[GenotypeDtype] = None, copy: bool = False):
         """Initialize assuming values is a GenotypeArray or a numpy array with the correct underlying shape"""
@@ -232,6 +235,9 @@ class GenotypeArray(ExtensionArray):
 
         # Load the values
         # ---------------
+        if not is_list_like(values):
+            values = [values]
+
         if isinstance(values, np.ndarray) and (values.dtype == GenotypeDtype._record_type):
             # Stored data format
             self._data = values
@@ -251,11 +257,8 @@ class GenotypeArray(ExtensionArray):
             self._data = values._data
 
         elif len(values) == 0:
-            # Return an empty Genotype Array
-            if self._dtype is not None:
-                self._data = np.array(values, dtype=GenotypeDtype._record_type)
-            else:
-                raise ValueError("Cannot create a Genotype Array with neither values nor a dtype")
+            # Return an empty Genotype Array with the given GenotypeDtype
+            self._data = np.array(values, dtype=GenotypeDtype._record_type)
 
         elif all([type(i) == Genotype for i in values]):
             # Sequence of Genotype objects
@@ -273,6 +276,10 @@ class GenotypeArray(ExtensionArray):
 
         else:
             raise ValueError(f"Unsupported `values` type passed to __init__: {type(values)}")
+
+        # Set an anonymous dtype if one was not set
+        if self.dtype is None:
+            self._dtype = GenotypeDtype()
 
     # ExtensionArray Initialization Methods
     # -------------------------------------
@@ -403,7 +410,14 @@ class GenotypeArray(ExtensionArray):
         else:
             raise TypeError("Indexing error- unexpected type")
 
-    def __setitem__(self, key: Union[int, np.ndarray], value: Union[Genotype, 'GenotypeArray']) -> None:
+    def __setitem__(self, key: Union[int, np.ndarray], value: Union[Genotype, 'GenotypeArray', List[Genotype]]) -> None:
+        if isinstance(value, list):
+            # Convert list to genotype array, throwing an error if it doesn't work
+            value = self._from_sequence(value)
+        # Handle pandas BooleanArray
+        if isinstance(key, BooleanArray):
+            key = key.fillna(False).astype('bool')
+        # Update allele values directly
         if isinstance(value, Genotype):
             self._data[key] = (value.allele1, value.allele2)
         elif isinstance(value, GenotypeArray):
@@ -431,7 +445,6 @@ class GenotypeArray(ExtensionArray):
                 if not (indices == -1).all():
                     raise IndexError("Invalid take for empty array. Must be all -1.")
                 else:
-                    print(indices)
                     took = (np.full((len(indices), 2), fill_value, dtype=self.dtype._record_type).reshape(-1))
                     return GenotypeArray(values=took, dtype=self.dtype)
             if (indices < -1).any():

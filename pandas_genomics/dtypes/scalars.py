@@ -227,6 +227,10 @@ class Variant:
 
         return Genotype(self, a1, a2)
 
+    @classmethod
+    def get_anonymous(cls):
+        return cls(chromosome="N/A", coordinate=0, variant_id="<ANONYMOUS>", alleles=[])
+
 
 @dataclass(order=True)
 class Genotype:
@@ -250,7 +254,7 @@ class Genotype:
     >>> print(genotype)
     C/T
 
-    >>> missing_genotype = Genotype()
+    >>> missing_genotype = Genotype(variant)
     >>> print(missing_genotype)
     <Missing>
     """
