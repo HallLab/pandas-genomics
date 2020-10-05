@@ -1,8 +1,12 @@
 [tool.poetry]
 name = "pandas-genomics"
 version = "0.1.0"
-description = ""
+description = "Pandas ExtensionDtypes and ExtensionArray for working with genomics data"
+license = "BSD-3-Clause"
 authors = ["John McGuigan <jrm5100@psu.edu>"]
+readme = "README.md"
+repository = "https://github.com/HallLab/pandas-genomics/"
+documentation = "https://pandas-genomics.readthedocs.io/en/latest/"
 
 [tool.poetry.dependencies]
 python = "^3.7"

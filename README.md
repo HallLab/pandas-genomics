@@ -23,9 +23,11 @@
 <img src="https://img.shields.io/codecov/c/gh/HallLab/pandas-genomics.svg?style=for-the-badge" alt="Coverage Status"/>
 </a>
 <!-- License -->
-<a href="https://opensource.org/licenses/MIT">
-<img src="http://img.shields.io/:license-mit-ff69b4.svg?style=for-the-badge" alt="license"/>
+<a href="https://opensource.org/licenses/BSD-3-Clause">
+<img src="https://img.shields.io/pypi/l/pandas-genomics?style=for-the-badge" alt="license"/>
 </a>
 </div>
 
 <br/>
+
+Pandas ExtensionDtypes and ExtensionArray for working with genomics data
