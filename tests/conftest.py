@@ -11,27 +11,16 @@ def sort_by_key(request):
     """
     return request.param
 
-_all_arithmetic_operators = [
-    "__add__",
-    "__radd__",
-    "__sub__",
-    "__rsub__",
-    "__mul__",
-    "__rmul__",
-    "__floordiv__",
-    "__rfloordiv__",
-    "__truediv__",
-    "__rtruediv__",
-    "__pow__",
-    "__rpow__",
-    "__mod__",
-    "__rmod__",
-]
 
-
-@pytest.fixture(params=_all_arithmetic_operators)
-def all_arithmetic_operators(request):
+@pytest.fixture(params=["__eq__", "__ne__", "__le__", "__lt__", "__ge__", "__gt__"])
+def all_compare_operators(request):
     """
-    Fixture for dunder names for common arithmetic operations.
+    Fixture for dunder names for common compare operations
+    * >=
+    * >
+    * ==
+    * !=
+    * <
+    * <=
     """
     return request.param

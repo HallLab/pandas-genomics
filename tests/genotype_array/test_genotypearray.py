@@ -143,8 +143,9 @@ class TestMissing(base.BaseMissingTests):
     pass
 
 
-class TestArithmeticOps(base.BaseArithmeticOpsTests):
-    pass
+# Skip ArithmeticOps since they aren't valid
+#class TestArithmeticOps(base.BaseArithmeticOpsTests):
+#    pass
 
 
 class TestComparisonOps(base.BaseComparisonOpsTests):

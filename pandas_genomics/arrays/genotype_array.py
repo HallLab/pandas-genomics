@@ -565,11 +565,11 @@ class GenotypeArray(ExtensionArray):
     # Note: genotypes are compared by first allele then second, using the order of alleles in the variant
     # ----------
     def _get_alleles_for_ops(self, other):
-        """Get the scalar allele values (Genotype) or arrays of allele values (GenotypeArray)"""
-        # Ensure the comparison is using the same variant
-        if other.variant != self.variant:
-            raise ValueError("Can't compare genotypes from different variants")
-        # Get the alleles
+        """
+        Get the scalar allele values (Genotype)
+                or arrays of allele values (GenotypeArray)
+                or None (NotImplemented)
+        """
         if isinstance(other, Genotype):
             # Get scalar values for alleles
             allele1 = other.allele1
@@ -579,26 +579,45 @@ class GenotypeArray(ExtensionArray):
             allele1 = other._data['allele1']
             allele2 = other._data['allele2']
         else:
-            raise NotImplementedError
-
-        return allele1, allele2
+            return None, None
+        # Ensure the comparison is using the same variant
+        if self.variant != other.variant:
+            return None, None
+        else:
+            return allele1, allele2
 
     def __eq__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
         return (self._data['allele1'] == allele1) & (self._data['allele2'] == allele2)
+
+    def __ne__(self, other):
+        allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
+        return (self._data['allele1'] != allele1) or (self._data['allele2'] != allele2)
 
     def __lt__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
         return (self._data['allele1'] <= allele1) & (self._data['allele2'] < allele2)
 
     def __le__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
         return (self._data['allele1'] <= allele1) & (self._data['allele2'] <= allele2)
 
     def __gt__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
         return (self._data['allele1'] >= allele1) & (self._data['allele2'] > allele2)
 
     def __ge__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
+        if allele1 is None and allele2 is None:
+            return NotImplemented
         return (self._data['allele1'] >= allele1) & (self._data['allele2'] >= allele2)
