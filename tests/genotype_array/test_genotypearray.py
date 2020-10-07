@@ -1,11 +1,10 @@
 import random
 
-import pandas as pd
-import pytest
 from pandas.tests.extension import base
-from pandas.tests.extension.conftest import *
+import pytest
 
-from pandas_genomics import GenotypeDtype, GenotypeArray, Variant, Genotype
+from pandas_genomics import GenotypeDtype, GenotypeArray, Variant
+
 
 # Implement the required fixtures
 @pytest.fixture
@@ -124,6 +123,7 @@ class TestGetItem(base.BaseGetitemTests):
 class TestGroupBy(base.BaseGroupbyTests):
     pass
 
+
 class TestInterface(base.BaseInterfaceTests):
     pass
 
@@ -133,7 +133,10 @@ class TestParsing(base.BaseParsingTests):
 
 
 class TestMethods(base.BaseMethodsTests):
-    pass
+
+    def test_combine_add(self, data_repeated):
+        """Addition of Genotypes isn't valid"""
+        pass
 
 
 class TestMissing(base.BaseMissingTests):

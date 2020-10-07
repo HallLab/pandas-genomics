@@ -1,20 +1,20 @@
-from typing import List, Optional
-from dataclasses import dataclass, field
+from typing import Optional, List
 
 
-@dataclass(order=True)
 class Variant:
     """
     Information about a variant.
 
     Parameters
     ----------
-    chromosome: str
-    coordinate: int
-        (1-based, 0 for none/unknown)
-    variant_id: str
-    alleles: List[str]
-        List of possible alleles
+    chromosome: str, optional
+        None by default, through this usually is not desired.
+    coordinate: int, optional
+        (1-based, the default is 0 for none/unknown)
+    variant_id: str, optional
+        None by default
+    alleles: List[str], optional
+        List of possible alleles, empty by default
 
     Examples
     --------
@@ -22,22 +22,43 @@ class Variant:
     >>> print(variant)
     rs12462[chr=12;pos=112161652;2 alleles]
     """
-    # Order by chromosome then coordinate for sorting reasons
-    chromosome: str
-    coordinate: int
-    variant_id: str
-    alleles: List[str] = field(default_factory=list)
+    def __init__(self,
+                 chromosome: Optional[str] = None,
+                 coordinate: int = 0,
+                 variant_id: Optional[str] = None,
+                 alleles: Optional[List[str]] = None):
+        self.chromosome = chromosome
+        self.coordinate = coordinate
+        self.variant_id = variant_id
+        # Start with standard alleles - any additional (ins/del) are added to the end for sorting purposes
+        self.alleles = ['A', 'C', 'G', 'T']
+        if alleles is not None:
+            self.alleles += [a for a in alleles if a not in self.alleles]
 
-    def __post_init__(self):
         # Validate the passed parameters
-        if ';' in self.variant_id or ',' in self.variant_id:
-            raise ValueError(f"The variant_id cannot contain ';' or ',': '{self.variant_id}'")
-        if ';' in self.chromosome or ',' in self.chromosome:
+        if self.chromosome is not None and (';' in self.chromosome or ',' in self.chromosome):
             raise ValueError(f"The chromosome cannot contain ';' or ',': '{self.chromosome}'")
-        if len(self.alleles) > 255:
-            raise ValueError(f"{len(self.alleles):,} alleles were provided, the maximum supported number is 255.")
         if self.coordinate > ((2 ** 31) - 2):
             raise ValueError(f"The coordinate value may not exceed 2^31-2, {self.coordinate:,} was specified")
+        if self.variant_id is not None and (';' in self.variant_id or ',' in self.variant_id):
+            raise ValueError(f"The variant_id cannot contain ';' or ',': '{self.variant_id}'")
+        if len(self.alleles) > 255:
+            raise ValueError(f"{len(self.alleles):,} alleles were provided, the maximum supported number is 255.")
+
+    def __str__(self):
+        return f"{self.variant_id}[chr={self.chromosome};pos={self.coordinate};{len(self.alleles)} alleles]"
+
+    def __repr__(self):
+        return f"Variant(chromosome={self.chromosome}, coordinate={self.coordinate}," \
+               f"variant_id={self.variant_id}, alleles={self.alleles})"
+
+    def __eq__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
+        return (self.chromosome == other.chromosome) &\
+               (self.coordinate == other.coordinate) &\
+               (self.variant_id == other.variant_id) & \
+               (self.alleles == other.alleles)
 
     def add_allele(self, allele):
         """
@@ -57,9 +78,6 @@ class Variant:
         else:
             raise ValueError(f"Couldn't add new allele to {self}, 255 alleles max.")
         print(self.alleles)
-
-    def __str__(self):
-        return f"{self.variant_id}[chr={self.chromosome};pos={self.coordinate};{len(self.alleles)} alleles]"
 
     def get_allele_idx(self, allele: Optional[str], add: bool = False) -> int:
         """
@@ -227,12 +245,7 @@ class Variant:
 
         return Genotype(self, a1, a2)
 
-    @classmethod
-    def get_anonymous(cls):
-        return cls(chromosome="N/A", coordinate=0, variant_id="<ANONYMOUS>", alleles=[])
 
-
-@dataclass(order=True)
 class Genotype:
     """
     Genotype information associated with a specific variant.
@@ -241,7 +254,7 @@ class Genotype:
 
     Parameters
     ----------
-    variant: Variant
+    variant: pandas_genomics.scalars.variant.Variant
     allele1: int
         The first allele encoded as an index into the variant allele list
     allele2: int
@@ -258,11 +271,14 @@ class Genotype:
     >>> print(missing_genotype)
     <Missing>
     """
-    variant: Variant
-    allele1: int = 255
-    allele2: int = 255
+    def __init__(self,
+                 variant: Variant,
+                 allele1: int = 255,
+                 allele2: int = 255):
+        self.variant = variant
+        self.allele1 = allele1
+        self.allele2 = allele2
 
-    def __post_init__(self):
         # Sort allele1 and allele2
         if self.allele1 > self.allele2:
             a1, a2 = self.allele2, self.allele1
@@ -282,8 +298,44 @@ class Genotype:
         elif self.allele1 != 255 and self.allele2 != 255:
             return f"{self.variant.alleles[self.allele1]}/{self.variant.alleles[self.allele2]}"
 
+    def __repr__(self):
+        return f"Genotype(variant={self.variant}, allele1={self.allele1}, allele2={self.allele2})"
+
     def __hash__(self):
         return hash(repr(self))
+
+    def __eq__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
+        return (self.variant == other.variant) & (self.allele1 == other.allele1) & (self.allele2 == other.allele2)
+
+    def __lt__(self, other):
+        if self.variant != other.variant:
+            raise NotImplementedError("Can't compare different variants")
+        else:
+            # Compare allele index values for sorting
+            # allele_1 is always <= allele_2 within a genotype
+            a1_lt = self.allele1 < other.allele1
+            a1_eq = self.allele1 == other.allele1
+            a2_lt = self.allele2 < other.allele2
+            return a1_lt | (a1_eq & a2_lt)
+
+    def __gt__(self, other):
+        if self.variant != other.variant:
+            raise NotImplementedError("Can't compare different variants")
+        else:
+            # Compare allele index values for sorting
+            # allele_1 is always <= allele_2 within a genotype
+            a1_gt = self.allele1 > other.allele1
+            a1_eq = self.allele1 == other.allele1
+            a2_gt = self.allele2 > other.allele2
+            return a1_gt | (a1_eq & a2_gt)
+
+    def __le__(self, other):
+        return (self < other) | (self == other)
+
+    def __ge__(self, other):
+        return (self > other) | (self == other)
 
     def is_missing(self) -> bool:
         """

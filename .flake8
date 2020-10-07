@@ -6,5 +6,6 @@ exclude =
     dist,
     versioneer.py,
     plunk/_version.py,
-    docs/source/conf.py
+    docs/conf.py
+    tests/conftest.py
 max-line-length = 160

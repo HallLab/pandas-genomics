@@ -1,5 +1,5 @@
-from .dtypes.scalars import Genotype, Variant
-from .dtypes.genotype import GenotypeDtype, GenotypeArray
+from .scalars import Genotype, Variant
+from .arrays.genotype_array import GenotypeDtype, GenotypeArray
 
 __all__ = [
     'Genotype',

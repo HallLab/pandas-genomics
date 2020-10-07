@@ -4,11 +4,11 @@ from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
-from pandas.core.arrays import ExtensionArray, BooleanArray
+from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
 from pandas.core.dtypes.inference import is_list_like
 
-from .scalars import Variant, Genotype
+from pandas_genomics.scalars import Variant, Genotype
 
 
 @register_extension_dtype
@@ -64,7 +64,7 @@ class GenotypeDtype(PandasExtensionDtype):
     # ----
     def __init__(self, variant: Optional[Variant] = None):
         if variant is None:
-            variant = Variant.get_anonymous()
+            variant = Variant()
         self.variant = variant
 
     # ExtensionDtype Methods
@@ -295,7 +295,7 @@ class GenotypeArray(ExtensionArray):
             Optional GenotypeDtype that must be compatible with the Genotypes
         copy : boolean, default False
             If True, copy the underlying data.
-        
+
         Returns
         -------
         GenotypeArray
@@ -328,7 +328,7 @@ class GenotypeArray(ExtensionArray):
     @classmethod
     def _from_sequence_of_strings(cls, strings, dtype, copy: bool = False):
         """Construct a new ExtensionArray from a sequence of strings.
-        .. versionadded:: 0.24.0
+
         Parameters
         ----------
         strings : Sequence
@@ -337,6 +337,7 @@ class GenotypeArray(ExtensionArray):
             GenotypeDtype with variant information used to process the strings
         copy : boolean, default False
             If True, copy the underlying data.
+
         Returns
         -------
         GenotypeArray
@@ -414,9 +415,27 @@ class GenotypeArray(ExtensionArray):
         if isinstance(value, list):
             # Convert list to genotype array, throwing an error if it doesn't work
             value = self._from_sequence(value)
-        # Handle pandas BooleanArray
+
+        # Validate the key
+        if isinstance(key, List):
+            key = pd.Series(key)
+            if key.isna().sum() > 0:
+                raise ValueError("Cannot index with an integer indexer containing NA values")
         if isinstance(key, BooleanArray):
+            # Convert to a normal boolean array after making NaN rows False
             key = key.fillna(False).astype('bool')
+        # Handle pandas IntegerArray
+        if isinstance(key, IntegerArray):
+            if key.isna().sum() > 0:
+                # Raise an error if there are any NA values
+                raise ValueError("Cannot index with an integer indexer containing NA values")
+            else:
+                # Convert to a regular numpy array of ints
+                key = key.astype('int')
+        # Ensure a mask doesn't have an incorrect length
+        if isinstance(key, np.ndarray) and key.dtype == 'bool':
+            if len(key) != len(self):
+                raise IndexError("wrong length")
         # Update allele values directly
         if isinstance(value, Genotype):
             self._data[key] = (value.allele1, value.allele2)
@@ -489,19 +508,19 @@ class GenotypeArray(ExtensionArray):
         return GenotypeArray(values=unique_data, dtype=self.dtype)
 
     def value_counts(self, dropna=True):
-        raise NotImplementedError()
-
-    #def _values_for_factorize(self):
-    #    return self.astype(object), self.variant.make_genotype()
+        """Return a Series of unique counts with a GenotypeArray index"""
+        unique_data, unique_counts = np.unique(self._data, return_counts=True)
+        result = pd.Series(unique_counts, index=GenotypeArray(values=unique_data, dtype=self.dtype))
+        if dropna:
+            result = result.loc[result.index != self.dtype.na_value]
+        return result
 
     def astype(self, dtype, copy=True):
-        if isinstance(dtype, GenotypeDtype) or isinstance(dtype, object):
+        if isinstance(dtype, GenotypeDtype):
             if copy:
-                return self.copy()
-            else:
-                return self
-        else:
-            raise ValueError(f"Can't coerce GenotypeArray to 'dtype'")
+                self = self.copy()
+            return self
+        return super(GenotypeArray, self).astype(dtype)
 
     def isna(self):
         """
@@ -513,9 +532,11 @@ class GenotypeArray(ExtensionArray):
     def _concat_same_type(cls, to_concat):
         """
         Concatenate multiple array
+
         Parameters
         ----------
         to_concat : sequence of this type
+
         Returns
         -------
         ExtensionArray
