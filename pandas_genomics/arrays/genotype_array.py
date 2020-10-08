@@ -4,7 +4,7 @@ from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
-from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
+from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray, ExtensionScalarOpsMixin
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
 from pandas.core.dtypes.inference import is_list_like
 
@@ -222,6 +222,9 @@ class GenotypeArray(ExtensionArray):
     --------
 
     """
+    # array priority higher than numpy scalars
+    __array_priority__ = 1000
+
     def __init__(self, values: Union[List[Genotype], 'GenotypeArray', np.ndarray],
                  dtype: Optional[GenotypeDtype] = None, copy: bool = False):
         """Initialize assuming values is a GenotypeArray or a numpy array with the correct underlying shape"""
@@ -596,28 +599,42 @@ class GenotypeArray(ExtensionArray):
         allele1, allele2 = self._get_alleles_for_ops(other)
         if allele1 is None and allele2 is None:
             return NotImplemented
-        return (self._data['allele1'] != allele1) or (self._data['allele2'] != allele2)
+        return (self._data['allele1'] != allele1) | (self._data['allele2'] != allele2)
 
     def __lt__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
         if allele1 is None and allele2 is None:
             return NotImplemented
-        return (self._data['allele1'] <= allele1) & (self._data['allele2'] < allele2)
+        a1_lt = self._data['allele1'] < allele1
+        a1_eq = self._data['allele1'] == allele1
+        a2_lt = self._data['allele2'] < allele2
+        return a1_lt | (a1_eq & a2_lt)
 
     def __le__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
         if allele1 is None and allele2 is None:
             return NotImplemented
-        return (self._data['allele1'] <= allele1) & (self._data['allele2'] <= allele2)
+        a1_lt = self._data['allele1'] < allele1
+        a1_eq = self._data['allele1'] == allele1
+        a2_lt = self._data['allele2'] < allele2
+        a2_eq = self._data['allele2'] == allele2
+        return a1_lt | (a1_eq & a2_lt) | (a1_eq & a2_eq)
 
     def __gt__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
         if allele1 is None and allele2 is None:
             return NotImplemented
-        return (self._data['allele1'] >= allele1) & (self._data['allele2'] > allele2)
+        a1_gt = self._data['allele1'] > allele1
+        a1_eq = self._data['allele1'] == allele1
+        a2_gt = self._data['allele2'] > allele2
+        return a1_gt | (a1_eq & a2_gt)
 
     def __ge__(self, other):
         allele1, allele2 = self._get_alleles_for_ops(other)
         if allele1 is None and allele2 is None:
             return NotImplemented
-        return (self._data['allele1'] >= allele1) & (self._data['allele2'] >= allele2)
+        a1_gt = self._data['allele1'] > allele1
+        a1_eq = self._data['allele1'] == allele1
+        a2_gt = self._data['allele2'] > allele2
+        a2_eq = self._data['allele2'] == allele2
+        return a1_gt | (a1_eq & a2_gt) | (a1_eq & a2_eq)

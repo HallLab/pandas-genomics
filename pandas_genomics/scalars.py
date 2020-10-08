@@ -307,9 +307,13 @@ class Genotype:
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
             return NotImplemented
-        return (self.variant == other.variant) & (self.allele1 == other.allele1) & (self.allele2 == other.allele2)
+        if self.variant != other.variant:
+            raise NotImplementedError("Can't compare different variants")
+        return (self.allele1 == other.allele1) & (self.allele2 == other.allele2)
 
     def __lt__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
         if self.variant != other.variant:
             raise NotImplementedError("Can't compare different variants")
         else:
@@ -321,6 +325,8 @@ class Genotype:
             return a1_lt | (a1_eq & a2_lt)
 
     def __gt__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
         if self.variant != other.variant:
             raise NotImplementedError("Can't compare different variants")
         else:
@@ -332,9 +338,17 @@ class Genotype:
             return a1_gt | (a1_eq & a2_gt)
 
     def __le__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
+        if self.variant != other.variant:
+            raise NotImplementedError("Can't compare different variants")
         return (self < other) | (self == other)
 
     def __ge__(self, other):
+        if other.__class__ is not self.__class__:
+            return NotImplemented
+        if self.variant != other.variant:
+            raise NotImplementedError("Can't compare different variants")
         return (self > other) | (self == other)
 
     def is_missing(self) -> bool:
