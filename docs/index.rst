@@ -3,18 +3,39 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pandas-genomics's documentation!
-===========================================
+Documentation for pandas-genomics
+=================================
+:Version: |version|
+
+Pandas ExtensionArray for working with genomics data
+
+TODO:
+- [x] Create the GenotypeArray ExtensionArray
+  - [x] Pass all necessary ExtensionArray tests
+- [ ] IO Functions
+  - [x] Load data from Plink files
+  - [ ] Export to Plink files
+  - [ ] Load data from VCF files
+  - [ ] Export to VCF files
+- [ ] Add Useful Methods
+  - [ ] Additive encoding
+  - [ ] Get variant frequencies
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   Hall Lab Homepage <https://www.hall-lab.org>
+   pandas-genomics Github Repo <https://github.com/HallLab/pandas-genomics>
+   io
 
 
-Indices and tables
-==================
+Additional Notes
+----------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+Release History, etc
+
+.. toctree::
+   :maxdepth: 2
+
+   release-history
