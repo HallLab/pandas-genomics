@@ -3,7 +3,8 @@ import random
 from pandas.tests.extension import base
 import pytest
 
-from pandas_genomics import GenotypeDtype, GenotypeArray, Variant
+from pandas_genomics.arrays import GenotypeDtype, GenotypeArray
+from pandas_genomics.scalars import Variant
 
 random.seed(1855)
 
