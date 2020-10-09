@@ -12,20 +12,23 @@ Pandas ExtensionArray for working with genomics data
 Done
 ----
 
- - Create the GenotypeArray ExtensionArray
- - Pass all necessary ExtensionArray tests
- - Load data from Plink files
+* Create the GenotypeArray ExtensionArray
+* Pass all necessary ExtensionArray tests
+* Load data from Plink files
 
 ToDo
 ----
 
-- IO
-    - Export to Plink files
-    - Load data from VCF files
-    - Export to VCF files
-- Add Useful Methods
-    - Additive encoding
-    - Get variant frequencies
+* IO
+
+  * Export to Plink files
+  * Load data from VCF files
+  * Export to VCF files
+
+* Add Useful Methods
+
+  * Additive encoding
+  * Get variant frequencies
 
 .. toctree::
    :maxdepth: 2
