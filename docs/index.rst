@@ -36,7 +36,9 @@ ToDo
 
    Hall Lab Homepage <https://www.hall-lab.org>
    Pandas-Genomics Github Repo <https://github.com/HallLab/pandas-genomics>
-   io
+
+   .. automodule:: pandas_genomics.io
+   :members:
 
 
 Additional Notes
