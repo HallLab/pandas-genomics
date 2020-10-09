@@ -1,12 +1,14 @@
 """
-``pandas_genomics.arrays``
-======================
+Arrays
+------
+
 This module contains ExtensionArrays and their corresponding ExtensionDtypes
 
-Genotypes
-------------
-   GenotypeDtype
-   GenotypeArray
+  .. autosummary::
+     :toctree: arrays
+
+     GenotypeDtype
+     GenotypeArray
 
 """
 

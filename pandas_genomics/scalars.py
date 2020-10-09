@@ -1,13 +1,13 @@
 """
-``pandas_genomics.scalars``
-======================
+Scalars
+-------
 This module contains scalar types used in the ExtensionArrays.  They may also be useful on their own.
 
-Classes
--------
-   Variant
-   Genotype
+.. autosummary::
+     :toctree: scalars
 
+     Variant
+     Genotype
 """
 
 from typing import Optional, List

@@ -1,12 +1,12 @@
 """
-``pandas_genomics.io``
-======================
-This module provides functions for loading and saving GenotypeArrays to common variant formats
-
-Loading data
+Input/Output
 ------------
-   from_plink
+The `io` module provides functions for loading and saving GenotypeArrays to common variant formats
 
+.. autosummary::
+     :toctree: io
+
+     from_plink
 """
 
 from .plink import from_plink
