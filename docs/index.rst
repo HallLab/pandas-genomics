@@ -20,12 +20,12 @@ ToDo
 ----
 
 - IO
-  - Export to Plink files
-  - Load data from VCF files
-  - Export to VCF files
+    - Export to Plink files
+    - Load data from VCF files
+    - Export to VCF files
 - Add Useful Methods
-  - Additive encoding
-  - Get variant frequencies
+    - Additive encoding
+    - Get variant frequencies
 
 .. toctree::
    :maxdepth: 2
