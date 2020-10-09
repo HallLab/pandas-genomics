@@ -225,7 +225,10 @@ class Variant:
         a2 = self.get_allele_idx(allele2, add=True)
         return Genotype(self, a1, a2)
 
-    def make_genotype_from_plink_bits(self, plink_bits: str) -> 'Genotype':
+    def make_genotype_from_plink_bits(self,
+                                      plink_bits: str,
+                                      allele1: str,
+                                      allele2: str) -> 'Genotype':
         """
         Create a genotype from PLINK Bed file bits
 
@@ -233,6 +236,10 @@ class Variant:
         ----------
         plink_bits: str
             A string with allele indices as encoded in plink format, one of {'00', '01', '10', '11'}
+        allele1: str
+            Allele corresponding to the first allele in the plink file
+        allele2: str
+            Allele corresponding to the second allele in the plink file
 
         Returns
         -------

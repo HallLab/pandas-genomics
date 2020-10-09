@@ -70,16 +70,18 @@ def from_plink(bed_file: str):
         for v_idx in range(num_variants):
             variant_info_dict = variant_info.iloc[v_idx].to_dict()
             variant_id = str(variant_info_dict['variant_id'])
+            a1 = str(variant_info_dict['allele1'])
+            a2 = str(variant_info_dict['allele2'])
             variant = Variant(variant_id=variant_id,
                               chromosome=str(variant_info_dict['chromosome']),
                               coordinate=int(variant_info_dict['coordinate']),
-                              alleles=[str(variant_info_dict['allele1']), str(variant_info_dict['allele2'])])
+                              alleles=[a1, a2])
             genotypes = []
             chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
             for byte in chunk:
                 # for each byte, get 2 bits at a time in reverse order (as a string, so '00', '01', '10', or '11')
                 bitstrings = [f"{byte:08b}"[i:i+2] for i in range(0, 8, 2)][::-1]
-                genotypes.extend([variant.make_genotype_from_plink_bits(bs) for bs in bitstrings])
+                genotypes.extend([variant.make_genotype_from_plink_bits(bs, a1, a2) for bs in bitstrings])
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
             df[variant_id] = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
