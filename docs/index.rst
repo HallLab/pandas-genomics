@@ -10,6 +10,7 @@ Documentation for pandas-genomics
 Pandas ExtensionArray for working with genomics data
 
 TODO:
+
 - [x] Create the GenotypeArray ExtensionArray
   - [x] Pass all necessary ExtensionArray tests
 - [ ] IO Functions
@@ -26,7 +27,7 @@ TODO:
    :caption: Contents:
 
    Hall Lab Homepage <https://www.hall-lab.org>
-   pandas-genomics Github Repo <https://github.com/HallLab/pandas-genomics>
+   Pandas-Genomics Github Repo <https://github.com/HallLab/pandas-genomics>
    io
 
 
