@@ -1,12 +1,14 @@
 from .scalars import Genotype, Variant
-from .arrays.genotype_array import GenotypeDtype, GenotypeArray
+from .arrays import GenotypeDtype, GenotypeArray
+import io
 
 __all__ = [
     'Genotype',
     'Variant',
     'GenotypeDtype',
-    'GenotypeArray'
+    'GenotypeArray',
+    'io'
 ]
 
 # Simple version tracking for now until Poetry has a solution
-__version__ = "v0.1.0"
+__version__ = "v0.2.0"

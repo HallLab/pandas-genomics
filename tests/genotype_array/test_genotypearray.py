@@ -7,6 +7,7 @@ from pandas_genomics import GenotypeDtype, GenotypeArray, Variant
 
 random.seed(1855)
 
+
 # Implement the required fixtures
 @pytest.fixture
 def dtype():

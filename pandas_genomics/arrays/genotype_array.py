@@ -4,7 +4,7 @@ from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
-from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray, ExtensionScalarOpsMixin
+from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
 from pandas.core.dtypes.inference import is_list_like
 
@@ -454,29 +454,32 @@ class GenotypeArray(ExtensionArray):
     def __len__(self):
         return len(self._data)
 
-    def take(self, indices, allow_fill=False, fill_value=None):
-        indices = np.asarray(indices, dtype='int')
+    def take(self, indexer, allow_fill=False, fill_value=None):
+        indexer = np.asarray(indexer)
+        msg = (
+            "Index is out of bounds or cannot do a "
+            "non-empty take from an empty array."
+        )
 
         if allow_fill:
-            # Unpack the genotype or use the default value for None
-            fill_value = self.dtype.unpack_genotype(genotype=fill_value)
+            if fill_value is None:
+                fill_value = self.dtype.na_value
+            # bounds check
+            if (indexer < -1).any():
+                raise ValueError
+            try:
+                output = [
+                    self[loc] if loc != -1 else fill_value for loc in indexer
+                ]
+            except IndexError as err:
+                raise IndexError(msg) from err
+        else:
+            try:
+                output = [self[loc] for loc in indexer]
+            except IndexError as err:
+                raise IndexError(msg) from err
 
-        if allow_fill:
-            mask = (indices == -1)
-            if len(self) == 0:
-                if not (indices == -1).all():
-                    raise IndexError("Invalid take for empty array. Must be all -1.")
-                else:
-                    took = (np.full((len(indices), 2), fill_value, dtype=self.dtype._record_type).reshape(-1))
-                    return GenotypeArray(values=took, dtype=self.dtype)
-            if (indices < -1).any():
-                raise ValueError("Invalid value in 'indicies'. Must be all >= -1 for 'allow_fill=True'")
-
-        took = self._data.take(indices)
-        if allow_fill:
-            took[mask] = fill_value
-
-        return GenotypeArray(values=took, dtype=self.dtype)
+        return self._from_sequence(scalars=output, dtype=self.dtype)
 
     def copy(self):
         return GenotypeArray(self._data.copy(), self.dtype)
@@ -532,7 +535,7 @@ class GenotypeArray(ExtensionArray):
         return (self._data['allele1'] == 255) & (self._data['allele2'] == 255)
 
     @classmethod
-    def _concat_same_type(cls, to_concat):
+    def _concat_same_type(cls, to_concat, axis: int = 0):
         """
         Concatenate multiple array
 
@@ -545,14 +548,13 @@ class GenotypeArray(ExtensionArray):
         ExtensionArray
         """
         # Check dtypes
-        dtype = to_concat[0].dtype
-        for a in to_concat:
-            if a.dtype != dtype:
-                raise ValueError(f"Incompatible types: {dtype} and {a.dtype}")
+        dtypes = {a.dtype for a in to_concat}
+        if len(dtypes) != 1:
+            raise ValueError("to_concat must have the same dtype for all values", dtypes)
 
-        data = np.concatenate([ga._data for ga in to_concat])
+        data = np.concatenate([ga._data for ga in to_concat], axis=axis)
 
-        return GenotypeArray(data, dtype)
+        return GenotypeArray(data, list(dtypes)[0])
 
     # Properties for the type parameters
     # ----------------------------------

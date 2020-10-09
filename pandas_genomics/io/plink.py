@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
-from .arrays import GenotypeDtype, GenotypeArray
-from .scalars import Variant
+from ..arrays import GenotypeDtype, GenotypeArray
+from ..scalars import Variant
 
 
 def from_plink(bed_file: str):
