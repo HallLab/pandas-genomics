@@ -16,8 +16,8 @@ def from_plink(bed_file: str):
     Returns
     -------
     DataFrame
-        Index columns include sample information.
-        Columns correspond to variants and rows correspond to samples.
+        Columns correspond to variants (named as {variant_number}_{variant ID}).
+        Rows correspond to samples and index columns include sample information.
 
     Examples
     --------
@@ -86,7 +86,7 @@ def from_plink(bed_file: str):
                 genotypes.extend([variant.make_genotype_from_plink_bits(bs) for bs in bitstrings])
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
-            df[variant_id] = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
+            df[f"{v_idx}_{variant_id}"] = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
     # Set sample info as the index
