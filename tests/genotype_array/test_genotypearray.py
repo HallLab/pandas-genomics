@@ -191,3 +191,8 @@ class TestReshaping(base.BaseReshapingTests):
 
 class TestSetitems(base.BaseSetitemTests):
     pass
+
+
+# Custom Tests
+def test_encoding_additive(data):
+    result = data.encode_additive()

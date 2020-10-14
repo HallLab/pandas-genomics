@@ -644,3 +644,27 @@ class GenotypeArray(ExtensionArray):
         a2_gt = self._data['allele2'] > allele2
         a2_eq = self._data['allele2'] == allele2
         return a1_gt | (a1_eq & a2_gt) | (a1_eq & a2_eq)
+
+    ######################
+    # Encoding Functions #
+    ######################
+
+    def encode_additive(self) -> pd.arrays.IntegerArray:
+        """
+        Returns
+        -------
+        pd.arrays.IntegerArray
+            0 for Homozygous Reference
+            1 for Heterozygous
+            2 for Homozygous
+            pd.NA for missing
+            Raises an error if there is more than 1 alternate allele
+        """
+        # TODO: Return multiple arrays for multiple alternate alleles?
+        if len(self.variant.alleles) > 2:
+            raise ValueError("Additive encoding can only be used with one allele")
+
+        allele_sum = self._data['allele1'] + self._data['allele2']
+        # Mask those > 2 which would result from a missing allele (255)
+        result = pd.arrays.IntegerArray(values=allele_sum, mask=(allele_sum > 2))
+        return result
