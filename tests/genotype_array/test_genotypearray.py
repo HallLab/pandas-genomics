@@ -12,7 +12,7 @@ random.seed(1855)
 # Implement the required fixtures
 @pytest.fixture
 def dtype():
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=['A', 'T', 'G'])
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     return GenotypeDtype(variant=variant)
 
 
@@ -23,7 +23,7 @@ def data():
     * data[0] and data[1] should not be equal
     """
     alleles = ['A', 'T', 'G']
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=alleles)
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     genotypes = [variant.make_genotype('A', 'T'), variant.make_genotype('T', 'T')]
     for i in range(98):
         genotypes.append(variant.make_genotype(random.choice(alleles), random.choice(alleles)))
@@ -40,8 +40,7 @@ def data_for_twos():
 @pytest.fixture
 def data_missing():
     """Length-2 array with [NA, Valid]"""
-    alleles = ['A', 'T', 'G']
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=alleles)
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     genotypes = [variant.make_genotype(), variant.make_genotype('T', 'T')]
     return GenotypeArray(values=genotypes)
 
@@ -52,8 +51,7 @@ def data_for_sorting():
     This should be three items [B, C, A] with
     A < B < C
     """
-    alleles = ['A', 'T', 'G']
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=alleles)
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     a = variant.make_genotype('A', 'A')
     b = variant.make_genotype('A', 'T')
     c = variant.make_genotype('T', 'T')
@@ -66,8 +64,7 @@ def data_missing_for_sorting():
     This should be three items [B, NA, A] with
     A < B and NA missing.
     """
-    alleles = ['A', 'T', 'G']
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=alleles)
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     a = variant.make_genotype('A', 'A')
     b = variant.make_genotype('A', 'T')
     na = variant.make_genotype()
@@ -87,7 +84,7 @@ def na_cmp():
 @pytest.fixture
 def na_value():
     """The scalar missing value for this type. Default 'None'"""
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=['A', 'T', 'G'])
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     return variant.make_genotype()
 
 
@@ -97,8 +94,7 @@ def data_for_grouping():
     Expected to be like [B, B, NA, NA, A, A, B, C]
     Where A < B < C and NA is missing
     """
-    alleles = ['A', 'T', 'G']
-    variant = Variant(variant_id='rs12345', chromosome='chr1', coordinate=123456, alleles=alleles)
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
     a = variant.make_genotype('A', 'A')
     b = variant.make_genotype('A', 'T')
     c = variant.make_genotype('T', 'T')

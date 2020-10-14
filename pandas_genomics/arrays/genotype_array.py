@@ -28,9 +28,9 @@ class GenotypeDtype(PandasExtensionDtype):
 
     Examples
     --------
-    v = Variant(variant_id="rs12462", chromosome="12", coordinate=112161652, alleles=["T", "C"])
+    v = Variant(chromosome='12', position=112161652, id='rs12462', ref='T', alt=['C',])
     >>> GenotypeDtype(v)
-    genotype[rs12462; 12; 112161652; T,C]
+    genotype[12; 112161652; rs12462; T; C]
     """
 
     # Internal attributes
@@ -38,11 +38,13 @@ class GenotypeDtype(PandasExtensionDtype):
     # metadata field names
     _metadata = ("variant",)
     # Regular expression
+    # TODO: Validate ref/alt more specifically
     _match = re.compile(r"(genotype)\["
-                        r"(?P<variant_id>.+); "
                         r"(?P<chromosome>.+); "
-                        r"(?P<coordinate>[0-9]+); "
-                        r"(?P<alleles>.+)\]")
+                        r"(?P<position>[0-9]+); "
+                        r"(?P<id>.+); "
+                        r"(?P<ref>.+); "
+                        r"(?P<alt>.+)\]")
     kind = 'O'
     type = Genotype
     _record_type = np.dtype([('allele1', '>u8'), ('allele2', '>u8')])
@@ -89,12 +91,12 @@ class GenotypeDtype(PandasExtensionDtype):
         ----------
         string : str
             The string alias for this GenotypeDtype.
-            Should be formatted like `genotype[<variant>; <chromosome>; <coordinate>; <comma separated alleles>]`
+            Should be formatted like `genotype[<chromosome>; <position>; <id>; <ref>; <alt>]`
 
         Examples
         --------
-        >>> GenotypeDtype.construct_from_string('genotype[rs12462; 12; 112161652; T,C]')
-        genotype[rs12462; 12; 112161652; T,C]
+        >>> GenotypeDtype.construct_from_string('genotype[chr1; 123456; rs12345; A; T,G]')
+        genotype[chr1; 123456; rs12345; A; T,G]
         """
         if isinstance(string, str):
             msg = "Cannot construct a 'GenotypeDtype' from '{}'"
@@ -102,10 +104,11 @@ class GenotypeDtype(PandasExtensionDtype):
                 match = cls._match.match(string)
                 if match is not None:
                     d = match.groupdict()
-                    variant = Variant(variant_id=d["variant_id"],
-                                      chromosome=d["chromosome"],
-                                      coordinate=int(d["coordinate"]),
-                                      alleles=d["alleles"].split(','))
+                    variant = Variant(chromosome=d["chromosome"],
+                                      position=int(d["position"]),
+                                      id=d["id"],
+                                      ref=d["ref"],
+                                      alt=d["alt"].split(','))
                     return cls(variant=variant)
                 else:
                     raise TypeError(msg.format(string))
@@ -126,9 +129,9 @@ class GenotypeDtype(PandasExtensionDtype):
         Examples
         -------
         >>> variant = Variant('12', 112161652, 'rs12462')
-        >>> genotype = variant.make_genotype_from_str('C/T')
+        >>> genotype = variant.make_genotype_from_str('C/T', add_alleles=True)
         >>> GenotypeDtype.from_genotype(genotype)
-        genotype[rs12462; 12; 112161652; T,C]
+        genotype[12; 112161652; rs12462; ref=N; alt=T,C]
         """
         return cls(genotype.variant)
 
@@ -157,10 +160,11 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __str__(self):
         return f"genotype[" \
-               f"{self.variant.variant_id}; " \
                f"{self.variant.chromosome}; " \
-               f"{self.variant.coordinate}; " \
-               f"{','.join(self.variant.alleles)}]"
+               f"{self.variant.position}; " \
+               f"{self.variant.id}; " \
+               f"{self.variant.ref}; "\
+               f"{self.variant.alt}]"
 
     def __hash__(self):
         return hash(str(self))

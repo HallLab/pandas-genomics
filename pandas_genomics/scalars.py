@@ -12,6 +12,8 @@ This module contains scalar types used in the ExtensionArrays.  They may also be
 
 from typing import Optional, List
 
+MISSING_IDX = 255  # Integer indicating a missing allele.  Each variant must have 254 alleles max.
+
 
 class Variant:
     """
@@ -21,55 +23,74 @@ class Variant:
     ----------
     chromosome: str, optional
         None by default, through this usually is not desired.
-    coordinate: int, optional
+    position: int, optional
         (1-based, the default is 0 for none/unknown)
-    variant_id: str, optional
+    id: str, optional
         None by default
-    alleles: List[str], optional
-        List of possible alleles, empty by default
+    ref: str, optional
+        Reference allele, 'N' by default
+    alt: List[str], optional
+        List of possible alternate alleles, empty list by default
 
     Examples
     --------
-    >>> variant = Variant('12', 112161652, 'rs12462', alleles=['C', 'T'])
+    >>> variant = Variant('12', 112161652, 'A', 'rs12462', alleles=['C', 'T'])
     >>> print(variant)
-    rs12462[chr=12;pos=112161652;2 alleles]
+    rs12462[chr=12;pos=112161652;ref=A;alt=C,T]
     """
     def __init__(self,
                  chromosome: Optional[str] = None,
-                 coordinate: int = 0,
-                 variant_id: Optional[str] = None,
-                 alleles: Optional[List[str]] = None):
+                 position: int = 0,
+                 id: Optional[str] = None,
+                 ref: Optional[str] = 'N',
+                 alt: Optional[List[str]] = None):
         self.chromosome = chromosome
-        self.coordinate = coordinate
-        self.variant_id = variant_id
-        # Start with standard alleles - any additional (ins/del) are added to the end for sorting purposes
-        self.alleles = ['A', 'C', 'G', 'T']
-        if alleles is not None:
-            self.alleles += [a for a in alleles if a not in self.alleles]
+        self.position = position
+        self.id = id
+
+        # Validate alleles
+        # TODO: Validate ref and alt alleles using regex
+        if ref is None:
+            ref = "N"
+        if alt is None:
+            alt = []
+        if ref in alt:
+            raise ValueError(f"The ref allele ({ref}) was also listed as an alt allele.")
+        if len(alt) >= MISSING_IDX:
+            raise ValueError(f"Too many alternate alleles ({len(alt):,} > {MISSING_IDX})")
+
+        # Store alleles in a big list with the ref first
+        self.alleles = [ref, ] + alt
 
         # Validate the passed parameters
         if self.chromosome is not None and (';' in self.chromosome or ',' in self.chromosome):
             raise ValueError(f"The chromosome cannot contain ';' or ',': '{self.chromosome}'")
-        if self.coordinate > ((2 ** 31) - 2):
-            raise ValueError(f"The coordinate value may not exceed 2^31-2, {self.coordinate:,} was specified")
-        if self.variant_id is not None and (';' in self.variant_id or ',' in self.variant_id):
-            raise ValueError(f"The variant_id cannot contain ';' or ',': '{self.variant_id}'")
-        if len(self.alleles) > 255:
-            raise ValueError(f"{len(self.alleles):,} alleles were provided, the maximum supported number is 255.")
+        if self.position > ((2 ** 31) - 2):
+            raise ValueError(f"The 'position' value may not exceed 2^31-2, {self.position:,} was specified")
+        if self.id is not None and (';' in self.id or ',' in self.id):
+            raise ValueError(f"The variant_id cannot contain ';' or ',': '{self.id}'")
+
+    @property
+    def ref(self):
+        return self.alleles[0]
+
+    @property
+    def alt(self):
+        return ",".join(self.alleles[1:])
 
     def __str__(self):
-        return f"{self.variant_id}[chr={self.chromosome};pos={self.coordinate};{len(self.alleles)} alleles]"
+        return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]"
 
     def __repr__(self):
-        return f"Variant(chromosome={self.chromosome}, coordinate={self.coordinate}," \
-               f"variant_id={self.variant_id}, alleles={self.alleles})"
+        return f"Variant(chromosome={self.chromosome}, position={self.position}," \
+               f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]})"
 
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
             return NotImplemented
-        return (self.chromosome == other.chromosome) &\
-               (self.coordinate == other.coordinate) &\
-               (self.variant_id == other.variant_id) & \
+        return (self.chromosome == other.chromosome) & \
+               (self.position == other.position) & \
+               (self.id == other.id) & \
                (self.alleles == other.alleles)
 
     def add_allele(self, allele):
@@ -85,11 +106,11 @@ class Variant:
         None
 
         """
-        if len(self.alleles) < 255:
+        if len(self.alleles) < MISSING_IDX:
             self.alleles.append(allele)
         else:
-            raise ValueError(f"Couldn't add new allele to {self}, 255 alleles max.")
-        print(self.alleles)
+            raise ValueError(f"Couldn't add new allele to {self}, {MISSING_IDX} alleles max.")
+        print(f"Alternate alleles = {self.alt}")
 
     def get_allele_idx(self, allele: Optional[str], add: bool = False) -> int:
         """
@@ -101,7 +122,7 @@ class Variant:
         allele: str
         add: bool
             If `add` is True and the allele doesn't exist in the variant, add it
-            If 'add' is False and the allele doesn't exist in the variant, return 255
+            If 'add' is False and the allele doesn't exist in the variant, return the missing index value
 
         Returns
         -------
@@ -110,7 +131,7 @@ class Variant:
 
         """
         if allele is None:
-            return 255
+            return MISSING_IDX
         else:
             try:
                 # Get allele idx
@@ -121,7 +142,7 @@ class Variant:
                     self.add_allele(allele)
                     allele_idx = len(self.alleles) - 1
                 else:
-                    raise ValueError(f"'{allele}' is not an allele in {self} a")
+                    raise ValueError(f"'{allele}' is not an allele in {self}")
             return allele_idx
 
     def is_valid_allele_idx(self, idx: int) -> bool:
@@ -136,11 +157,11 @@ class Variant:
         Returns
         -------
         bool
-            True if the index value is valid (including 255 for None/Missing)
+            True if the index value is valid (including None/Missing value)
             False if the index value is not valid (negative or a nonexistent allele index)
 
         """
-        if idx == 255:
+        if idx == MISSING_IDX:
             # None/Missing
             return True
         elif idx < 0:
@@ -162,14 +183,15 @@ class Variant:
         Returns
         -------
         bool
-            True if the variant_id, chromosome, and coordinate all match.
+            True if the variant_id, chromosome, position, and ref allele all match.
             False otherwise.
 
         """
         if isinstance(other, Variant):
-            return (self.variant_id == other.variant_id and
+            return (self.id == other.id and
                     self.chromosome == other.chromosome and
-                    self.coordinate == other.coordinate)
+                    self.position == other.position and
+                    self.alleles[0] == other.alleles[0])
         else:
             return False
 
@@ -191,7 +213,7 @@ class Variant:
         a2 = self.get_allele_idx(allele2, add=True)
         return Genotype(self, a1, a2)
 
-    def make_genotype_from_str(self, gt_str: str, sep: str = "/") -> 'Genotype':
+    def make_genotype_from_str(self, gt_str: str, sep: str = "/", add_alleles: bool = False) -> 'Genotype':
         """
         Create a Genotype object associated with this variant using the specified allele string
 
@@ -201,6 +223,8 @@ class Variant:
             A string containing two alleles separated by a delimiter character
         sep: str
             The delimiter used to separate alleles in the gt_str ('/' by default)
+        add_alleles: bool
+            False by default.  If True, add alleles if the Variant doesn't have them yet.
 
         Returns
         -------
@@ -221,16 +245,14 @@ class Variant:
         else:
             raise ValueError("Can't process more that two alleles for a genotype")
 
-        a1 = self.get_allele_idx(allele1, add=True)
-        a2 = self.get_allele_idx(allele2, add=True)
+        a1 = self.get_allele_idx(allele1, add=add_alleles)
+        a2 = self.get_allele_idx(allele2, add=add_alleles)
         return Genotype(self, a1, a2)
 
-    def make_genotype_from_plink_bits(self,
-                                      plink_bits: str,
-                                      allele1: str,
-                                      allele2: str) -> 'Genotype':
+    def make_genotype_from_plink_bits(self, plink_bits: str) -> 'Genotype':
         """
-        Create a genotype from PLINK Bed file bits
+        Create a genotype from PLINK Bed file bits.
+        Assumes the Variant has only the first and second alleles from the matching bim file
 
         Parameters
         ----------
@@ -246,13 +268,16 @@ class Variant:
         Genotype
             A Genotype based on this variant with the specified alleles
         """
+        # Raise an error if the variant has more than a ref and alt allele
+        if len(self.alleles) != 2:
+            raise ValueError(f"Genotypes can only be created from plink bitcodes if there are exactly two alleles")
         # Process Allele String
         if plink_bits == '00':
             a1 = 0
             a2 = 0
         elif plink_bits == '01':
-            a1 = 255
-            a2 = 255
+            a1 = MISSING_IDX
+            a2 = MISSING_IDX
         elif plink_bits == '10':
             a1 = 0
             a2 = 1
@@ -292,8 +317,8 @@ class Genotype:
     """
     def __init__(self,
                  variant: Variant,
-                 allele1: int = 255,
-                 allele2: int = 255):
+                 allele1: int = MISSING_IDX,
+                 allele2: int = MISSING_IDX):
         self.variant = variant
         self.allele1 = allele1
         self.allele2 = allele2
@@ -310,11 +335,11 @@ class Genotype:
             raise ValueError(f"Invalid allele2 for {self.variant}: {self.allele2}")
 
     def __str__(self):
-        if self.allele1 == 255 and self.allele2 == 255:
+        if self.allele1 == MISSING_IDX and self.allele2 == MISSING_IDX:
             return "<Missing>"
-        elif self.allele1 != 255 and self.allele2 == 255:
+        elif self.allele1 != MISSING_IDX and self.allele2 == MISSING_IDX:
             return self.variant.alleles[self.allele1]
-        elif self.allele1 != 255 and self.allele2 != 255:
+        elif self.allele1 != MISSING_IDX and self.allele2 != MISSING_IDX:
             return f"{self.variant.alleles[self.allele1]}/{self.variant.alleles[self.allele2]}"
 
     def __repr__(self):
@@ -377,4 +402,4 @@ class Genotype:
         bool
             True if the variant is missing (both alleles are None), otherwise False
         """
-        return (self.allele1 == 255) and (self.allele2 == 255)
+        return (self.allele1 == MISSING_IDX) and (self.allele2 == MISSING_IDX)
