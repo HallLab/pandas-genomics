@@ -709,7 +709,7 @@ class GenotypeArray(ExtensionArray):
         pd.arrays.IntegerArray
             0 for Homozygous Reference
             1 for Heterozygous
-            2 for Homozygous
+            2 for Homozygous Alt
             pd.NA for missing
             Raises an error if there is more than 1 alternate allele
         """
@@ -719,5 +719,28 @@ class GenotypeArray(ExtensionArray):
 
         allele_sum = self._data['allele1'] + self._data['allele2']
         # Mask those > 2 which would result from a missing allele (255)
-        result = pd.arrays.IntegerArray(values=allele_sum, mask=(allele_sum > 2))
+        result = pd.array(data=[n if n <= 2 else None for n in allele_sum],
+                          dtype='UInt8')
+        return result
+
+    def encode_dominant(self) -> pd.arrays.IntegerArray:
+        """
+        Returns
+        -------
+        pd.arrays.IntegerArray
+            0 for Homozygous Reference
+            1 for Heterozygous
+            1 for Homozygous Alt
+            pd.NA for missing
+            Raises an error if there is more than 1 alternate allele
+        """
+        # TODO: Return multiple arrays for multiple alternate alleles?
+        if len(self.variant.alleles) > 2:
+            raise ValueError("Additive encoding can only be used with one allele")
+
+        allele_sum = self._data['allele1'] + self._data['allele2']
+        # Heterozygous (sum=1) or Homozygous alt (sum=2) are 1
+        allele_sum[(allele_sum == 1) | (allele_sum == 2)] = 1
+        # Anything not 0 (homozygous ref) or 1 is None
+        result = pd.array(data=[n if n in {0, 1} else None for n in allele_sum], dtype='UInt8')
         return result

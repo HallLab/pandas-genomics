@@ -28,4 +28,9 @@ class GenotypeAccessor:
     def encode_additive(self):
         return pd.Series(data=self._array.encode_additive(),
                          index=self._index,
-                         name=f"{self.array.variant.id}_{self.array.variant.alleles[1]}")
+                         name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}")
+
+    def encode_dominant(self):
+        return pd.Series(data=self._array.encode_dominant(),
+                         index=self._index,
+                         name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}")

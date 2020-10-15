@@ -157,3 +157,17 @@ def data_for_grouping():
     c = variant.make_genotype('T', 'T')
     na = variant.make_genotype()
     return GenotypeArray([b, b, na, na, a, a, b, c])
+
+
+@pytest.fixture
+def data_for_encoding():
+    """Data for encoding tests.
+    Contains one alt allele.
+    Variants are Homozygouse Ref, Heterozygous, Homozygous Alt, and Missing
+    """
+    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T'])
+    a = variant.make_genotype('A', 'A')
+    b = variant.make_genotype('A', 'T')
+    c = variant.make_genotype('T', 'T')
+    na = variant.make_genotype()
+    return GenotypeArray([a, b, c, na])
