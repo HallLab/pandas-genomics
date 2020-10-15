@@ -677,7 +677,7 @@ class GenotypeArray(ExtensionArray):
 
         if allele_idx == 0:
             # Nothing to do, this is already the reference
-            return
+            return self
 
         # Update the list of alleles
         old_ref = self.variant.alleles[0]
@@ -685,6 +685,18 @@ class GenotypeArray(ExtensionArray):
         self.variant.alleles[allele_idx] = old_ref
         # Add new ref to the beginning and remove the old ref
         self.variant.alleles = [allele_str, ] + self.variant.alleles[1:]
+
+        # Update stored alleles
+        was_ref_a1 = self._data['allele1'] == 0
+        was_ref_a2 = self._data['allele2'] == 0
+        was_allele_a1 = self._data['allele1'] == allele_idx
+        was_allele_a2 = self._data['allele2'] == allele_idx
+        # What was the reference is now the new reference position
+        self._data['allele1'][was_ref_a1] = allele_idx
+        self._data['allele2'][was_ref_a2] = allele_idx
+        # What was the allele is now reference (0)
+        self._data['allele1'][was_allele_a1] = 0
+        self._data['allele2'][was_allele_a2] = 0
 
     ######################
     # Encoding Functions #
@@ -707,6 +719,5 @@ class GenotypeArray(ExtensionArray):
 
         allele_sum = self._data['allele1'] + self._data['allele2']
         # Mask those > 2 which would result from a missing allele (255)
-        result = pd.arrays.IntegerArray(name=f"{self.variant.id}_{self.variant.alleles[1]}",
-                                        values=allele_sum, mask=(allele_sum > 2))
+        result = pd.arrays.IntegerArray(values=allele_sum, mask=(allele_sum > 2))
         return result
