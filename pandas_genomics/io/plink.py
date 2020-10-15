@@ -1,17 +1,26 @@
 from pathlib import Path
+from typing import Optional
+
 import pandas as pd
 from ..arrays import GenotypeDtype, GenotypeArray
 from ..scalars import Variant
 
 
-def from_plink(bed_file: str):
+def from_plink(bed_file: str,
+               swap_alleles: bool = False,
+               max_variants: Optional[int] = None):
     """
-    Load genetic data from plink files (.bed, .bim, and .fam) into a DataFrame
+    Load genetic data from plink files (.bed, .bim, and .fam) into a DataFrame.
 
     Parameters
     ----------
     bed_file: str or Path
         PLINK .bed file.  .bim and .fam files with the same name and location must also exist.
+    swap_alleles: bool
+        False by default, in which case "allele1" in the bim file is considered the "reference" allele.
+        If True, "allele2" is considered the "reference" allele.
+    max_variants: Optional[int]
+        If provided, only load this number of variants
 
     Returns
     -------
@@ -55,6 +64,14 @@ def from_plink(bed_file: str):
     # chromosome is a category
     variant_info['chromosome'] = variant_info['chromosome'].astype('category')
     num_variants = len(variant_info)
+
+    # Limit num_variants
+    if max_variants is not None:
+        if max_variants < 1:
+            raise ValueError(f"'max_variants' set to an invalid value: {max_variants}")
+        else:
+            num_variants = max_variants
+
     print(f"\tLoaded information for {num_variants} variants from '{bim_file.name}'")
 
     # Load bed file (PLINK binary biallelic genotype table) and add info to the df
@@ -86,7 +103,11 @@ def from_plink(bed_file: str):
                 genotypes.extend([variant.make_genotype_from_plink_bits(bs) for bs in bitstrings])
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
-            df[f"{v_idx}_{variant_id}"] = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
+            gt_array = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
+            # Set allele2 as the reference if 'swap_alleles'
+            if swap_alleles:
+                gt_array.set_reference(a2)
+            df[f"{v_idx}_{variant_id}"] = gt_array
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
     # Set sample info as the index

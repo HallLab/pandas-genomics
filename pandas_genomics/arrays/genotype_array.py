@@ -645,6 +645,47 @@ class GenotypeArray(ExtensionArray):
         a2_eq = self._data['allele2'] == allele2
         return a1_gt | (a1_eq & a2_gt) | (a1_eq & a2_eq)
 
+    #####################
+    # Utility Functions #
+    #####################
+    def set_reference(self, allele: Union[str, int]) -> None:
+        """
+        Change the reference allele (in-place) by specifying an allele index value or an allele string
+
+        Parameters
+        ----------
+        allele: int or str
+            The allele that will be set as the reference allele.
+            Either the allele string, or the index into the variant allele list
+
+        Returns
+        -------
+        None
+        """
+        # Get the allele as an integer and as a string
+        if type(allele) == str:
+            allele_idx = self.variant.get_allele_idx(allele, add=False)
+            allele_str = allele
+        elif type(allele) == int:
+            if not self.variant.is_valid_allele_idx(allele):
+                raise ValueError(f"{allele} is not a valid allele index,"
+                                 f" the variant has {len(self.variant.alleles)} alleles.")
+            allele_idx = allele
+            allele_str = self.variant.alleles[allele]
+        else:
+            raise ValueError(f"The `allele` must be a str or int, not an instance of '{type(allele)}'")
+
+        if allele_idx == 0:
+            # Nothing to do, this is already the reference
+            return
+
+        # Update the list of alleles
+        old_ref = self.variant.alleles[0]
+        # Replace existing value with the old ref
+        self.variant.alleles[allele_idx] = old_ref
+        # Add new ref to the beginning and remove the old ref
+        self.variant.alleles = [allele_str, ] + self.variant.alleles[1:]
+
     ######################
     # Encoding Functions #
     ######################
@@ -666,5 +707,6 @@ class GenotypeArray(ExtensionArray):
 
         allele_sum = self._data['allele1'] + self._data['allele2']
         # Mask those > 2 which would result from a missing allele (255)
-        result = pd.arrays.IntegerArray(values=allele_sum, mask=(allele_sum > 2))
+        result = pd.arrays.IntegerArray(name=f"{self.variant.id}_{self.variant.alleles[1]}",
+                                        values=allele_sum, mask=(allele_sum > 2))
         return result
