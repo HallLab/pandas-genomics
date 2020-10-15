@@ -270,7 +270,7 @@ class Variant:
         """
         # Raise an error if the variant has more than a ref and alt allele
         if len(self.alleles) != 2:
-            raise ValueError(f"Genotypes can only be created from plink bitcodes if there are exactly two alleles")
+            raise ValueError("Genotypes can only be created from plink bitcodes if there are exactly two alleles")
         # Process Allele String
         if plink_bits == '00':
             a1 = 0

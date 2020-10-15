@@ -1,5 +1,5 @@
 import pytest
-import pandas_genomics
+
 
 @pytest.mark.slow
 def test_loaded_small(plink_small):

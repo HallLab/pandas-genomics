@@ -65,6 +65,7 @@ def all_boolean_reductions(request):
     """
     return request.param
 
+
 # Implement the required fixtures
 @pytest.fixture
 def dtype():
