@@ -10,7 +10,7 @@ This module contains scalar types used in the ExtensionArrays.  They may also be
      Genotype
 """
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 MISSING_IDX = 255  # Integer indicating a missing allele.  Each variant must have 254 alleles max.
 
@@ -286,6 +286,31 @@ class Variant:
             a2 = 1
         else:
             raise ValueError(f"Invalid plink_bits: '{plink_bits}'")
+
+        return Genotype(self, a1, a2)
+
+    def make_genotype_from_vcf_record(self, vcf_record: Tuple[int, int, bool]) -> 'Genotype':
+        """
+        Create a genotype from VCF records loaded as cyvcf2.VCF().genotypes
+
+        Parameters
+        ----------
+        vcf_record: List[int, int, bool]
+            The list is [allele1_idx, allele2_idx, is_phased] where "-1" is missing.
+
+        Returns
+        -------
+        Genotype
+            A Genotype based on this variant with the specified alleles
+        """
+        a1, a2, is_phased = vcf_record
+        if a1 == -1:
+            a1 = MISSING_IDX
+        if a2 == -1:
+            a2 = MISSING_IDX
+
+        assert self.is_valid_allele_idx(a1)
+        assert self.is_valid_allele_idx(a1)
 
         return Genotype(self, a1, a2)
 

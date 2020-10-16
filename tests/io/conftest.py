@@ -6,7 +6,7 @@ import pytest
 from pandas_genomics import io
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-VCF_DIR = Path(cyvcf2.__file__) / "tests"
+VCF_DIR = Path(cyvcf2.__file__).parent / "tests"
 
 
 @pytest.mark.slow
@@ -37,6 +37,7 @@ def plink_small_20_swap():
     bed_file = DATA_DIR / "plink" / "plink_test_small.bed"
     result = io.from_plink(bed_file, max_variants=20, swap_alleles=True)
     return result
+
 
 @pytest.fixture
 def vcf_test():

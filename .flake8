@@ -8,4 +8,5 @@ exclude =
     plunk/_version.py,
     docs/conf.py
     tests/conftest.py
+    venv
 max-line-length = 160

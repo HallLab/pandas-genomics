@@ -1,13 +1,13 @@
 from pathlib import Path
+from typing import Union
 
-from cyvcf2 import VCF
 import pandas as pd
 
-from ..arrays import GenotypeDtype, GenotypeArray
+from ..arrays import GenotypeArray
 from ..scalars import Variant
 
 
-def from_vcf(filename: str, min_qual: float = 0, drop_filtered: bool = True):
+def from_vcf(filename: Union[str, Path], min_qual: float = 0, drop_filtered: bool = True):
     """
     Load genetic data from a VCF or BCF file into a DataFrame
 
@@ -29,8 +29,10 @@ def from_vcf(filename: str, min_qual: float = 0, drop_filtered: bool = True):
     Examples
     --------
     """
-    genotype_array_list = []
-    for vcf_variant in VCF(filename):  # or VCF('some.bcf')
+    from cyvcf2 import VCF  # Import here since installing htslib on Windows is tricky
+
+    genotype_array_dict = dict()
+    for var_num, vcf_variant in enumerate(VCF(filename)):  # or VCF('some.bcf')
         # TODO: Should FILTER or QUAL be stored in the GenotypeArray?
 
         # Skip filtered variants unless drop_filtered is True
@@ -41,12 +43,23 @@ def from_vcf(filename: str, min_qual: float = 0, drop_filtered: bool = True):
         if vcf_variant.QUAL < min_qual:
             continue
 
-        variant = Variant(chromosome = vcf_variant.CHROM,
-                          position = vcf_variant.start,
+        # Make variant
+        variant = Variant(chromosome=vcf_variant.CHROM,
+                          position=vcf_variant.start,
                           id=vcf_variant.ID,
                           ref=vcf_variant.REF,
                           alt=vcf_variant.ALT)
+        # Make the GenotypeArray
+        gt_array = GenotypeArray(values=[variant.make_genotype_from_vcf_record(vcf_record)
+                                         for vcf_record in vcf_variant.genotypes])
+        # Make the variant name
+        if gt_array.variant.id is None:
+            var_name = f"Variant_{var_num}"
+        else:
+            var_name = gt_array.variant.id
 
-        alleles = vcf_variant.gt_bases
-        print()
-        
+        # Save to the dict
+        genotype_array_dict[var_name] = gt_array
+
+    df = pd.DataFrame.from_dict(genotype_array_dict)
+    return df
