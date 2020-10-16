@@ -744,3 +744,27 @@ class GenotypeArray(ExtensionArray):
         # Anything not 0 (homozygous ref) or 1 is None
         result = pd.array(data=[n if n in {0, 1} else None for n in allele_sum], dtype='UInt8')
         return result
+
+    def encode_recessive(self) -> pd.arrays.IntegerArray:
+        """
+        Returns
+        -------
+        pd.arrays.IntegerArray
+            0 for Homozygous Reference
+            0 for Heterozygous
+            1 for Homozygous Alt
+            pd.NA for missing
+            Raises an error if there is more than 1 alternate allele
+        """
+        # TODO: Return multiple arrays for multiple alternate alleles?
+        if len(self.variant.alleles) > 2:
+            raise ValueError("Additive encoding can only be used with one allele")
+
+        allele_sum = self._data['allele1'] + self._data['allele2']
+        # Heterozygous (sum=1) should be 0
+        allele_sum[allele_sum == 1] = 0
+        # Homozygous Alt (sum=2) should be 1
+        allele_sum[allele_sum == 2] = 1
+        # Anything not 0 or 1 is None
+        result = pd.array(data=[n if n in {0, 1} else None for n in allele_sum], dtype='UInt8')
+        return result
