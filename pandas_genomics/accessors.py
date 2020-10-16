@@ -39,3 +39,8 @@ class GenotypeAccessor:
         return pd.Series(data=self._array.encode_recessive(),
                          index=self._index,
                          name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}")
+
+    def encode_codominant(self):
+        return pd.Series(data=self._array.encode_codominant(),
+                         index=self._index,
+                         name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}")

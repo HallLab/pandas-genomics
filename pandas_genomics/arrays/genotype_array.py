@@ -768,3 +768,27 @@ class GenotypeArray(ExtensionArray):
         # Anything not 0 or 1 is None
         result = pd.array(data=[n if n in {0, 1} else None for n in allele_sum], dtype='UInt8')
         return result
+
+    def encode_codominant(self) -> pd.arrays.Categorical:
+        """
+        This encodes the genotype into three categories.  When utilized in regression, this results in two variables
+        due to dummy encoding- "Het" as 0 or 1 and "Hom" as 0 or 1.  0 in both indicates "Ref".
+
+        Returns
+        -------
+        pd.arrays.Categorical
+            'Ref' for Homozygous Reference
+            'Het' for Heterozygous
+            'Hom' for Homozygous Alt
+            pd.NA for missing
+            Raises an error if there is more than 1 alternate allele
+        """
+        # TODO: Return multiple arrays for multiple alternate alleles?
+        if len(self.variant.alleles) > 2:
+            raise ValueError("Additive encoding can only be used with one allele")
+
+        allele_sum = self._data['allele1'] + self._data['allele2']
+        categories = ["Ref", "Het", "Hom"]
+        result = pd.Categorical(values=[categories[n] if n in {0, 1, 2} else None for n in allele_sum],
+                                categories=categories, ordered=True)
+        return result
