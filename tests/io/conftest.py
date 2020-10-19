@@ -1,12 +1,11 @@
+import sys
 from pathlib import Path
 
-import cyvcf2
 import pytest
 
 from pandas_genomics import io
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-VCF_DIR = Path(cyvcf2.__file__).parent / "tests"
 
 
 @pytest.mark.slow
@@ -41,6 +40,12 @@ def plink_small_20_swap():
 
 @pytest.fixture
 def vcf_test():
+    # Skip on Windows
+    if sys.platform.startswith("win"):
+        pytest.skip("VCF IO requires HTSLIB, which isn't easy to install on Windows")
+    # Run otherwise
+    import cyvcf2
+    VCF_DIR = Path(cyvcf2.__file__).parent / "tests"
     vcf_filename = VCF_DIR / "test.vcf.gz"
     result = io.from_vcf(vcf_filename)
     return result
