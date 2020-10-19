@@ -8,6 +8,7 @@ class GenotypeAccessor:
     """
     Series accessor for GenotypeArray methods
     """
+
     def __init__(self, obj):
         if not GenotypeDtype.is_dtype(obj.dtype):
             raise AttributeError(

@@ -308,7 +308,10 @@ class GenotypeArray(ExtensionArray):
 
     @classmethod
     def _from_sequence(
-        cls, scalars: Union[Genotype, Iterable[Genotype]], dtype: Optional[GenotypeDtype] = None, copy: bool = False
+        cls,
+        scalars: Union[Genotype, Iterable[Genotype]],
+        dtype: Optional[GenotypeDtype] = None,
+        copy: bool = False,
     ) -> "GenotypeArray":
         """
         Construct a new GenotypeArray from a sequence of Genotypes.
