@@ -35,7 +35,9 @@ jobs:
           poetry config virtualenvs.path ~/.virtualenvs
 
       - name: Install Dependencies
-        run: poetry install
+        run: |
+          poetry install
+          poetry install -E vcf
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Code Quality
