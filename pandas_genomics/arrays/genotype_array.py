@@ -1,6 +1,6 @@
 import operator
 import re
-from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple
+from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
 
 import numpy as np
 import pandas as pd
@@ -227,13 +227,6 @@ class GenotypeArray(ExtensionArray):
         The specific parametized type
     data: np.dtype([('allele1', '>u8'), ('allele2', '>u8')])
         The genotype values encoded as indices into the allele list of the dtype
-
-    Methods
-    -------
-
-    Examples
-    --------
-
     """
 
     # array priority higher than numpy scalars
@@ -315,7 +308,7 @@ class GenotypeArray(ExtensionArray):
 
     @classmethod
     def _from_sequence(
-        cls, scalars, dtype: Optional[GenotypeDtype] = None, copy: bool = False
+        cls, scalars: Union[Genotype, Iterable[Genotype]], dtype: Optional[GenotypeDtype] = None, copy: bool = False
     ) -> "GenotypeArray":
         """
         Construct a new GenotypeArray from a sequence of Genotypes.

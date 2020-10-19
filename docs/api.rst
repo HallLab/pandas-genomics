@@ -11,3 +11,7 @@ API Reference
 ----
 
 .. automodule:: pandas_genomics.arrays
+
+----
+
+.. autoclass:: pandas_genomics.GenotypeAccessor

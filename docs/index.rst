@@ -14,20 +14,17 @@ Done
 
 * Create the GenotypeArray ExtensionArray
 * Pass all necessary ExtensionArray tests
-* Load data from Plink files
+* Load data from Plink or VCF files
 
 ToDo
 ----
 
 * IO
 
-  * Export to Plink files
-  * Load data from VCF files
-  * Export to VCF files
+  * Export to Plink or VCF files
 
 * Add Useful Methods
 
-  * Additive encoding
   * Get variant frequencies
 
 .. toctree::
