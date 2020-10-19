@@ -89,7 +89,6 @@ class TestNoReduce(base.BaseNoReduceTests):
 
 
 class TestReshaping(base.BaseReshapingTests):
-
     def test_unstack(self, data, index, obj):
         # Fixed for Pandas 1.2: https://github.com/pandas-dev/pandas/issues/36986
         pass
