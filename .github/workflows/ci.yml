@@ -17,6 +17,10 @@ jobs:
         with:
           python-version: 3.7
 
+      - name: Install htslib dependencies
+        run: sudo apt-get install libcurl4-openssl-dev
+
+
       - name: Install Poetry
         uses: dschep/install-poetry-action@v1.3
 
