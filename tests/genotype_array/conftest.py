@@ -69,7 +69,9 @@ def all_boolean_reductions(request):
 # Implement the required fixtures
 @pytest.fixture
 def dtype():
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
     return GenotypeDtype(variant=variant)
 
 
@@ -79,11 +81,15 @@ def data():
     * data[0] and data[1] should both be non missing
     * data[0] and data[1] should not be equal
     """
-    alleles = ['A', 'T', 'G']
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
-    genotypes = [variant.make_genotype('A', 'T'), variant.make_genotype('T', 'T')]
+    alleles = ["A", "T", "G"]
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
+    genotypes = [variant.make_genotype("A", "T"), variant.make_genotype("T", "T")]
     for i in range(98):
-        genotypes.append(variant.make_genotype(random.choice(alleles), random.choice(alleles)))
+        genotypes.append(
+            variant.make_genotype(random.choice(alleles), random.choice(alleles))
+        )
     return GenotypeArray(values=genotypes)
 
 
@@ -97,8 +103,10 @@ def data_for_twos():
 @pytest.fixture
 def data_missing():
     """Length-2 array with [NA, Valid]"""
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
-    genotypes = [variant.make_genotype(), variant.make_genotype('T', 'T')]
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
+    genotypes = [variant.make_genotype(), variant.make_genotype("T", "T")]
     return GenotypeArray(values=genotypes)
 
 
@@ -108,10 +116,12 @@ def data_for_sorting():
     This should be three items [B, C, A] with
     A < B < C
     """
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
-    a = variant.make_genotype('A', 'A')
-    b = variant.make_genotype('A', 'T')
-    c = variant.make_genotype('T', 'T')
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
+    a = variant.make_genotype("A", "A")
+    b = variant.make_genotype("A", "T")
+    c = variant.make_genotype("T", "T")
     return GenotypeArray(values=[b, c, a])
 
 
@@ -121,9 +131,11 @@ def data_missing_for_sorting():
     This should be three items [B, NA, A] with
     A < B and NA missing.
     """
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
-    a = variant.make_genotype('A', 'A')
-    b = variant.make_genotype('A', 'T')
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
+    a = variant.make_genotype("A", "A")
+    b = variant.make_genotype("A", "T")
     na = variant.make_genotype()
     return GenotypeArray(values=[b, na, a])
 
@@ -141,7 +153,9 @@ def na_cmp():
 @pytest.fixture
 def na_value():
     """The scalar missing value for this type. Default 'None'"""
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
     return variant.make_genotype()
 
 
@@ -151,10 +165,12 @@ def data_for_grouping():
     Expected to be like [B, B, NA, NA, A, A, B, C]
     Where A < B < C and NA is missing
     """
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T', 'G'])
-    a = variant.make_genotype('A', 'A')
-    b = variant.make_genotype('A', 'T')
-    c = variant.make_genotype('T', 'T')
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+    )
+    a = variant.make_genotype("A", "A")
+    b = variant.make_genotype("A", "T")
+    c = variant.make_genotype("T", "T")
     na = variant.make_genotype()
     return GenotypeArray([b, b, na, na, a, a, b, c])
 
@@ -165,9 +181,11 @@ def data_for_encoding():
     Contains one alt allele.
     Variants are Homozygouse Ref, Heterozygous, Homozygous Alt, and Missing
     """
-    variant = Variant(chromosome='chr1', position=123456, id='rs12345', ref='A', alt=['T'])
-    a = variant.make_genotype('A', 'A')
-    b = variant.make_genotype('A', 'T')
-    c = variant.make_genotype('T', 'T')
+    variant = Variant(
+        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T"]
+    )
+    a = variant.make_genotype("A", "A")
+    b = variant.make_genotype("A", "T")
+    c = variant.make_genotype("T", "T")
     na = variant.make_genotype()
     return GenotypeArray([a, b, c, na])

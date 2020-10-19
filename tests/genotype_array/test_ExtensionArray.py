@@ -35,7 +35,6 @@ class TestParsing(base.BaseParsingTests):
 
 
 class TestMethods(base.BaseMethodsTests):
-
     def test_combine_add(self, data_repeated):
         """Addition of Genotypes isn't valid"""
         pass
@@ -64,6 +63,7 @@ class TestComparisonOps(base.BaseComparisonOpsTests):
 
 class TestOpsUtil(base.BaseOpsUtil):
     pass
+
 
 # No way to invert a genotype
 # class TestUnaryOps(base.BaseUnaryOpsTests):

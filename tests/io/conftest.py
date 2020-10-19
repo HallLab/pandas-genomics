@@ -45,6 +45,7 @@ def vcf_test():
         pytest.skip("VCF IO requires HTSLIB, which isn't easy to install on Windows")
     # Run otherwise
     import cyvcf2
+
     VCF_DIR = Path(cyvcf2.__file__).parent / "tests"
     vcf_filename = VCF_DIR / "test.vcf.gz"
     result = io.from_vcf(vcf_filename)

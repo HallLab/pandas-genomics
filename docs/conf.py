@@ -17,11 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'pandas-genomics'
-copyright = '2020, John McGuigan'
-author = 'John McGuigan'
+project = "pandas-genomics"
+copyright = "2020, John McGuigan"
+author = "John McGuigan"
 
 import pandas_genomics
+
 # The short X.Y version.
 version = pandas_genomics.__version__
 # The full version, including alpha/beta/rc tags.
@@ -34,15 +35,15 @@ release = pandas_genomics.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
-    'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting',
-    'numpydoc',
-    'sphinx_copybutton'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
+    "numpydoc",
+    "sphinx_copybutton",
 ]
 
 # Configuration options for plot_directive. See:
@@ -55,18 +56,18 @@ autosummary_generate = True
 numpydoc_show_class_members = False
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -74,22 +75,23 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 import sphinx_rtd_theme
+
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_logo = '_static/logo.png'
+html_logo = "_static/logo.png"
 html_theme_options = {
-    'logo_only': True,
+    "logo_only": True,
 }
 
 # Custom sidebar templates, must be a dictionary that maps document names
@@ -98,8 +100,8 @@ html_theme_options = {
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
-    '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
+    "**": [
+        "relations.html",  # needs 'show_related': True theme option to display
+        "searchbox.html",
     ]
 }
