@@ -20,8 +20,11 @@ sphinx-copybutton = {version = "^0.3.0", extras = ["docs"]}
 ipython = {version = "^7.18.1", extras = ["docs"]}
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^6"
 flake8 = "^3.8.4"
+pytest-cov = "^2.10.1"
+pytest-xdist = "^2.1.0"
+black = "^20.8b1"
 
 [tool.poetry.extras]
 docs = ["sphinx"]

@@ -7,7 +7,9 @@ from ..arrays import GenotypeArray
 from ..scalars import Variant
 
 
-def from_vcf(filename: Union[str, Path], min_qual: float = 0, drop_filtered: bool = True):
+def from_vcf(
+    filename: Union[str, Path], min_qual: float = 0, drop_filtered: bool = True
+):
     """
     Load genetic data from a VCF or BCF file into a DataFrame
 
@@ -44,14 +46,20 @@ def from_vcf(filename: Union[str, Path], min_qual: float = 0, drop_filtered: boo
             continue
 
         # Make variant
-        variant = Variant(chromosome=vcf_variant.CHROM,
-                          position=vcf_variant.start,
-                          id=vcf_variant.ID,
-                          ref=vcf_variant.REF,
-                          alt=vcf_variant.ALT)
+        variant = Variant(
+            chromosome=vcf_variant.CHROM,
+            position=vcf_variant.start,
+            id=vcf_variant.ID,
+            ref=vcf_variant.REF,
+            alt=vcf_variant.ALT,
+        )
         # Make the GenotypeArray
-        gt_array = GenotypeArray(values=[variant.make_genotype_from_vcf_record(vcf_record)
-                                         for vcf_record in vcf_variant.genotypes])
+        gt_array = GenotypeArray(
+            values=[
+                variant.make_genotype_from_vcf_record(vcf_record)
+                for vcf_record in vcf_variant.genotypes
+            ]
+        )
         # Make the variant name
         if gt_array.variant.id is None:
             var_name = f"Variant_{var_num}"

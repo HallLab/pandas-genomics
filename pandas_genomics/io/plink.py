@@ -6,9 +6,9 @@ from ..arrays import GenotypeDtype, GenotypeArray
 from ..scalars import Variant
 
 
-def from_plink(bed_file: str,
-               swap_alleles: bool = False,
-               max_variants: Optional[int] = None):
+def from_plink(
+    bed_file: str, swap_alleles: bool = False, max_variants: Optional[int] = None
+):
     """
     Load genetic data from plink files (.bed, .bim, and .fam) into a DataFrame.
 
@@ -51,8 +51,8 @@ def from_plink(bed_file: str,
     df = pd.read_table(fam_file, header=None, sep=" ")
     df.columns = ["FID", "IID", "IID_father", "IID_mother", "sex", "phenotype"]
     # Update 'sex'
-    df['sex'] = df['sex'].astype('category')
-    df['sex'] = df['sex'].cat.rename_categories({1: 'male', 2: 'female', 0: 'unknown'})
+    df["sex"] = df["sex"].astype("category")
+    df["sex"] = df["sex"].cat.rename_categories({1: "male", 2: "female", 0: "unknown"})
     # 'Phenotype' is not encoded because it may be more complicated than just case/control
     num_samples = len(df)
     print(f"\tLoaded information for {num_samples} samples from '{fam_file.name}'")
@@ -60,9 +60,16 @@ def from_plink(bed_file: str,
     # Load bim file (PLINK extended MAP file)
     variant_info = pd.read_table(bim_file, header=None, sep="\t")
     # Note 'position' is in centimorgans, 'coordinate' is what pandas-genomics refers to as 'position' (in base-pairs)
-    variant_info.columns = ["chromosome", "variant_id", "position", "coordinate", "allele1", "allele2"]
+    variant_info.columns = [
+        "chromosome",
+        "variant_id",
+        "position",
+        "coordinate",
+        "allele1",
+        "allele2",
+    ]
     # chromosome is a category
-    variant_info['chromosome'] = variant_info['chromosome'].astype('category')
+    variant_info["chromosome"] = variant_info["chromosome"].astype("category")
     num_variants = len(variant_info)
 
     # Limit num_variants
@@ -76,10 +83,12 @@ def from_plink(bed_file: str,
 
     # Load bed file (PLINK binary biallelic genotype table) and add info to the df
     CORRECT_FIRST_BYTES = b"\x6c\x1b\x01"
-    with bed_file.open('rb') as f:
+    with bed_file.open("rb") as f:
         first3bytes = f.read(3)  # Read first three bytes and confirm they are correct
         if first3bytes != CORRECT_FIRST_BYTES:
-            raise ValueError(f"The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted.")
+            raise ValueError(
+                f"The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted."
+            )
         # Determine chunk size
         chunk_size = num_samples // 4
         if num_samples % 4 > 0:
@@ -87,20 +96,24 @@ def from_plink(bed_file: str,
         # Read through the file
         for v_idx in range(num_variants):
             variant_info_dict = variant_info.iloc[v_idx].to_dict()
-            variant_id = str(variant_info_dict['variant_id'])
-            a1 = str(variant_info_dict['allele1'])
-            a2 = str(variant_info_dict['allele2'])
-            variant = Variant(chromosome=str(variant_info_dict['chromosome']),
-                              position=int(variant_info_dict['coordinate']),
-                              id=variant_id,
-                              ref=a1,
-                              alt=[a2])
+            variant_id = str(variant_info_dict["variant_id"])
+            a1 = str(variant_info_dict["allele1"])
+            a2 = str(variant_info_dict["allele2"])
+            variant = Variant(
+                chromosome=str(variant_info_dict["chromosome"]),
+                position=int(variant_info_dict["coordinate"]),
+                id=variant_id,
+                ref=a1,
+                alt=[a2],
+            )
             genotypes = []
             chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
             for byte in chunk:
                 # for each byte, get 2 bits at a time in reverse order (as a string, so '00', '01', '10', or '11')
-                bitstrings = [f"{byte:08b}"[i:i+2] for i in range(0, 8, 2)][::-1]
-                genotypes.extend([variant.make_genotype_from_plink_bits(bs) for bs in bitstrings])
+                bitstrings = [f"{byte:08b}"[i : i + 2] for i in range(0, 8, 2)][::-1]
+                genotypes.extend(
+                    [variant.make_genotype_from_plink_bits(bs) for bs in bitstrings]
+                )
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
             gt_array = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))

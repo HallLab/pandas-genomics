@@ -13,4 +13,4 @@ The `io` module provides functions for loading and saving GenotypeArrays to comm
 from .plink import from_plink
 from .vcf import from_vcf
 
-__all__ = ['from_plink', 'from_vcf']
+__all__ = ["from_plink", "from_vcf"]

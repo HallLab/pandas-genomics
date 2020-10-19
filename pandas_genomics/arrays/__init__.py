@@ -12,6 +12,6 @@ This module contains ExtensionArrays and their corresponding ExtensionDtypes
 
 """
 
-from.genotype_array import GenotypeDtype, GenotypeArray
+from .genotype_array import GenotypeDtype, GenotypeArray
 
-__all__ = ['GenotypeDtype', 'GenotypeArray']
+__all__ = ["GenotypeDtype", "GenotypeArray"]
