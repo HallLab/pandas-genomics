@@ -15,8 +15,8 @@
 <img src="https://img.shields.io/pypi/v/pandas-genomics.svg?style=for-the-badge" alt="pypi" />
 </a>
 <!-- Build status -->
-<a href="https://travis-ci.org/HallLab/pandas-genomics?branch=master">
-<img src="https://img.shields.io/travis/HallLab/pandas-genomics.svg?style=for-the-badge" alt="Build Status" />
+<a href="https://github.com/HallLab/pandas-genomics/actions?query=workflow%3ACI">
+<img src="https://img.shields.io/github/workflow/status/HallLab/pandas-genomics/CI?style=for-the-badge" alt="Build Status" />
 </a>
 <!-- Test coverage -->
 <a href="https://coveralls.io/github/HallLab/pandas-genomics?branch=master">
