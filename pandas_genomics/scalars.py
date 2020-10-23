@@ -36,7 +36,7 @@ class Variant:
 
     Examples
     --------
-    >>> variant = Variant('12', 112161652, 'A', 'rs12462', alleles=['C', 'T'])
+    >>> variant = Variant('12', 112161652, id='rs12462', ref='A', alt=['C', 'T'])
     >>> print(variant)
     rs12462[chr=12;pos=112161652;ref=A;alt=C,T]
     """

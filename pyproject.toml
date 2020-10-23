@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/HallLab/pandas-genomics/"
 documentation = "https://pandas-genomics.readthedocs.io/en/latest/"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
