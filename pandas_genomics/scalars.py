@@ -220,25 +220,24 @@ class Variant:
         else:
             return False
 
-    def make_genotype(
-        self, allele1: Optional[str] = None, allele2: Optional[str] = None
-    ) -> "Genotype":
+    def make_genotype(self, *alleles: str, add_alleles: bool = False) -> "Genotype":
         """
         Create a Genotype object associated with this variant using the specified allele(s)
 
         Parameters
         ----------
-        allele1: Optional[str]
-        allele2: Optional[str]
+        alleles:
+            one or more alleles (as strings) that make up the genotype
+        add_alleles: bool
+            False by default.  If True, add alleles if the Variant doesn't have them yet.
 
         Returns
         -------
         Genotype
             A Genotype based on this variant with the specified alleles
         """
-        a1 = self.get_allele_idx(allele1, add=True)
-        a2 = self.get_allele_idx(allele2, add=True)
-        return Genotype(self, a1, a2)
+        allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
+        return Genotype(self, allele_idxs)
 
     def make_genotype_from_str(
         self, gt_str: str, sep: str = "/", add_alleles: bool = False
@@ -262,21 +261,8 @@ class Variant:
         """
         # Process Allele String
         alleles = gt_str.split(sep)
-        if len(alleles) == 0:
-            allele1 = None
-            allele2 = None
-        elif len(alleles) == 1:
-            allele1 = alleles[0]
-            allele2 = None
-        elif len(alleles) == 2:
-            allele1 = alleles[0]
-            allele2 = alleles[1]
-        else:
-            raise ValueError("Can't process more that two alleles for a genotype")
-
-        a1 = self.get_allele_idx(allele1, add=add_alleles)
-        a2 = self.get_allele_idx(allele2, add=add_alleles)
-        return Genotype(self, a1, a2)
+        allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
+        return Genotype(self, allele_idxs)
 
     def make_genotype_from_plink_bits(self, plink_bits: str) -> "Genotype":
         """
@@ -287,10 +273,6 @@ class Variant:
         ----------
         plink_bits: str
             A string with allele indices as encoded in plink format, one of {'00', '01', '10', '11'}
-        allele1: str
-            Allele corresponding to the first allele in the plink file
-        allele2: str
-            Allele corresponding to the second allele in the plink file
 
         Returns
         -------
@@ -318,49 +300,46 @@ class Variant:
         else:
             raise ValueError(f"Invalid plink_bits: '{plink_bits}'")
 
-        return Genotype(self, a1, a2)
+        return Genotype(self, [a1, a2])
 
-    def make_genotype_from_vcf_record(
-        self, vcf_record: Tuple[int, int, bool]
-    ) -> "Genotype":
+    def make_genotype_from_vcf_record(self, vcf_record: Tuple) -> "Genotype":
         """
         Create a genotype from VCF records loaded as cyvcf2.VCF().genotypes
 
         Parameters
         ----------
-        vcf_record: List[int, int, bool]
-            The list is [allele1_idx, allele2_idx, is_phased] where "-1" is missing.
+        vcf_record: Tuple
+            The list is an array of allele indicies (where "-1" is missing) with a boolean for phased status at the nd
 
         Returns
         -------
         Genotype
             A Genotype based on this variant with the specified alleles
         """
-        a1, a2, is_phased = vcf_record
-        if a1 == -1:
-            a1 = MISSING_IDX
-        if a2 == -1:
-            a2 = MISSING_IDX
+        # TODO: Replace with pysam?
+        allele_idxs = vcf_record[:-1]
+        # is_phased = vcf_record[-1]
 
-        assert self.is_valid_allele_idx(a1)
-        assert self.is_valid_allele_idx(a1)
+        # Replace -1 with MISSING_IDX
+        allele_idxs = [a if a != -1 else MISSING_IDX for a in allele_idxs]
 
-        return Genotype(self, a1, a2)
+        for a in allele_idxs:
+            assert self.is_valid_allele_idx(a)
+
+        return Genotype(self, allele_idxs)
 
 
 class Genotype:
     """
     Genotype information associated with a specific variant.
-    Defaults to using an anonymous variant with unknown alleles.
+    Defaults to using an anonymous variant with two unknown alleles (diploid).
     Usually created with methods on ~Variant
 
     Parameters
     ----------
     variant: pandas_genomics.scalars.variant.Variant
-    allele1: int
-        The first allele encoded as an index into the variant allele list
-    allele2: int
-        The second allele encoded as an index into the variant allele list
+    alleles: str[int]
+        List of alleles encoded as indexes into the variant allele list
 
     Examples
     --------
@@ -374,34 +353,35 @@ class Genotype:
     <Missing>
     """
 
-    def __init__(
-        self, variant: Variant, allele1: int = MISSING_IDX, allele2: int = MISSING_IDX
-    ):
-        self.variant = variant
-        self.allele1 = allele1
-        self.allele2 = allele2
+    def __init__(self, variant: Variant, allele_idxs: Optional[List[int]] = None):
 
-        # Sort allele1 and allele2
-        if self.allele1 > self.allele2:
-            a1, a2 = self.allele2, self.allele1
-            self.__setattr__("allele1", a1)
-            self.__setattr__("allele2", a2)
+        self.variant = variant
+        if allele_idxs is None:
+            # Missing diploid genotype by default
+            self.allele_idxs = [MISSING_IDX, MISSING_IDX]
+        self.allele_idxs = allele_idxs
+
+        # Ensure alleles are sorted
+        self.allele_idxs = sorted(self.allele_idxs)
+
         # Validate parameters
-        if not self.variant.is_valid_allele_idx(self.allele1):
-            raise ValueError(f"Invalid allele1 for {self.variant}: {self.allele1}")
-        if not self.variant.is_valid_allele_idx(self.allele2):
-            raise ValueError(f"Invalid allele2 for {self.variant}: {self.allele2}")
+        for a in self.allele_idxs:
+            if not self.variant.is_valid_allele_idx(a):
+                raise ValueError(f"Invalid allele index for {self.variant}: {self.a}")
+
+    @property
+    def ploidy(self):
+        """Number of sets of chromosomes"""
+        return len(self.allele_idxs)
 
     def __str__(self):
-        if self.allele1 == MISSING_IDX and self.allele2 == MISSING_IDX:
+        if all([a == MISSING_IDX for a in self.allele_idxs]):
             return "<Missing>"
-        elif self.allele1 != MISSING_IDX and self.allele2 == MISSING_IDX:
-            return self.variant.alleles[self.allele1]
-        elif self.allele1 != MISSING_IDX and self.allele2 != MISSING_IDX:
-            return f"{self.variant.alleles[self.allele1]}/{self.variant.alleles[self.allele2]}"
+        else:
+            return "/".join([self.variant.alleles[a] for a in self.allele_idxs])
 
     def __repr__(self):
-        return f"Genotype(variant={self.variant}, allele1={self.allele1}, allele2={self.allele2})"
+        return f"Genotype(variant={self.variant})[{str(self)}]"
 
     def __hash__(self):
         return hash(repr(self))
@@ -411,7 +391,7 @@ class Genotype:
             return NotImplemented
         if self.variant != other.variant:
             raise NotImplementedError("Can't compare different variants")
-        return (self.allele1 == other.allele1) & (self.allele2 == other.allele2)
+        return self.allele_idxs == other.allele_idxs
 
     def __lt__(self, other):
         if other.__class__ is not self.__class__:
@@ -420,11 +400,13 @@ class Genotype:
             raise NotImplementedError("Can't compare different variants")
         else:
             # Compare allele index values for sorting
-            # allele_1 is always <= allele_2 within a genotype
-            a1_lt = self.allele1 < other.allele1
-            a1_eq = self.allele1 == other.allele1
-            a2_lt = self.allele2 < other.allele2
-            return a1_lt | (a1_eq & a2_lt)
+            for selfa, othera in zip(self.allele_idxs, other.allele_idxs):
+                if selfa < othera:
+                    return True
+                elif othera < selfa:
+                    return False
+            # All Equal
+            return False
 
     def __gt__(self, other):
         if other.__class__ is not self.__class__:
@@ -433,25 +415,43 @@ class Genotype:
             raise NotImplementedError("Can't compare different variants")
         else:
             # Compare allele index values for sorting
-            # allele_1 is always <= allele_2 within a genotype
-            a1_gt = self.allele1 > other.allele1
-            a1_eq = self.allele1 == other.allele1
-            a2_gt = self.allele2 > other.allele2
-            return a1_gt | (a1_eq & a2_gt)
+            for selfa, othera in zip(self.allele_idxs, other.allele_idxs):
+                if selfa > othera:
+                    return True
+                elif othera > selfa:
+                    return False
+            # All Equal
+            return False
 
     def __le__(self, other):
         if other.__class__ is not self.__class__:
             return NotImplemented
         if self.variant != other.variant:
             raise NotImplementedError("Can't compare different variants")
-        return (self < other) | (self == other)
+        else:
+            # Compare allele index values for sorting
+            for selfa, othera in zip(self.allele_idxs, other.allele_idxs):
+                if selfa < othera:
+                    return True
+                elif othera < selfa:
+                    return False
+            # All Equal
+            return True
 
     def __ge__(self, other):
         if other.__class__ is not self.__class__:
             return NotImplemented
         if self.variant != other.variant:
             raise NotImplementedError("Can't compare different variants")
-        return (self > other) | (self == other)
+        else:
+            # Compare allele index values for sorting
+            for selfa, othera in zip(self.allele_idxs, other.allele_idxs):
+                if selfa > othera:
+                    return True
+                elif othera > selfa:
+                    return False
+            # All Equal
+            return True
 
     def is_missing(self) -> bool:
         """
@@ -460,4 +460,4 @@ class Genotype:
         bool
             True if the variant is missing (both alleles are None), otherwise False
         """
-        return (self.allele1 == MISSING_IDX) and (self.allele2 == MISSING_IDX)
+        return all([a == MISSING_IDX for a in self.allele_idxs])
