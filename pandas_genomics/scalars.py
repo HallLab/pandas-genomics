@@ -127,6 +127,8 @@ class Variant:
         None
 
         """
+        if allele in self.alleles:
+            raise ValueError(f"Allele already exists in the variant")
         if len(self.alleles) < MISSING_IDX:
             self.alleles.append(allele)
         else:
@@ -338,7 +340,7 @@ class Genotype:
     Parameters
     ----------
     variant: pandas_genomics.scalars.variant.Variant
-    alleles: str[int]
+    allele_idxs: List[int]
         List of alleles encoded as indexes into the variant allele list
 
     Examples
@@ -358,7 +360,7 @@ class Genotype:
         self.variant = variant
         if allele_idxs is None:
             # Missing diploid genotype by default
-            self.allele_idxs = [MISSING_IDX, MISSING_IDX]
+            allele_idxs = [MISSING_IDX, MISSING_IDX]
         self.allele_idxs = allele_idxs
 
         # Ensure alleles are sorted
