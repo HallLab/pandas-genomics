@@ -69,9 +69,7 @@ class Variant:
             )
 
         # Store alleles in a big list with the ref first
-        self.alleles = [
-            ref,
-        ] + alt
+        self.alleles = [ref, ] + alt
 
         # Validate the passed parameters
         if self.chromosome is not None and (
@@ -238,8 +236,12 @@ class Variant:
         Genotype
             A Genotype based on this variant with the specified alleles
         """
-        allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
-        return Genotype(self, allele_idxs)
+        if len(alleles) == 0:
+            # Create diploid missing genotype
+            return Genotype(self, [MISSING_IDX, MISSING_IDX])
+        else:
+            allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
+            return Genotype(self, allele_idxs)
 
     def make_genotype_from_str(
         self, gt_str: str, sep: str = "/", add_alleles: bool = False
@@ -355,12 +357,24 @@ class Genotype:
     <Missing>
     """
 
-    def __init__(self, variant: Variant, allele_idxs: Optional[List[int]] = None):
+    def __init__(self,
+                 variant: Variant,
+                 allele_idxs: Optional[List[int]] = None,
+                 ploidy: Optional[int] = None):
+
+        # Determine alleles/ploidy
+        if allele_idxs is not None and ploidy is not None:
+            # Both specified: ploidy must match
+            if len(allele_idxs) != ploidy:
+                raise ValueError(f"Ploidy of {ploidy} is not compatible with an "
+                                 f"allele_idxs list of {len(allele_idxs)} values")
+        elif allele_idxs is None:
+            # allele_idxs not specified, use given ploidy or a default value of 2 to make a missing GT
+            if ploidy is None:
+                ploidy = 2
+            allele_idxs = [MISSING_IDX, ] * ploidy
 
         self.variant = variant
-        if allele_idxs is None:
-            # Missing diploid genotype by default
-            allele_idxs = [MISSING_IDX, MISSING_IDX]
         self.allele_idxs = allele_idxs
 
         # Ensure alleles are sorted
@@ -369,7 +383,7 @@ class Genotype:
         # Validate parameters
         for a in self.allele_idxs:
             if not self.variant.is_valid_allele_idx(a):
-                raise ValueError(f"Invalid allele index for {self.variant}: {self.a}")
+                raise ValueError(f"Invalid allele index for {self.variant}: {a}")
 
     @property
     def ploidy(self):
