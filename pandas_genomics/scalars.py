@@ -10,7 +10,7 @@ This module contains scalar types used in the ExtensionArrays.  They may also be
      Genotype
 """
 
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 
 MISSING_IDX = (
     255  # Integer indicating a missing allele.  Each variant must have 254 alleles max.
@@ -359,7 +359,7 @@ class Genotype:
 
     def __init__(self,
                  variant: Variant,
-                 allele_idxs: Optional[List[int]] = None,
+                 allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
                  ploidy: Optional[int] = None):
 
         # Determine alleles/ploidy
@@ -374,11 +374,11 @@ class Genotype:
                 ploidy = 2
             allele_idxs = [MISSING_IDX, ] * ploidy
 
+        # Ensure allele_idxs is a sorted tuple
+        allele_idxs = tuple(sorted(allele_idxs))
+
         self.variant = variant
         self.allele_idxs = allele_idxs
-
-        # Ensure alleles are sorted
-        self.allele_idxs = sorted(self.allele_idxs)
 
         # Validate parameters
         for a in self.allele_idxs:

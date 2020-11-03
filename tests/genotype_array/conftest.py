@@ -90,7 +90,6 @@ def data():
         genotypes.append(
             variant.make_genotype(random.choice(alleles), random.choice(alleles))
         )
-    test = GenotypeArray(values=genotypes)
     return GenotypeArray(values=genotypes)
 
 
