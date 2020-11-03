@@ -191,7 +191,11 @@ class GenotypeDtype(PandasExtensionDtype):
         if isinstance(other, str):
             return other == self.name
 
-        return isinstance(other, GenotypeDtype) and self.variant == other.variant and self.ploidy == other.ploidy
+        return (
+            isinstance(other, GenotypeDtype)
+            and self.variant == other.variant
+            and self.ploidy == other.ploidy
+        )
 
     # Pickle compatibility
     # --------------------
@@ -214,9 +218,7 @@ class GenotypeDtype(PandasExtensionDtype):
                 f"The fill value must be None or a Genotype object, not {type(genotype)}"
             )
         else:
-            return np.array(
-                genotype.allele_idxs, dtype=self._record_type
-            )
+            return np.array(genotype.allele_idxs, dtype=self._record_type)
 
 
 class GenotypeArray(ExtensionArray):
@@ -659,7 +661,9 @@ class GenotypeArray(ExtensionArray):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(axis=1) & (self._data < allele_idxs).any(axis=1)
+        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(
+            axis=1
+        ) & (self._data < allele_idxs).any(axis=1)
 
     def __le__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
@@ -671,7 +675,9 @@ class GenotypeArray(ExtensionArray):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(axis=1) & (self._data > allele_idxs).any(axis=1)
+        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(
+            axis=1
+        ) & (self._data > allele_idxs).any(axis=1)
 
     def __ge__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
@@ -752,7 +758,7 @@ class GenotypeArray(ExtensionArray):
             raise ValueError("Additive encoding can only be used with one allele")
 
         data = rfn.structured_to_unstructured(self._data)
-        allele_sum = data.sum(axis=1).astype('float')
+        allele_sum = data.sum(axis=1).astype("float")
         allele_sum[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=allele_sum, dtype="UInt8")
         return result
@@ -772,7 +778,7 @@ class GenotypeArray(ExtensionArray):
             raise ValueError("Dominant encoding can only be used with one allele")
 
         data = rfn.structured_to_unstructured(self._data)
-        has_minor = (data == 1).any(axis=1).astype('float')
+        has_minor = (data == 1).any(axis=1).astype("float")
         has_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=has_minor, dtype="UInt8")
         return result
@@ -792,7 +798,7 @@ class GenotypeArray(ExtensionArray):
             raise ValueError("Recessive encoding can only be used with one allele")
 
         data = rfn.structured_to_unstructured(self._data)
-        all_minor = (data == 1).all(axis=1).astype('float')
+        all_minor = (data == 1).all(axis=1).astype("float")
         all_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=all_minor, dtype="UInt8")
         return result
@@ -815,7 +821,9 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Codominant encoding can only be used with one allele")
         if self.dtype.ploidy != 2:
-            raise ValueError("Codominant encoding can only be used with diploid genotypes")
+            raise ValueError(
+                "Codominant encoding can only be used with diploid genotypes"
+            )
 
         allele_sum = rfn.structured_to_unstructured(self._data).sum(axis=1)
         categories = ["Ref", "Het", "Hom"]

@@ -69,7 +69,9 @@ class Variant:
             )
 
         # Store alleles in a big list with the ref first
-        self.alleles = [ref, ] + alt
+        self.alleles = [
+            ref,
+        ] + alt
 
         # Validate the passed parameters
         if self.chromosome is not None and (
@@ -357,22 +359,28 @@ class Genotype:
     <Missing>
     """
 
-    def __init__(self,
-                 variant: Variant,
-                 allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
-                 ploidy: Optional[int] = None):
+    def __init__(
+        self,
+        variant: Variant,
+        allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
+        ploidy: Optional[int] = None,
+    ):
 
         # Determine alleles/ploidy
         if allele_idxs is not None and ploidy is not None:
             # Both specified: ploidy must match
             if len(allele_idxs) != ploidy:
-                raise ValueError(f"Ploidy of {ploidy} is not compatible with an "
-                                 f"allele_idxs list of {len(allele_idxs)} values")
+                raise ValueError(
+                    f"Ploidy of {ploidy} is not compatible with an "
+                    f"allele_idxs list of {len(allele_idxs)} values"
+                )
         elif allele_idxs is None:
             # allele_idxs not specified, use given ploidy or a default value of 2 to make a missing GT
             if ploidy is None:
                 ploidy = 2
-            allele_idxs = [MISSING_IDX, ] * ploidy
+            allele_idxs = [
+                MISSING_IDX,
+            ] * ploidy
 
         # Ensure allele_idxs is a sorted tuple
         allele_idxs = tuple(sorted(allele_idxs))
