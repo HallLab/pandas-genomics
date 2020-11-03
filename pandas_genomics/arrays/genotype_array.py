@@ -3,6 +3,7 @@ import re
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
 
 import numpy as np
+from numpy.lib import recfunctions as rfn
 import pandas as pd
 from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
@@ -464,7 +465,7 @@ class GenotypeArray(ExtensionArray):
     ) -> None:
         if isinstance(value, list):
             # Convert list to genotype array, throwing an error if it doesn't work
-            value = self._from_sequence(value)
+            value = self._from_sequence(value, dtype=self.dtype)
 
         # Validate the key
         if isinstance(key, List):
@@ -492,7 +493,7 @@ class GenotypeArray(ExtensionArray):
                 raise IndexError("wrong length")
         # Update allele values directly
         if isinstance(value, Genotype):
-            self._data[key] = value
+            self._data[key] = value.allele_idxs
         elif isinstance(value, GenotypeArray):
             self._data[key] = value._data
         elif isinstance(value, pd.Series) and isinstance(value.values, GenotypeArray):
@@ -583,7 +584,7 @@ class GenotypeArray(ExtensionArray):
         """
         A 1-D array indicating if each value is missing
         """
-        return (self._data == MISSING_IDX).all()
+        return (rfn.structured_to_unstructured(self._data) == MISSING_IDX).any(axis=1)
 
     @classmethod
     def _concat_same_type(cls, to_concat, axis: int = 0):
@@ -633,7 +634,7 @@ class GenotypeArray(ExtensionArray):
             allele_idxs = other.allele_idxs
         elif isinstance(other, GenotypeArray):
             # Get array values for alleles
-            allele_idxs = other._data
+            allele_idxs = rfn.structured_to_unstructured(other._data)
         else:
             return None
         # Ensure the comparison is using the same variant
@@ -646,37 +647,37 @@ class GenotypeArray(ExtensionArray):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data == allele_idxs).all(axis=1)
+        return (rfn.structured_to_unstructured(self._data) == allele_idxs).all(axis=1)
 
     def __ne__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data != allele_idxs).any(axis=1)
+        return (rfn.structured_to_unstructured(self._data) != allele_idxs).any(axis=1)
 
     def __lt__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data <= allele_idxs).all(axis=1) & (self._data < allele_idxs).any(axis=1)
+        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(axis=1) & (self._data < allele_idxs).any(axis=1)
 
     def __le__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data <= allele_idxs).all(axis=1)
+        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(axis=1)
 
     def __gt__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data >= allele_idxs).all(axis=1) & (self._data > allele_idxs).any(axis=1)
+        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(axis=1) & (self._data > allele_idxs).any(axis=1)
 
     def __ge__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (self._data >= allele_idxs).all(axis=1)
+        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(axis=1)
 
     #####################
     # Utility Functions #
