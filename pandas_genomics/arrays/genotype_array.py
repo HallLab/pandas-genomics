@@ -751,8 +751,9 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Additive encoding can only be used with one allele")
 
-        allele_sum = self._data.sum(axis=1).astype('float')
-        allele_sum[(self._data == MISSING_IDX).any(axis=1)] = np.nan
+        data = rfn.structured_to_unstructured(self._data)
+        allele_sum = data.sum(axis=1).astype('float')
+        allele_sum[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=allele_sum, dtype="UInt8")
         return result
 
@@ -770,8 +771,9 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Dominant encoding can only be used with one allele")
 
-        has_minor = (self._data == 1).any(axis=1).astype('float')
-        has_minor[(self._data == MISSING_IDX).any(axis=1)] = np.nan
+        data = rfn.structured_to_unstructured(self._data)
+        has_minor = (data == 1).any(axis=1).astype('float')
+        has_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=has_minor, dtype="UInt8")
         return result
 
@@ -789,8 +791,9 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Recessive encoding can only be used with one allele")
 
-        all_minor = (self._data == 1).all(axis=1).astype('float')
-        all_minor[(self._data == MISSING_IDX).any(axis=1)] = np.nan
+        data = rfn.structured_to_unstructured(self._data)
+        all_minor = (data == 1).all(axis=1).astype('float')
+        all_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=all_minor, dtype="UInt8")
         return result
 
@@ -814,7 +817,7 @@ class GenotypeArray(ExtensionArray):
         if self.dtype.ploidy != 2:
             raise ValueError("Codominant encoding can only be used with diploid genotypes")
 
-        allele_sum = self._data.sum(axis=1)
+        allele_sum = rfn.structured_to_unstructured(self._data).sum(axis=1)
         categories = ["Ref", "Het", "Hom"]
         result = pd.Categorical(
             values=[categories[n] if n in {0, 1, 2} else None for n in allele_sum],

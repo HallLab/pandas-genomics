@@ -342,8 +342,8 @@ class Genotype:
     Parameters
     ----------
     variant: pandas_genomics.scalars.variant.Variant
-    allele_idxs: List[int]
-        List of alleles encoded as indexes into the variant allele list
+    allele_idxs: Alleles encoded as indexes into the variant allele list
+    ploidy: Number of alleles in the genotype
 
     Examples
     --------
