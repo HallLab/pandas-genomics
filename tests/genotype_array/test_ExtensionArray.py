@@ -1,7 +1,7 @@
 """
 Run ExtensionArray tests from Pandas on the GenotypeArray class
 """
-
+import pytest
 from pandas.tests.extension import base
 
 
@@ -23,7 +23,9 @@ class TestGetItem(base.BaseGetitemTests):
 
 
 class TestGroupBy(base.BaseGroupbyTests):
-    pass
+    @pytest.mark.xfail(reason="GH#39098: Converts agg result to object")
+    def test_groupby_agg_extension(self, data_for_grouping):
+        super().test_groupby_agg_extension(data_for_grouping)
 
 
 class TestInterface(base.BaseInterfaceTests):
@@ -89,9 +91,7 @@ class TestNoReduce(base.BaseNoReduceTests):
 
 
 class TestReshaping(base.BaseReshapingTests):
-    def test_unstack(self):
-        # Fixed for Pandas 1.2: https://github.com/pandas-dev/pandas/issues/36986
-        pass
+    pass
 
 
 class TestSetitems(base.BaseSetitemTests):

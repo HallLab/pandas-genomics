@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandas-genomics"
-version = "0.3.0"
+version = "0.3.1"
 description = "Pandas ExtensionDtypes and ExtensionArray for working with genomics data"
 license = "BSD-3-Clause"
 authors = ["John McGuigan <jrm5100@psu.edu>"]
@@ -16,9 +16,9 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.7.1"
 numpy = "1.18"
-pandas = "^1.1"
+pandas = "^1.2"
 cyvcf2 = {version = "^0.20.9", optional = true}
 sphinx = {version = "^3.2.1", optional = true}
 sphinx_rtd_theme = {version = "^0.5.0", optional = true}
