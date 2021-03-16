@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/_static/logo.png" alt="pandas_genomics logo"/>
+<img src="https://github.com/HallLab/pandas-genomics/raw/master/docs/_static/logo.png" alt="pandas_genomics logo"/>
 </div>
 
 <br/>
