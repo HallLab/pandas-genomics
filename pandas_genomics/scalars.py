@@ -347,32 +347,6 @@ class Variant:
 
         return Genotype(self, [a1, a2])
 
-    def make_genotype_from_vcf_record(self, vcf_record: Tuple) -> "Genotype":
-        """
-        Create a genotype from VCF records loaded as cyvcf2.VCF().genotypes
-
-        Parameters
-        ----------
-        vcf_record: Tuple
-            The list is an array of allele indicies (where "-1" is missing) with a boolean for phased status at the nd
-
-        Returns
-        -------
-        Genotype
-            A Genotype based on this variant with the specified alleles
-        """
-        # TODO: Replace with pysam?
-        allele_idxs = vcf_record[:-1]
-        # is_phased = vcf_record[-1]
-
-        # Replace -1 with MISSING_IDX
-        allele_idxs = [a if a != -1 else MISSING_IDX for a in allele_idxs]
-
-        for a in allele_idxs:
-            assert self.is_valid_allele_idx(a)
-
-        return Genotype(self, allele_idxs)
-
 
 class Genotype:
     """

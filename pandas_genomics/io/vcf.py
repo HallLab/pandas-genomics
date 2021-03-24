@@ -2,9 +2,10 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
+import numpy as np
 
-from ..arrays import GenotypeArray
-from ..scalars import Variant
+from ..arrays import GenotypeArray, GenotypeDtype
+from ..scalars import Variant, MISSING_IDX, Genotype
 
 
 def from_vcf(
@@ -54,13 +55,13 @@ def from_vcf(
             alt=vcf_variant.ALT,
             ploidy=vcf_variant.ploidy
         )
+
+        # Collect alleles
+        genotypes = [Genotype(variant, [i if i != -1 else MISSING_IDX for i in gt[:-1]])
+                     for gt in vcf_variant.genotypes]
+
         # Make the GenotypeArray
-        gt_array = GenotypeArray(
-            values=[
-                variant.make_genotype_from_vcf_record(vcf_record)
-                for vcf_record in vcf_variant.genotypes
-            ]
-        )
+        gt_array = GenotypeArray(values=genotypes)
         # Make the variant name
         if gt_array.variant.id is None:
             var_name = f"Variant_{var_num}"
