@@ -22,8 +22,6 @@ class GenotypeDtype(PandasExtensionDtype):
     variant: Variant or None
         The ~Variant associated with the genotype.
         If None, use an anonymous variant
-    ploidy: int or None
-        The number of alleles in each genotype
 
     Attributes
     ----------
@@ -40,7 +38,7 @@ class GenotypeDtype(PandasExtensionDtype):
     # Internal attributes
     # -------------------
     # metadata field names
-    _metadata = ("variant", "ploidy")
+    _metadata = ("variant",)
     # Regular expression
     # TODO: Validate ref/alt more specifically
     _match = re.compile(
@@ -69,17 +67,13 @@ class GenotypeDtype(PandasExtensionDtype):
 
     # init
     # ----
-    def __init__(self, variant: Optional[Variant] = None, ploidy: Optional[int] = None):
+    def __init__(self, variant: Optional[Variant] = None):
         # Set variant
         if variant is None:
             variant = Variant()
         self.variant = variant
-        # Set ploidy
-        if ploidy is None:
-            ploidy = 2
-        self.ploidy = ploidy
 
-        self._record_type = np.dtype([(f"allele{i+1}", ">u8") for i in range(ploidy)])
+        self._record_type = np.dtype([(f"allele{i+1}", ">u8") for i in range(variant.ploidy)])
 
     # ExtensionDtype Methods
     # -------------------------
@@ -122,8 +116,9 @@ class GenotypeDtype(PandasExtensionDtype):
                         id=d["id"],
                         ref=d["ref"],
                         alt=d["alt"].split(","),
+                        ploidy=int(d["ploidy"])
                     )
-                    return cls(variant=variant, ploidy=int(d["ploidy"]))
+                    return cls(variant=variant)
                 else:
                     raise TypeError(msg.format(string))
             except Exception:
@@ -149,7 +144,7 @@ class GenotypeDtype(PandasExtensionDtype):
         >>> GenotypeDtype.from_genotype(genotype)
         genotype(2)[12; 112161652; rs12462; ref=N; alt=T,C]
         """
-        return cls(genotype.variant, genotype.ploidy)
+        return cls(genotype.variant)
 
     @classmethod
     def is_dtype(cls, dtype) -> bool:
@@ -176,7 +171,7 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __str__(self):
         return (
-            f"genotype({self.ploidy})["
+            f"genotype({self.variant.ploidy})["
             f"{self.variant.chromosome}; "
             f"{self.variant.position}; "
             f"{self.variant.id}; "
@@ -194,7 +189,6 @@ class GenotypeDtype(PandasExtensionDtype):
         return (
             isinstance(other, GenotypeDtype)
             and self.variant == other.variant
-            and self.ploidy == other.ploidy
         )
 
     # Pickle compatibility
@@ -205,7 +199,6 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __setstate__(self, state: MutableMapping[str, Any]) -> None:
         self.variant = state.pop("variant")
-        self.ploidy = state.pop("ploidy")
 
     # Other internal methods
     # ----------------------
@@ -351,11 +344,9 @@ class GenotypeArray(ExtensionArray):
         if dtype is None:
             # Use variant from first genotype
             variant = scalars[0].variant
-            ploidy = scalars[0].ploidy
         else:
             # Use the dtype variant
             variant = dtype.variant
-            ploidy = dtype.ploidy
         values = []
         for idx, gt in enumerate(scalars):
             if not variant.is_same_variant(gt.variant):
@@ -365,7 +356,7 @@ class GenotypeArray(ExtensionArray):
                 )
             else:
                 values.append(gt.allele_idxs)
-        result = cls(values=[], dtype=GenotypeDtype(variant, ploidy))
+        result = cls(values=[], dtype=GenotypeDtype(variant))
         result._data = np.array(values, dtype=result._dtype._record_type)
         return result
 
@@ -425,7 +416,7 @@ class GenotypeArray(ExtensionArray):
     @property
     def nbytes(self) -> int:
         """How many bytes to store this object in memory (1 per allele per genotype)"""
-        return self._dtype.ploidy * len(self)
+        return self._dtype.variant.ploidy * len(self)
 
     def __getitem__(self, index):
         """
@@ -704,7 +695,7 @@ class GenotypeArray(ExtensionArray):
         """
         # Get the allele as an integer and as a string
         if type(allele) == str:
-            allele_idx = self.variant.get_allele_idx(allele, add=False)
+            allele_idx = self.variant.get_idx_from_allele(allele, add=False)
             allele_str = allele
         elif type(allele) == int:
             if not self.variant.is_valid_allele_idx(allele):
@@ -820,7 +811,7 @@ class GenotypeArray(ExtensionArray):
         # TODO: Return multiple arrays for multiple alternate alleles?
         if len(self.variant.alleles) > 2:
             raise ValueError("Codominant encoding can only be used with one allele")
-        if self.dtype.ploidy != 2:
+        if self.dtype.variant.ploidy != 2:
             raise ValueError(
                 "Codominant encoding can only be used with diploid genotypes"
             )

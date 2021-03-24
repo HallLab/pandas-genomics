@@ -33,6 +33,9 @@ class Variant:
         Reference allele, 'N' by default
     alt: List[str], optional
         List of possible alternate alleles, empty list by default
+    ploidy: int, optional
+        The number of alleles that should be present.  Assumed to be 2 if not specified.
+
 
     Examples
     --------
@@ -48,10 +51,19 @@ class Variant:
         id: Optional[str] = None,
         ref: Optional[str] = "N",
         alt: Optional[List[str]] = None,
+        ploidy: Optional[int] = None
     ):
         self.chromosome = chromosome
         self.position = position
         self.id = id
+        if ploidy is None:
+            self.ploidy = 2
+        elif ploidy < 1:
+            raise ValueError(
+                f"If specified, ploidy must be >= 1, but was specified as {ploidy}"
+            )
+        else:
+            self.ploidy = ploidy
 
         # Validate alleles
         # TODO: Validate ref and alt alleles using regex
@@ -100,8 +112,9 @@ class Variant:
 
     def __repr__(self):
         return (
-            f"Variant(chromosome={self.chromosome}, position={self.position},"
-            f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]})"
+            f"Variant(chromosome={self.chromosome}, position={self.position}, "
+            f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]}, "
+            f"ploidy={self.ploidy})"
         )
 
     def __eq__(self, other):
@@ -112,6 +125,7 @@ class Variant:
             & (self.position == other.position)
             & (self.id == other.id)
             & (self.alleles == other.alleles)
+            & (self.ploidy == other.ploidy)
         )
 
     def add_allele(self, allele):
@@ -137,7 +151,7 @@ class Variant:
             )
         print(f"Alternate alleles = {self.alt}")
 
-    def get_allele_idx(self, allele: Optional[str], add: bool = False) -> int:
+    def get_idx_from_allele(self, allele: Optional[str], add: bool = False) -> int:
         """
         Get the integer value for an allele based on this variant's list of alleles,
         optionally adding it as a new allele
@@ -169,6 +183,27 @@ class Variant:
                 else:
                     raise ValueError(f"'{allele}' is not an allele in {self}")
             return allele_idx
+
+    def get_allele_from_idx(self, idx: int) -> str:
+        """
+        Get the allele corresponding to an index value for this variant
+
+        Parameters
+        ----------
+        idx: int
+
+        Returns
+        -------
+        str
+            String representation of the allele
+        """
+
+        if idx == MISSING_IDX:
+            return "."  # Missing allele symbol, same as VCF
+        elif idx > len(self.alleles)-1:
+            raise ValueError(f"Invalid index (idx) for a variant with {len(self.alleles)} alleles")
+        else:
+            return self.alleles[idx]
 
     def is_valid_allele_idx(self, idx: int) -> bool:
         """
@@ -218,6 +253,7 @@ class Variant:
                 and self.chromosome == other.chromosome
                 and self.position == other.position
                 and self.alleles[0] == other.alleles[0]
+                and self.ploidy == other.ploidy
             )
         else:
             return False
@@ -229,7 +265,8 @@ class Variant:
         Parameters
         ----------
         alleles:
-            one or more alleles (as strings) that make up the genotype
+            zero or more alleles (as strings) that make up the genotype.
+            If ploidy > the number of specified alleles, missing alleles will be filled in.
         add_alleles: bool
             False by default.  If True, add alleles if the Variant doesn't have them yet.
 
@@ -238,12 +275,11 @@ class Variant:
         Genotype
             A Genotype based on this variant with the specified alleles
         """
-        if len(alleles) == 0:
-            # Create diploid missing genotype
-            return Genotype(self, [MISSING_IDX, MISSING_IDX])
-        else:
-            allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
-            return Genotype(self, allele_idxs)
+        if len(alleles) > self.ploidy:
+            raise ValueError(f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}")
+        allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
+        missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
+        return Genotype(self, allele_idxs + missing_idxs)
 
     def make_genotype_from_str(
         self, gt_str: str, sep: str = "/", add_alleles: bool = False
@@ -267,8 +303,11 @@ class Variant:
         """
         # Process Allele String
         alleles = gt_str.split(sep)
-        allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
-        return Genotype(self, allele_idxs)
+        if len(alleles) > self.ploidy:
+            raise ValueError(f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}")
+        allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
+        missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
+        return Genotype(self, allele_idxs + missing_idxs)
 
     def make_genotype_from_plink_bits(self, plink_bits: str) -> "Genotype":
         """
@@ -344,8 +383,8 @@ class Genotype:
     Parameters
     ----------
     variant: pandas_genomics.scalars.variant.Variant
-    allele_idxs: Alleles encoded as indexes into the variant allele list
-    ploidy: Number of alleles in the genotype
+    allele_idxs: List[int]
+        Alleles encoded as indexes into the variant allele list
 
     Examples
     --------
@@ -362,25 +401,19 @@ class Genotype:
     def __init__(
         self,
         variant: Variant,
-        allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
-        ploidy: Optional[int] = None,
+        allele_idxs: Optional[Union[Tuple[int], List[int]]] = None
     ):
 
         # Determine alleles/ploidy
-        if allele_idxs is not None and ploidy is not None:
-            # Both specified: ploidy must match
-            if len(allele_idxs) != ploidy:
-                raise ValueError(
-                    f"Ploidy of {ploidy} is not compatible with an "
-                    f"allele_idxs list of {len(allele_idxs)} values"
+        if allele_idxs is not None and len(allele_idxs) > variant.ploidy:
+            raise ValueError(
+                f"{len(allele_idxs)} alleles given for a variant with ploidy of {variant.ploidy}"
                 )
         elif allele_idxs is None:
-            # allele_idxs not specified, use given ploidy or a default value of 2 to make a missing GT
-            if ploidy is None:
-                ploidy = 2
-            allele_idxs = [
-                MISSING_IDX,
-            ] * ploidy
+            allele_idxs = []
+
+        # Fill in any missing allele_idxs
+        allele_idxs = list(allele_idxs) + [MISSING_IDX] * (variant.ploidy - len(allele_idxs))
 
         # Ensure allele_idxs is a sorted tuple
         allele_idxs = tuple(sorted(allele_idxs))
@@ -393,16 +426,11 @@ class Genotype:
             if not self.variant.is_valid_allele_idx(a):
                 raise ValueError(f"Invalid allele index for {self.variant}: {a}")
 
-    @property
-    def ploidy(self):
-        """Number of sets of chromosomes"""
-        return len(self.allele_idxs)
-
     def __str__(self):
-        if all([a == MISSING_IDX for a in self.allele_idxs]):
+        if all([i == MISSING_IDX for i in self.allele_idxs]):
             return "<Missing>"
         else:
-            return "/".join([self.variant.alleles[a] for a in self.allele_idxs])
+            return "/".join([self.variant.get_allele_from_idx(i) for i in self.allele_idxs])
 
     def __repr__(self):
         return f"Genotype(variant={self.variant})[{str(self)}]"

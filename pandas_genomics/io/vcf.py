@@ -37,7 +37,7 @@ def from_vcf(
     for var_num, vcf_variant in enumerate(VCF(filename)):  # or VCF('some.bcf')
         # TODO: Should FILTER or QUAL be stored in the GenotypeArray?
 
-        # Skip filtered variants unless drop_filtered is True
+        # Skip filtered variants unless drop_filtered is False
         if vcf_variant.FILTER is not None and drop_filtered:
             continue
 
@@ -52,6 +52,7 @@ def from_vcf(
             id=vcf_variant.ID,
             ref=vcf_variant.REF,
             alt=vcf_variant.ALT,
+            ploidy=vcf_variant.ploidy
         )
         # Make the GenotypeArray
         gt_array = GenotypeArray(
