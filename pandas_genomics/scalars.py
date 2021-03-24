@@ -309,44 +309,6 @@ class Variant:
         missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
         return Genotype(self, allele_idxs + missing_idxs)
 
-    def make_genotype_from_plink_bits(self, plink_bits: str) -> "Genotype":
-        """
-        Create a genotype from PLINK Bed file bits.
-        Assumes the Variant has only the first and second alleles from the matching bim file
-
-        Parameters
-        ----------
-        plink_bits: str
-            A string with allele indices as encoded in plink format, one of {'00', '01', '10', '11'}
-
-        Returns
-        -------
-        Genotype
-            A Genotype based on this variant with the specified alleles
-        """
-        # Raise an error if the variant has more than a ref and alt allele
-        if len(self.alleles) != 2:
-            raise ValueError(
-                "Genotypes can only be created from plink bitcodes if there are exactly two alleles"
-            )
-        # Process Allele String
-        if plink_bits == "00":
-            a1 = 0
-            a2 = 0
-        elif plink_bits == "01":
-            a1 = MISSING_IDX
-            a2 = MISSING_IDX
-        elif plink_bits == "10":
-            a1 = 0
-            a2 = 1
-        elif plink_bits == "11":
-            a1 = 1
-            a2 = 1
-        else:
-            raise ValueError(f"Invalid plink_bits: '{plink_bits}'")
-
-        return Genotype(self, [a1, a2])
-
 
 class Genotype:
     """

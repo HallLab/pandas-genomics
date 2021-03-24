@@ -50,18 +50,3 @@ def test_make_genotype_from_str(var_complete, var_complete_triploid):
     gt = var_complete_triploid.make_genotype_from_str("A/C/A")
     expected = Genotype(variant=var_complete_triploid, allele_idxs=[0, 0, 1])
     assert gt == expected
-
-
-def test_make_genotype_from_plink_bits(var_two_allele):
-    gt = var_two_allele.make_genotype_from_plink_bits("00")
-    expected = Genotype(variant=var_two_allele, allele_idxs=[0, 0])
-    assert gt == expected
-    gt = var_two_allele.make_genotype_from_plink_bits("01")
-    expected = Genotype(variant=var_two_allele)
-    assert gt == expected
-    gt = var_two_allele.make_genotype_from_plink_bits("10")
-    expected = Genotype(variant=var_two_allele, allele_idxs=[0, 1])
-    assert gt == expected
-    gt = var_two_allele.make_genotype_from_plink_bits("11")
-    expected = Genotype(variant=var_two_allele, allele_idxs=[1, 1])
-    assert gt == expected

@@ -3,7 +3,7 @@ from typing import Optional
 
 import pandas as pd
 from ..arrays import GenotypeDtype, GenotypeArray
-from ..scalars import Variant
+from ..scalars import Variant, MISSING_IDX, Genotype
 
 
 def from_plink(
@@ -106,17 +106,17 @@ def from_plink(
                 ref=a1,
                 alt=[a2],
             )
-            genotypes = []
             chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
-            for byte in chunk:
-                # for each byte, get 2 bits at a time in reverse order (as a string, so '00', '01', '10', or '11')
-                bitstrings = [f"{byte:08b}"[i : i + 2] for i in range(0, 8, 2)][::-1]
-                genotypes.extend(
-                    [variant.make_genotype_from_plink_bits(bs) for bs in bitstrings]
-                )
+            BIT_TRANSLATION = {"00": [0, 0],
+                               "01": [MISSING_IDX, MISSING_IDX],
+                               "10": [0, 1],
+                               "11": [1, 1]}
+            genotypes = [Genotype(variant, BIT_TRANSLATION[bs])
+                         for byte in chunk
+                         for bs in [f"{byte:08b}"[i: i + 2] for i in range(0, 8, 2)][::-1]]
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
-            gt_array = GenotypeArray(values=genotypes, dtype=GenotypeDtype(variant))
+            gt_array = GenotypeArray(values=genotypes)
             # Set allele2 as the reference if 'swap_alleles'
             if swap_alleles:
                 gt_array.set_reference(a2)
