@@ -31,8 +31,8 @@ class GenotypeDtype(PandasExtensionDtype):
     Examples
     --------
     v = Variant(chromosome='12', position=112161652, id='rs12462', ref='T', alt=['C',])
-    >>> GenotypeDtype(v, 2)
-    genotype[12; 112161652; rs12462; T; C]
+    >>> GenotypeDtype(v)
+    genotype(2)[12; 112161652; rs12462; T; C]
     """
 
     # Internal attributes
