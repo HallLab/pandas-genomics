@@ -35,6 +35,8 @@ class Variant:
         List of possible alternate alleles, empty list by default
     ploidy: int, optional
         The number of alleles that should be present.  Assumed to be 2 if not specified.
+    score: int, optional
+        A quality score for the Variant.  No assumptions are made about the meaning.
 
 
     Examples
@@ -52,6 +54,7 @@ class Variant:
         ref: Optional[str] = "N",
         alt: Optional[List[str]] = None,
         ploidy: Optional[int] = None,
+        score: Optional[int] = None
     ):
         self.chromosome = chromosome
         self.position = position
@@ -64,6 +67,7 @@ class Variant:
             )
         else:
             self.ploidy = ploidy
+        self.score = score
 
         # Validate alleles
         # TODO: Validate ref and alt alleles using regex
@@ -108,13 +112,17 @@ class Variant:
         return ",".join(self.alleles[1:])
 
     def __str__(self):
-        return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]"
+        if self.score is None:
+            score_str = ""
+        else:
+            score_str = f"Q{self.score}"
+        return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]{score_str}"
 
     def __repr__(self):
         return (
             f"Variant(chromosome={self.chromosome}, position={self.position}, "
             f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]}, "
-            f"ploidy={self.ploidy})"
+            f"ploidy={self.ploidy}, score={self.score})"
         )
 
     def __eq__(self, other):
