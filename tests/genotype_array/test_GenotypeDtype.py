@@ -33,6 +33,18 @@ TEST_VAR = Variant(
                 ploidy=3,
             ),
         ),
+        (
+            "genotype(3n)[12; 112161652; rs12462; T; C]Q30",
+            Variant(
+                chromosome="12",
+                position=112161652,
+                id="rs12462",
+                ref="T",
+                alt=["C"],
+                ploidy=3,
+                score=30,
+            ),
+        ),
         pytest.param(
             "genotype[12; 112161652; rs12462; T; C]",
             None,
@@ -40,6 +52,11 @@ TEST_VAR = Variant(
         ),
         pytest.param(
             "genotype(2n)[12; 112161652; T; C]",
+            None,
+            marks=pytest.mark.xfail(raises=TypeError),
+        ),
+        pytest.param(
+            "genotype(2n)[12; 112161652; T; C]q35",
             None,
             marks=pytest.mark.xfail(raises=TypeError),
         ),

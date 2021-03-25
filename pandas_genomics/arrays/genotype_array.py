@@ -29,9 +29,9 @@ class GenotypeDtype(PandasExtensionDtype):
 
     Examples
     --------
-    v = Variant(chromosome='12', position=112161652, id='rs12462', ref='T', alt=['C',])
+    v = Variant(chromosome='12', position=112161652, id='rs12462', ref='T', alt=['C',], score=25)
     >>> GenotypeDtype(v)
-    genotype(2n)[12; 112161652; rs12462; T; C]
+    genotype(2n)[12; 112161652; rs12462; T; C]Q25
     """
 
     # Internal attributes
@@ -41,12 +41,13 @@ class GenotypeDtype(PandasExtensionDtype):
     # Regular expression
     # TODO: Validate ref/alt more specifically
     _match = re.compile(
-        r"(genotype)\((?P<ploidy>[0-9]+)n\)\["
+        r"genotype\((?P<ploidy>[0-9]+)n\)\["
         r"(?P<chromosome>.+); "
         r"(?P<position>[0-9]+); "
         r"(?P<id>.+); "
         r"(?P<ref>.+); "
         r"(?P<alt>.+)\]"
+        r"(Q(?P<score>[0-9]+))?$"
     )
     kind = "O"
     type = Genotype
@@ -111,6 +112,10 @@ class GenotypeDtype(PandasExtensionDtype):
                 match = cls._match.match(string)
                 if match is not None:
                     d = match.groupdict()
+                    # Score is optional, so it may be None
+                    score = d["score"]
+                    if score is not None:
+                        score = int(score)
                     variant = Variant(
                         chromosome=d["chromosome"],
                         position=int(d["position"]),
@@ -118,6 +123,7 @@ class GenotypeDtype(PandasExtensionDtype):
                         ref=d["ref"],
                         alt=d["alt"].split(","),
                         ploidy=int(d["ploidy"]),
+                        score=score,
                     )
                     return cls(variant=variant)
                 else:
@@ -171,13 +177,17 @@ class GenotypeDtype(PandasExtensionDtype):
     # -------------
 
     def __str__(self):
+        if self.variant.score is None:
+            score_str = ""
+        else:
+            score_str = f"Q{self.variant.score}"
         return (
             f"genotype({self.variant.ploidy}n)["
             f"{self.variant.chromosome}; "
             f"{self.variant.position}; "
             f"{self.variant.id}; "
             f"{self.variant.ref}; "
-            f"{self.variant.alt}]"
+            f"{self.variant.alt}]" + score_str
         )
 
     def __hash__(self):
@@ -347,10 +357,15 @@ class GenotypeArray(ExtensionArray):
             variant = dtype.variant
         values = []
         for idx, gt in enumerate(scalars):
-            if not variant.is_same_variant(gt.variant):
+            if not variant.is_same_position(gt.variant):
                 raise ValueError(
                     f"Variant for Genotype {idx} of {len(scalars)} ({gt.variant}) "
                     f"is not compatible with the prior ones ({variant})"
+                )
+            elif variant.score != gt.variant.score:
+                raise ValueError(
+                    f"Variant for Genotype {idx} of {len(scalars)} ({gt.variant}) "
+                    f"is compatible, but has a different variant score"
                 )
             else:
                 values.append(gt.allele_idxs)

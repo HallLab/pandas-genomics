@@ -134,6 +134,7 @@ class Variant:
             & (self.id == other.id)
             & (self.alleles == other.alleles)
             & (self.ploidy == other.ploidy)
+            & (self.score == other.score)
         )
 
     def add_allele(self, allele):
@@ -241,9 +242,9 @@ class Variant:
         else:
             return True
 
-    def is_same_variant(self, other):
+    def is_same_position(self, other):
         """
-        Confirms this is the same variant, other than the allele list.
+        Confirms this is a variant at the same position
 
         Parameters
         ----------
