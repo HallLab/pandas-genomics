@@ -177,9 +177,8 @@ class GenotypeDtype(PandasExtensionDtype):
     # -------------
 
     def __str__(self):
-        if self.variant.score is None:
-            score_str = ""
-        else:
+        score_str = ""
+        if self.variant.score is not None:
             score_str = f"Q{self.variant.score}"
         return (
             f"genotype({self.variant.ploidy}n)["
