@@ -70,7 +70,12 @@ def all_boolean_reductions(request):
 @pytest.fixture
 def dtype():
     variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+        chromosome="chr1",
+        position=123456,
+        id="rs12345",
+        ref="A",
+        alt=["T", "G"],
+        score=30,
     )
     return GenotypeDtype(variant=variant)
 
@@ -83,7 +88,12 @@ def data():
     """
     alleles = ["A", "T", "G"]
     variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+        chromosome="chr1",
+        position=123456,
+        id="rs12345",
+        ref="A",
+        alt=["T", "G"],
+        score=30,
     )
     genotypes = [variant.make_genotype("A", "T"), variant.make_genotype("T", "T")]
     for i in range(98):
@@ -117,7 +127,12 @@ def data_for_sorting():
     A < B < C
     """
     variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+        chromosome="chr1",
+        position=123456,
+        id="rs12345",
+        ref="A",
+        alt=["T", "G"],
+        score=30,
     )
     a = variant.make_genotype("A", "A")
     b = variant.make_genotype("A", "T")
@@ -154,7 +169,12 @@ def na_cmp():
 def na_value():
     """The scalar missing value for this type. Default 'None'"""
     variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T", "G"]
+        chromosome="chr1",
+        position=123456,
+        id="rs12345",
+        ref="A",
+        alt=["T", "G"],
+        score=30,
     )
     return variant.make_genotype()
 
