@@ -59,8 +59,12 @@ def from_vcf(
 
         # Collect alleles
         genotypes = [
-            Genotype(variant, [i if i != -1 else MISSING_IDX for i in gt[:-1]])
-            for gt in vcf_variant.genotypes
+            Genotype(
+                variant,
+                [i if i != -1 else MISSING_IDX for i in gt[:-1]],
+                score=qual if qual != -1 else None,
+            )
+            for gt, qual in zip(vcf_variant.genotypes, vcf_variant.gt_quals)
         ]
 
         # Make the GenotypeArray

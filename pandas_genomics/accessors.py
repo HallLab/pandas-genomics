@@ -37,7 +37,6 @@ class GenotypeAccessor:
         else:
             return float(self._array.variant.score)
 
-
     ####################
     # In-place methods #
     ####################

@@ -73,8 +73,12 @@ class GenotypeDtype(PandasExtensionDtype):
             variant = Variant()
         self.variant = variant
 
+        # Data backing the GenotypeArray is stored as a numpy structured array
+        # An unsigned integer for each allele in the genotype indexing the list of possible alleles
+        # A float value for the genotype score (nan if missing)
         self._record_type = np.dtype(
             [(f"allele{i+1}", ">u8") for i in range(variant.ploidy)]
+            + [("gt_score", np.float64)]
         )
 
     # ExtensionDtype Methods
@@ -177,16 +181,16 @@ class GenotypeDtype(PandasExtensionDtype):
     # -------------
 
     def __str__(self):
-        score_str = ""
+        variant_score_str = ""
         if self.variant.score is not None:
-            score_str = f"Q{self.variant.score}"
+            variant_score_str = f"Q{self.variant.score}"
         return (
             f"genotype({self.variant.ploidy}n)["
             f"{self.variant.chromosome}; "
             f"{self.variant.position}; "
             f"{self.variant.id}; "
             f"{self.variant.ref}; "
-            f"{self.variant.alt}]" + score_str
+            f"{self.variant.alt}]" + variant_score_str
         )
 
     def __hash__(self):
@@ -218,7 +222,12 @@ class GenotypeDtype(PandasExtensionDtype):
                 f"The fill value must be None or a Genotype object, not {type(genotype)}"
             )
         else:
-            return np.array(genotype.allele_idxs, dtype=self._record_type)
+            score = float("NaN")
+            if genotype.score is not None:
+                score = genotype.score
+            return np.array(
+                list(genotype.allele_idxs) + [score], dtype=self._record_type
+            )
 
 
 class GenotypeArray(ExtensionArray):
@@ -367,7 +376,12 @@ class GenotypeArray(ExtensionArray):
                     f"is compatible, but has a different variant score"
                 )
             else:
-                values.append(gt.allele_idxs)
+                values.append(
+                    tuple(
+                        list(gt.allele_idxs)
+                        + [gt.score if gt.score is not None else np.nan]
+                    )
+                )
         result = cls(values=[], dtype=GenotypeDtype(variant))
         result._data = np.array(values, dtype=result._dtype._record_type)
         return result
@@ -384,6 +398,10 @@ class GenotypeArray(ExtensionArray):
             GenotypeDtype with variant information used to process the strings
         copy : boolean, default False
             If True, copy the underlying data.
+
+        Note
+        ----
+        This will not allow the use of genotype scores as they are not encoded in genotype strings
 
         Returns
         -------
@@ -456,9 +474,11 @@ class GenotypeArray(ExtensionArray):
         if isinstance(result, np.ndarray):
             return GenotypeArray(values=result, dtype=self.dtype)
         elif isinstance(result, np.void):
+            variant = self.dtype.variant
             return Genotype(
-                variant=self.dtype.variant,
-                allele_idxs=result,
+                variant=variant,
+                allele_idxs=result[[f"allele{n+1}" for n in range(variant.ploidy)]],
+                score=result["gt_score"] if not np.isnan(result["gt_score"]) else None,
             )
         else:
             raise TypeError("Indexing error- unexpected type")
@@ -498,7 +518,10 @@ class GenotypeArray(ExtensionArray):
                 raise IndexError("wrong length")
         # Update allele values directly
         if isinstance(value, Genotype):
-            self._data[key] = value.allele_idxs
+            score = np.nan
+            if value.score is not None:
+                score = float(value.score)
+            self._data[key] = tuple(list(value.allele_idxs) + [score])
         elif isinstance(value, GenotypeArray):
             self._data[key] = value._data
         elif isinstance(value, pd.Series) and isinstance(value.values, GenotypeArray):
@@ -548,8 +571,8 @@ class GenotypeArray(ExtensionArray):
 
         codes = np.ones(len(self), dtype=np.int64)
 
-        # Get list of unique genotypes in order they appear
-        _, idx = np.unique(self._data, return_index=True)
+        # Get list of unique genotypes in order they appear (not counting scores)
+        _, idx = np.unique(self.allele_idxs, return_index=True, axis=0)
         uniques = self._data[np.sort(idx)]
         uniques = GenotypeArray(values=uniques, dtype=self.dtype)
 
@@ -565,8 +588,8 @@ class GenotypeArray(ExtensionArray):
 
     def unique(self) -> "GenotypeArray":
         """Return a GenotypeArray of unique values"""
-        unique_data = np.unique(self._data)
-        return GenotypeArray(values=unique_data, dtype=self.dtype)
+        _, idx = np.unique(self.allele_idxs, return_index=True)
+        return GenotypeArray(values=self._data[idx], dtype=self.dtype)
 
     def value_counts(self, dropna=True):
         """Return a Series of unique counts with a GenotypeArray index"""
@@ -589,7 +612,7 @@ class GenotypeArray(ExtensionArray):
         """
         A 1-D array indicating if each value is missing
         """
-        return (rfn.structured_to_unstructured(self._data) == MISSING_IDX).any(axis=1)
+        return (self.allele_idxs == MISSING_IDX).all(axis=1)
 
     @classmethod
     def _concat_same_type(cls, to_concat, axis: int = 0):
@@ -625,6 +648,15 @@ class GenotypeArray(ExtensionArray):
         """
         return self._dtype.variant
 
+    @property
+    def allele_idxs(self):
+        """
+        Return the allele indices for each genotype
+        """
+        ploidy = self.variant.ploidy
+        allele_names = [f"allele{n + 1}" for n in range(ploidy)]
+        return rfn.structured_to_unstructured(self._data[allele_names])
+
     # Operations
     # Note: genotypes are compared by first allele then second, using the order of alleles in the variant
     # ----------
@@ -639,7 +671,9 @@ class GenotypeArray(ExtensionArray):
             allele_idxs = other.allele_idxs
         elif isinstance(other, GenotypeArray):
             # Get array values for alleles
-            allele_idxs = rfn.structured_to_unstructured(other._data)
+            ploidy = other.variant.ploidy
+            allele_names = [f"allele{n+1}" for n in range(ploidy)]
+            allele_idxs = rfn.structured_to_unstructured(other._data[allele_names])
         else:
             return None
         # Ensure the comparison is using the same variant
@@ -652,41 +686,41 @@ class GenotypeArray(ExtensionArray):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) == allele_idxs).all(axis=1)
+        return (self.allele_idxs == allele_idxs).all(axis=1)
 
     def __ne__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) != allele_idxs).any(axis=1)
+        return (self.allele_idxs != allele_idxs).any(axis=1)
 
     def __lt__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(
-            axis=1
-        ) & (self._data < allele_idxs).any(axis=1)
+        return (self.allele_idxs <= allele_idxs).all(axis=1) & (
+            self.allele_idxs < allele_idxs
+        ).any(axis=1)
 
     def __le__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) <= allele_idxs).all(axis=1)
+        return (self.allele_idxs <= allele_idxs).all(axis=1)
 
     def __gt__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(
-            axis=1
-        ) & (self._data > allele_idxs).any(axis=1)
+        return (self.allele_idxs >= allele_idxs).all(axis=1) & (
+            self.allele_idxs > allele_idxs
+        ).any(axis=1)
 
     def __ge__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)
         if allele_idxs is None:
             return NotImplemented
-        return (rfn.structured_to_unstructured(self._data) >= allele_idxs).all(axis=1)
+        return (self.allele_idxs >= allele_idxs).all(axis=1)
 
     #####################
     # Utility Functions #
@@ -760,9 +794,8 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Additive encoding can only be used with one allele")
 
-        data = rfn.structured_to_unstructured(self._data)
-        allele_sum = data.sum(axis=1).astype("float")
-        allele_sum[(data == MISSING_IDX).any(axis=1)] = np.nan
+        allele_sum = self.allele_idxs.sum(axis=1).astype("float")
+        allele_sum[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=allele_sum, dtype="UInt8")
         return result
 
@@ -780,9 +813,8 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Dominant encoding can only be used with one allele")
 
-        data = rfn.structured_to_unstructured(self._data)
-        has_minor = (data == 1).any(axis=1).astype("float")
-        has_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
+        has_minor = (self.allele_idxs == 1).any(axis=1).astype("float")
+        has_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=has_minor, dtype="UInt8")
         return result
 
@@ -800,9 +832,8 @@ class GenotypeArray(ExtensionArray):
         if len(self.variant.alleles) > 2:
             raise ValueError("Recessive encoding can only be used with one allele")
 
-        data = rfn.structured_to_unstructured(self._data)
-        all_minor = (data == 1).all(axis=1).astype("float")
-        all_minor[(data == MISSING_IDX).any(axis=1)] = np.nan
+        all_minor = (self.allele_idxs == 1).all(axis=1).astype("float")
+        all_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=all_minor, dtype="UInt8")
         return result
 
@@ -828,7 +859,7 @@ class GenotypeArray(ExtensionArray):
                 "Codominant encoding can only be used with diploid genotypes"
             )
 
-        allele_sum = rfn.structured_to_unstructured(self._data).sum(axis=1)
+        allele_sum = self.allele_idxs.sum(axis=1)
         categories = ["Ref", "Het", "Hom"]
         result = pd.Categorical(
             values=[categories[n] if n in {0, 1, 2} else None for n in allele_sum],

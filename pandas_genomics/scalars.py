@@ -112,9 +112,8 @@ class Variant:
         return ",".join(self.alleles[1:])
 
     def __str__(self):
-        if self.score is None:
-            score_str = ""
-        else:
+        score_str = ""
+        if self.score is not None:
             score_str = f"Q{self.score}"
         return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]{score_str}"
 
@@ -336,6 +335,8 @@ class Genotype:
     variant: pandas_genomics.scalars.variant.Variant
     allele_idxs: List[int]
         Alleles encoded as indexes into the variant allele list
+    score: int, optional
+        A quality score for the Genotype.  No assumptions are made about the meaning.
 
     Examples
     --------
@@ -353,6 +354,7 @@ class Genotype:
         self,
         variant: Variant,
         allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
+        score: Optional[int] = None,
     ):
 
         # Determine alleles/ploidy
@@ -373,6 +375,9 @@ class Genotype:
 
         self.variant = variant
         self.allele_idxs = allele_idxs
+        self.score = None
+        if score is not None:
+            self.score = int(score)
 
         # Validate parameters
         for a in self.allele_idxs:
@@ -388,7 +393,10 @@ class Genotype:
             )
 
     def __repr__(self):
-        return f"Genotype(variant={self.variant})[{str(self)}]"
+        score_str = ""
+        if self.score is not None:
+            score_str = f"Q{self.score}"
+        return f"Genotype(variant={self.variant})[{str(self)}]" + score_str
 
     def __hash__(self):
         return hash(repr(self))
