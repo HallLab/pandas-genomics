@@ -54,7 +54,7 @@ def from_vcf(
             ref=vcf_variant.REF,
             alt=vcf_variant.ALT,
             ploidy=vcf_variant.ploidy,
-            score=vcf_variant.QUAL
+            score=vcf_variant.QUAL,
         )
 
         # Collect alleles

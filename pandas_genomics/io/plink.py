@@ -118,7 +118,7 @@ def from_plink(
                 id=variant_id,
                 ref=a2,
                 alt=a1,
-                ploidy=2
+                ploidy=2,
             )
             chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
             BIT_TRANSLATION = {

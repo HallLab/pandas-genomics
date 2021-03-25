@@ -54,7 +54,7 @@ class Variant:
         ref: Optional[str] = "N",
         alt: Optional[List[str]] = None,
         ploidy: Optional[int] = None,
-        score: Optional[int] = None
+        score: Optional[int] = None,
     ):
         self.chromosome = chromosome
         self.position = position
