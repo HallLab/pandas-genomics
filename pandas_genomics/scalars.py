@@ -51,7 +51,7 @@ class Variant:
         id: Optional[str] = None,
         ref: Optional[str] = "N",
         alt: Optional[List[str]] = None,
-        ploidy: Optional[int] = None
+        ploidy: Optional[int] = None,
     ):
         self.chromosome = chromosome
         self.position = position
@@ -200,8 +200,10 @@ class Variant:
 
         if idx == MISSING_IDX:
             return "."  # Missing allele symbol, same as VCF
-        elif idx > len(self.alleles)-1:
-            raise ValueError(f"Invalid index (idx) for a variant with {len(self.alleles)} alleles")
+        elif idx > len(self.alleles) - 1:
+            raise ValueError(
+                f"Invalid index (idx) for a variant with {len(self.alleles)} alleles"
+            )
         else:
             return self.alleles[idx]
 
@@ -276,7 +278,9 @@ class Variant:
             A Genotype based on this variant with the specified alleles
         """
         if len(alleles) > self.ploidy:
-            raise ValueError(f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}")
+            raise ValueError(
+                f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}"
+            )
         allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
         missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
         return Genotype(self, allele_idxs + missing_idxs)
@@ -304,7 +308,9 @@ class Variant:
         # Process Allele String
         alleles = gt_str.split(sep)
         if len(alleles) > self.ploidy:
-            raise ValueError(f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}")
+            raise ValueError(
+                f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}"
+            )
         allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
         missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
         return Genotype(self, allele_idxs + missing_idxs)
@@ -337,19 +343,21 @@ class Genotype:
     def __init__(
         self,
         variant: Variant,
-        allele_idxs: Optional[Union[Tuple[int], List[int]]] = None
+        allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
     ):
 
         # Determine alleles/ploidy
         if allele_idxs is not None and len(allele_idxs) > variant.ploidy:
             raise ValueError(
                 f"{len(allele_idxs)} alleles given for a variant with ploidy of {variant.ploidy}"
-                )
+            )
         elif allele_idxs is None:
             allele_idxs = []
 
         # Fill in any missing allele_idxs
-        allele_idxs = list(allele_idxs) + [MISSING_IDX] * (variant.ploidy - len(allele_idxs))
+        allele_idxs = list(allele_idxs) + [MISSING_IDX] * (
+            variant.ploidy - len(allele_idxs)
+        )
 
         # Ensure allele_idxs is a sorted tuple
         allele_idxs = tuple(sorted(allele_idxs))
@@ -366,7 +374,9 @@ class Genotype:
         if all([i == MISSING_IDX for i in self.allele_idxs]):
             return "<Missing>"
         else:
-            return "/".join([self.variant.get_allele_from_idx(i) for i in self.allele_idxs])
+            return "/".join(
+                [self.variant.get_allele_from_idx(i) for i in self.allele_idxs]
+            )
 
     def __repr__(self):
         return f"Genotype(variant={self.variant})[{str(self)}]"

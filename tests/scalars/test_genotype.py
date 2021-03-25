@@ -7,9 +7,13 @@ from pandas_genomics.scalars import Genotype, Variant
 def var_complete():
     return Variant("12", 12345678, "complete_diploid", ref="A", alt=["C", "G", "T"])
 
+
 @pytest.fixture()
 def var_complete_triploid():
-    return Variant("12", 12345678, "complete_diploid", ref="A", alt=["C", "G", "T"], ploidy=3)
+    return Variant(
+        "12", 12345678, "complete_diploid", ref="A", alt=["C", "G", "T"], ploidy=3
+    )
+
 
 @pytest.fixture()
 def var_two_allele():

@@ -107,13 +107,17 @@ def from_plink(
                 alt=[a2],
             )
             chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
-            BIT_TRANSLATION = {"00": [0, 0],
-                               "01": [MISSING_IDX, MISSING_IDX],
-                               "10": [0, 1],
-                               "11": [1, 1]}
-            genotypes = [Genotype(variant, BIT_TRANSLATION[bs])
-                         for byte in chunk
-                         for bs in [f"{byte:08b}"[i: i + 2] for i in range(0, 8, 2)][::-1]]
+            BIT_TRANSLATION = {
+                "00": [0, 0],
+                "01": [MISSING_IDX, MISSING_IDX],
+                "10": [0, 1],
+                "11": [1, 1],
+            }
+            genotypes = [
+                Genotype(variant, BIT_TRANSLATION[bs])
+                for byte in chunk
+                for bs in [f"{byte:08b}"[i : i + 2] for i in range(0, 8, 2)][::-1]
+            ]
             # Remove nonexistent samples at the end
             genotypes = genotypes[:num_samples]
             gt_array = GenotypeArray(values=genotypes)

@@ -53,12 +53,14 @@ def from_vcf(
             id=vcf_variant.ID,
             ref=vcf_variant.REF,
             alt=vcf_variant.ALT,
-            ploidy=vcf_variant.ploidy
+            ploidy=vcf_variant.ploidy,
         )
 
         # Collect alleles
-        genotypes = [Genotype(variant, [i if i != -1 else MISSING_IDX for i in gt[:-1]])
-                     for gt in vcf_variant.genotypes]
+        genotypes = [
+            Genotype(variant, [i if i != -1 else MISSING_IDX for i in gt[:-1]])
+            for gt in vcf_variant.genotypes
+        ]
 
         # Make the GenotypeArray
         gt_array = GenotypeArray(values=genotypes)

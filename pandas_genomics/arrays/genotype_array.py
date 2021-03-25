@@ -26,13 +26,12 @@ class GenotypeDtype(PandasExtensionDtype):
     Attributes
     ----------
     variant
-    ploidy
 
     Examples
     --------
     v = Variant(chromosome='12', position=112161652, id='rs12462', ref='T', alt=['C',])
     >>> GenotypeDtype(v)
-    genotype(2)[12; 112161652; rs12462; T; C]
+    genotype(2n)[12; 112161652; rs12462; T; C]
     """
 
     # Internal attributes
@@ -42,7 +41,7 @@ class GenotypeDtype(PandasExtensionDtype):
     # Regular expression
     # TODO: Validate ref/alt more specifically
     _match = re.compile(
-        r"(genotype)\((?P<ploidy>[0-9]+)\)\["
+        r"(genotype)\((?P<ploidy>[0-9]+)n\)\["
         r"(?P<chromosome>.+); "
         r"(?P<position>[0-9]+); "
         r"(?P<id>.+); "
@@ -73,7 +72,9 @@ class GenotypeDtype(PandasExtensionDtype):
             variant = Variant()
         self.variant = variant
 
-        self._record_type = np.dtype([(f"allele{i+1}", ">u8") for i in range(variant.ploidy)])
+        self._record_type = np.dtype(
+            [(f"allele{i+1}", ">u8") for i in range(variant.ploidy)]
+        )
 
     # ExtensionDtype Methods
     # -------------------------
@@ -97,12 +98,12 @@ class GenotypeDtype(PandasExtensionDtype):
         ----------
         string : str
             The string alias for this GenotypeDtype.
-            Should be formatted like `genotype(<ploidy>)[<chromosome>; <position>; <id>; <ref>; <alt>]`
+            Should be formatted like `genotype(<ploidy>n)[<chromosome>; <position>; <id>; <ref>; <alt>]`
 
         Examples
         --------
-        >>> GenotypeDtype.construct_from_string('genotype(2)[chr1; 123456; rs12345; A; T,G]')
-        genotype(2)[chr1; 123456; rs12345; A; T,G]
+        >>> GenotypeDtype.construct_from_string('genotype(2n)[chr1; 123456; rs12345; A; T,G]')
+        genotype(2n)[chr1; 123456; rs12345; A; T,G]
         """
         if isinstance(string, str):
             msg = "Cannot construct a 'GenotypeDtype' from '{}'"
@@ -116,7 +117,7 @@ class GenotypeDtype(PandasExtensionDtype):
                         id=d["id"],
                         ref=d["ref"],
                         alt=d["alt"].split(","),
-                        ploidy=int(d["ploidy"])
+                        ploidy=int(d["ploidy"]),
                     )
                     return cls(variant=variant)
                 else:
@@ -142,7 +143,7 @@ class GenotypeDtype(PandasExtensionDtype):
         >>> variant = Variant('12', 112161652, 'rs12462')
         >>> genotype = variant.make_genotype_from_str('C/T', add_alleles=True)
         >>> GenotypeDtype.from_genotype(genotype)
-        genotype(2)[12; 112161652; rs12462; ref=N; alt=T,C]
+        genotype(2n)[12; 112161652; rs12462; ref=N; alt=T,C]
         """
         return cls(genotype.variant)
 
@@ -171,7 +172,7 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __str__(self):
         return (
-            f"genotype({self.variant.ploidy})["
+            f"genotype({self.variant.ploidy}n)["
             f"{self.variant.chromosome}; "
             f"{self.variant.position}; "
             f"{self.variant.id}; "
@@ -186,10 +187,7 @@ class GenotypeDtype(PandasExtensionDtype):
         if isinstance(other, str):
             return other == self.name
 
-        return (
-            isinstance(other, GenotypeDtype)
-            and self.variant == other.variant
-        )
+        return isinstance(other, GenotypeDtype) and self.variant == other.variant
 
     # Pickle compatibility
     # --------------------
