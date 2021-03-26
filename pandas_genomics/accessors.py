@@ -25,17 +25,24 @@ class GenotypeAccessor:
     # Variant Properties
     ####################
     @property
-    def variant_score(self):
-        """Retrieve the variant score as a float
+    def variant(self):
+        """Retrieve the variant
 
         Returns
         -------
-        variant_score: float
+        variant: Variant
         """
-        if self._array.variant.score is None:
-            return float("NaN")
-        else:
-            return float(self._array.variant.score)
+        return self._array.variant
+
+    #######################
+    # Genotype Properties #
+    #######################
+    @property
+    def gt_scores(self):
+        """Return an array of genotype scores as float values
+        np.nan when the score is missing
+        """
+        return self._array.gt_scores
 
     ####################
     # In-place methods #

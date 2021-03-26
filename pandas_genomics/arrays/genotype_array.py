@@ -635,6 +635,8 @@ class GenotypeArray(ExtensionArray):
 
         return GenotypeArray(data, list(dtypes)[0])
 
+    # Properties for accessing array metadata
+    # ----------------------------------------
     @property
     def variant(self):
         """
@@ -650,6 +652,13 @@ class GenotypeArray(ExtensionArray):
         Return the allele indices for each genotype
         """
         return self._data["allele_idxs"]
+
+    @property
+    def gt_scores(self):
+        """
+        Return the genotype score for each genotype (as a float)
+        """
+        return self._data["gt_score"]
 
     # Operations
     # Note: genotypes are compared by first allele then second, using the order of alleles in the variant
