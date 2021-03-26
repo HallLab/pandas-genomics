@@ -17,9 +17,9 @@ Quickstart
 .. code-block:: python
 
     >>> from pandas_genomics.scalars import Variant
-    >>> variant = Variant('12', 112161652, id='rs12462', ref='A', alt=['C', 'T'])
+    >>> variant = Variant('12', 112161652, id='rs12462', ref='A', alt=['C', 'T'], score=30)
     >>> print(variant)
-    rs12462[chr=12;pos=112161652;ref=A;alt=C,T]
+    rs12462(n2)[chr=12;pos=112161652;ref=A;alt=C,T]Q30
 
 `Genotype` objects are associated with a particular `Variant`:
 
@@ -29,8 +29,8 @@ Quickstart
     >>> print(gt)
     A/C
 
-The `GenotypeArray` stores genotypes with an associated variant and has useful methods.
-The `genotype` Series accessor allows those methods to be used on Series.
+The `GenotypeArray` stores genotypes with an associated variant and has useful methods and properties.
+The `genotype` Series accessor allows those methods and properties to be accessed from a Series.
 
 .. code-block:: python
 
@@ -41,10 +41,10 @@ The `genotype` Series accessor allows those methods to be used on Series.
 
     >>> print(gt_array)
     <GenotypeArray>
-    [Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C], allele1=1, allele2=1),
-     Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C], allele1=0, allele2=1),
-     Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C], allele1=0, allele2=0)]
-    Length: 3, dtype: genotype[12; 112161652; rs12462; A; C]
+    [Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C])[C/C],
+     Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C])[A/C],
+     Genotype(variant=rs12462[chr=12;pos=112161652;ref=A;alt=C])[A/A]]
+    Length: 3, dtype: genotype(2n)[12; 112161652; rs12462; A; C]
 
     >>> print(gt_array.astype(str))
     ['C/C' 'A/C' 'A/A']
@@ -53,6 +53,18 @@ The `genotype` Series accessor allows those methods to be used on Series.
     <IntegerArray>
     [1, 1, 0]
     Length: 3, dtype: UInt8
+
+    >>> print(pd.Series(gt_array).genotype.encode_dominant())
+    0    1
+    1    1
+    2    0
+    Name: rs12462_C, dtype: UInt8
+
+    >>> print(pd.Series(gt_array).genotype.variant)
+    rs12462[chr=12;pos=112161652;ref=A;alt=C]
+
+    >>> print(pd.Series(gt_array).genotype.gt_scores)
+    [nan nan nan]
 
     >>> import pandas as pd
     >>> print(pd.Series(gt_array).genotype.encode_codominant())
