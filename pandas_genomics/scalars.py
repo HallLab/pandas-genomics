@@ -476,3 +476,11 @@ class Genotype:
             True if the variant is missing (both alleles are None), otherwise False
         """
         return all([a == MISSING_IDX for a in self.allele_idxs])
+
+    @property
+    def _float_score(self):
+        """Convenience method for storing score as a float"""
+        if self.score is None:
+            return float("NaN")
+        else:
+            return float(self.score)

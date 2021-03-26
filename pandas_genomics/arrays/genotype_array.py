@@ -3,7 +3,6 @@ import re
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
 
 import numpy as np
-from numpy.lib import recfunctions as rfn
 import pandas as pd
 from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
 from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
@@ -25,7 +24,8 @@ class GenotypeDtype(PandasExtensionDtype):
 
     Attributes
     ----------
-    variant
+    variant: Variant
+        The variant that the datatype is specific to
 
     Examples
     --------
@@ -77,8 +77,10 @@ class GenotypeDtype(PandasExtensionDtype):
         # An unsigned integer for each allele in the genotype indexing the list of possible alleles
         # A float value for the genotype score (nan if missing)
         self._record_type = np.dtype(
-            [(f"allele{i+1}", ">u8") for i in range(variant.ploidy)]
-            + [("gt_score", np.float64)]
+            [
+                ("allele_idxs", np.uint8, (self.variant.ploidy,)),
+                ("gt_score", np.float64),
+            ]
         )
 
     # ExtensionDtype Methods
@@ -376,12 +378,7 @@ class GenotypeArray(ExtensionArray):
                     f"is compatible, but has a different variant score"
                 )
             else:
-                values.append(
-                    tuple(
-                        list(gt.allele_idxs)
-                        + [gt.score if gt.score is not None else np.nan]
-                    )
-                )
+                values.append((gt.allele_idxs, gt._float_score))
         result = cls(values=[], dtype=GenotypeDtype(variant))
         result._data = np.array(values, dtype=result._dtype._record_type)
         return result
@@ -445,8 +442,8 @@ class GenotypeArray(ExtensionArray):
 
     @property
     def nbytes(self) -> int:
-        """How many bytes to store this object in memory (1 per allele per genotype)"""
-        return self._dtype.variant.ploidy * len(self)
+        """How many bytes to store this object in memory"""
+        return self._dtype.itemsize * len(self)
 
     def __getitem__(self, index):
         """
@@ -477,7 +474,7 @@ class GenotypeArray(ExtensionArray):
             variant = self.dtype.variant
             return Genotype(
                 variant=variant,
-                allele_idxs=result[[f"allele{n+1}" for n in range(variant.ploidy)]],
+                allele_idxs=result["allele_idxs"],
                 score=result["gt_score"] if not np.isnan(result["gt_score"]) else None,
             )
         else:
@@ -518,10 +515,7 @@ class GenotypeArray(ExtensionArray):
                 raise IndexError("wrong length")
         # Update allele values directly
         if isinstance(value, Genotype):
-            score = np.nan
-            if value.score is not None:
-                score = float(value.score)
-            self._data[key] = tuple(list(value.allele_idxs) + [score])
+            self._data[key] = tuple([value.allele_idxs, value._float_score])
         elif isinstance(value, GenotypeArray):
             self._data[key] = value._data
         elif isinstance(value, pd.Series) and isinstance(value.values, GenotypeArray):
@@ -641,9 +635,6 @@ class GenotypeArray(ExtensionArray):
 
         return GenotypeArray(data, list(dtypes)[0])
 
-    # Properties for the type parameters
-    # ----------------------------------
-
     @property
     def variant(self):
         """
@@ -651,14 +642,14 @@ class GenotypeArray(ExtensionArray):
         """
         return self._dtype.variant
 
+    # Properties for accessing individual portions of the internal _data array
+    # ------------------------------------------------------------------------
     @property
     def allele_idxs(self):
         """
         Return the allele indices for each genotype
         """
-        ploidy = self.variant.ploidy
-        allele_names = [f"allele{n + 1}" for n in range(ploidy)]
-        return rfn.structured_to_unstructured(self._data[allele_names])
+        return self._data["allele_idxs"]
 
     # Operations
     # Note: genotypes are compared by first allele then second, using the order of alleles in the variant
@@ -669,14 +660,9 @@ class GenotypeArray(ExtensionArray):
                 or arrays of allele values (GenotypeArray)
                 or None (NotImplemented)
         """
-        if isinstance(other, Genotype):
+        if isinstance(other, Genotype) or isinstance(other, GenotypeArray):
             # Get scalar values for alleles
             allele_idxs = other.allele_idxs
-        elif isinstance(other, GenotypeArray):
-            # Get array values for alleles
-            ploidy = other.variant.ploidy
-            allele_names = [f"allele{n+1}" for n in range(ploidy)]
-            allele_idxs = rfn.structured_to_unstructured(other._data[allele_names])
         else:
             return None
         # Ensure the comparison is using the same variant
