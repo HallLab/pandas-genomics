@@ -46,6 +46,12 @@ def from_vcf(
         if vcf_variant.QUAL < min_qual:
             continue
 
+        if len(vcf_variant.ALT) >= MISSING_IDX:
+            raise ValueError(
+                f"Could not load {vcf_variant.ID} due to too many ALT alleles"
+                f" ({len(vcf_variant.ALT)} > {MISSING_IDX-1})"
+            )
+
         # Make variant
         variant = Variant(
             chromosome=vcf_variant.CHROM,
@@ -56,19 +62,17 @@ def from_vcf(
             ploidy=vcf_variant.ploidy,
             score=int(vcf_variant.QUAL),
         )
+        dtype = GenotypeDtype(variant)
 
-        # Collect alleles
-        genotypes = [
-            Genotype(
-                variant,
-                [i if i != -1 else MISSING_IDX for i in gt[:-1]],
-                score=qual if qual != -1 else None,
-            )
-            for gt, qual in zip(vcf_variant.genotypes, vcf_variant.gt_quals)
-        ]
+        # Collect genotypes
+        allele_idxs = np.array(vcf_variant.genotypes)[:, :2]
+        allele_idxs = np.where(allele_idxs == -1, MISSING_IDX, allele_idxs)
+        gt_scores = vcf_variant.gt_quals
+        gt_scores = np.where(gt_scores == -1, np.nan, gt_scores)
+        values = np.array(list(zip(allele_idxs, gt_scores)), dtype=dtype._record_type)
 
         # Make the GenotypeArray
-        gt_array = GenotypeArray(values=genotypes)
+        gt_array = GenotypeArray(values=values, dtype=dtype)
         # Make the variant name
         if gt_array.variant.id is None:
             var_name = f"Variant_{var_num}"
