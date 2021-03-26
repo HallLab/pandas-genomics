@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+import numpy as np
 from ..arrays import GenotypeDtype, GenotypeArray
 from ..scalars import Variant, MISSING_IDX, Genotype
 
@@ -85,57 +86,64 @@ def from_plink(
 
     print(f"\tLoaded information for {num_variants} variants from '{bim_file.name}'")
 
-    # Load bed file (PLINK binary biallelic genotype table) and add info to the df
-    CORRECT_FIRST_BYTES = b"\x6c\x1b\x01"
-    with bed_file.open("rb") as f:
-        first3bytes = f.read(3)  # Read first three bytes and confirm they are correct
-        if first3bytes != CORRECT_FIRST_BYTES:
-            raise ValueError(
-                f"The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted."
-            )
-        # Determine chunk size
-        chunk_size = num_samples // 4
-        if num_samples % 4 > 0:
-            chunk_size += 1
-        # Read through the file
-        for v_idx in range(num_variants):
-            variant_info_dict = variant_info.iloc[v_idx].to_dict()
-            variant_id = str(variant_info_dict["variant_id"])
-            a1 = str(variant_info_dict["allele1"])
-            a2 = str(variant_info_dict["allele2"])
-            if swap_alleles:
-                a1, a2 = a2, a1
-            # 0 indicates a missing allele
-            if a1 == "0":
-                a1 = None
-            else:
-                a1 = [a1]  # pass as list
-            if a2 == "0":
-                a2 = None
-            variant = Variant(
-                chromosome=str(variant_info_dict["chromosome"]),
-                position=int(variant_info_dict["coordinate"]),
-                id=variant_id,
-                ref=a2,
-                alt=a1,
-                ploidy=2,
-            )
-            chunk = f.read(chunk_size)  # Encoded chunk of results for each variant
-            BIT_TRANSLATION = {
-                "00": [0, 0],
-                "01": [MISSING_IDX, MISSING_IDX],
-                "10": [0, 1],
-                "11": [1, 1],
-            }
-            genotypes = [
-                Genotype(variant, BIT_TRANSLATION[bs])
-                for byte in chunk
-                for bs in [f"{byte:08b}"[i : i + 2] for i in range(0, 8, 2)][::-1]
-            ]
-            # Remove nonexistent samples at the end
-            genotypes = genotypes[:num_samples]
-            gt_array = GenotypeArray(values=genotypes)
-            df[f"{v_idx}_{variant_id}"] = gt_array
+    # Load bed file (PLINK binary biallelic genotype table)
+    gt_bytes = np.fromfile(bed_file, dtype="uint8")
+    # Ensure the file is valid
+    CORRECT_FIRST_BYTES = np.array([108, 27, 1], dtype="uint8")
+    if not (gt_bytes[:3] == CORRECT_FIRST_BYTES).all():
+        raise ValueError(
+            f"The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted."
+        )
+    gt_bytes = gt_bytes[3:]
+    # Divide array into one row per variant
+    # (have to reshape using num_samples since num_variants may be set lower)
+    chunk_size = num_samples // 4
+    if num_samples % 4 > 0:
+        chunk_size += 1
+    gt_bytes = gt_bytes.reshape(-1, chunk_size)
+    # Process each variant
+    for v_idx in range(num_variants):
+        variant_info_dict = variant_info.iloc[v_idx].to_dict()
+        variant_id = str(variant_info_dict["variant_id"])
+        a1 = str(variant_info_dict["allele1"])
+        a2 = str(variant_info_dict["allele2"])
+        if swap_alleles:
+            a1, a2 = a2, a1
+        # 0 indicates a missing allele
+        if a1 == "0":
+            a1 = None
+        else:
+            a1 = [a1]  # pass as list
+        if a2 == "0":
+            a2 = None
+        variant = Variant(
+            chromosome=str(variant_info_dict["chromosome"]),
+            position=int(variant_info_dict["coordinate"]),
+            id=variant_id,
+            ref=a2,
+            alt=a1,
+            ploidy=2,
+        )
+        # Each byte (8 bits) is a concatenation of two bits per sample for 4 samples
+        # These are ordered from right to left, like (sample4, sample3, sample2, sample1)
+        # Convert each byte into 4 2-bits and flip them to order samples correctly
+        genotypes = np.flip(np.unpackbits(gt_bytes[v_idx]).reshape(-1, 4, 2), axis=1)
+        # flatten the middle dimension to give a big list of genotypes in the correct order and
+        # remove excess genotypes at the end that are padding rather than real samples
+        genotypes = genotypes.reshape(-1, 2)[:num_samples]
+        # Replace 0, 1 with missing (1, 0 is heterozygous)
+        missing_gt = (genotypes == (0, 1)).all(axis=1)
+        genotypes[missing_gt] = (MISSING_IDX, MISSING_IDX)
+        # Replace 1, 0 with 0, 1 for heterozygous so the reference allele is first
+        het_gt = (genotypes == (1, 0)).all(axis=1)
+        genotypes[het_gt] = (0, 1)
+        # Create GenotypeArray representation of the data
+        dtype = GenotypeDtype(variant)
+        scores = np.empty(num_samples)
+        scores[:] = np.nan
+        data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
+        gt_array = GenotypeArray(values=data, dtype=dtype)
+        df[f"{v_idx}_{variant_id}"] = gt_array
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
     # Set sample info as the index

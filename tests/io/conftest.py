@@ -8,22 +8,6 @@ from pandas_genomics import io
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 
-@pytest.mark.slow
-@pytest.fixture
-def plink_small():
-    bed_file = DATA_DIR / "plink" / "plink_test_small.bed"
-    result = io.from_plink(bed_file)
-    return result
-
-
-@pytest.mark.slow
-@pytest.fixture
-def plink_medium():
-    bed_file = DATA_DIR / "plink" / "plink_test_medium.bed"
-    result = io.from_plink(bed_file)
-    return result
-
-
 @pytest.fixture
 def plink_small_20():
     bed_file = DATA_DIR / "plink" / "plink_test_small.bed"

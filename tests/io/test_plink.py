@@ -1,18 +1,28 @@
+from pathlib import Path
+
 import pytest
 
+from pandas_genomics import io
 
-@pytest.mark.slow
-def test_loaded_small(plink_small):
+DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
+
+# TODO: Check genotypes in plink and double-check that the results are correct
+
+
+def test_loaded_small():
     """Validate the small dataset"""
-    # TODO: Add more assertions
-    assert plink_small.shape == (150, 3020)
+    # was 5.76 seconds
+    bed_file = DATA_DIR / "plink_test_small.bed"
+    result = io.from_plink(bed_file)
+    assert result.shape == (150, 3020)
 
 
 @pytest.mark.slow
-def test_loaded_medium(plink_medium):
+def test_loaded_medium():
     """Validate the medium dataset"""
-    # TODO: Add more assertions
-    assert plink_medium.shape == (600, 45100)
+    bed_file = DATA_DIR / "plink_test_medium.bed"
+    result = io.from_plink(bed_file)
+    assert result.shape == (600, 45100)
 
 
 def test_loaded_small_20(plink_small_20):
