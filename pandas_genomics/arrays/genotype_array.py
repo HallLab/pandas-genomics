@@ -588,14 +588,17 @@ class GenotypeArray(ExtensionArray):
 
     def unique(self) -> "GenotypeArray":
         """Return a GenotypeArray of unique values"""
-        _, idx = np.unique(self.allele_idxs, return_index=True)
+        _, idx = np.unique(self.allele_idxs, return_index=True, axis=0)
         return GenotypeArray(values=self._data[idx], dtype=self.dtype)
 
     def value_counts(self, dropna=True):
         """Return a Series of unique counts with a GenotypeArray index"""
-        unique_data, unique_counts = np.unique(self._data, return_counts=True)
+        _, unique_idx, unique_counts = np.unique(
+            self.allele_idxs, return_index=True, return_counts=True, axis=0
+        )
         result = pd.Series(
-            unique_counts, index=GenotypeArray(values=unique_data, dtype=self.dtype)
+            unique_counts,
+            index=GenotypeArray(values=self._data[unique_idx], dtype=self.dtype),
         )
         if dropna:
             result = result.loc[result.index != self.dtype.na_value]
