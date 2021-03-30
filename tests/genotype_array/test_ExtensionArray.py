@@ -29,7 +29,9 @@ class TestGroupBy(base.BaseGroupbyTests):
 
 
 class TestInterface(base.BaseInterfaceTests):
-    pass
+    @pytest.mark.xfail(reason="'contains' method not implemented")
+    def test_contains(self, data, data_missing):
+        super().test_contains(data, data_missing)
 
 
 class TestParsing(base.BaseParsingTests):
@@ -37,17 +39,21 @@ class TestParsing(base.BaseParsingTests):
 
 
 class TestMethods(base.BaseMethodsTests):
+    @pytest.mark.xfail(reason="Addition of Genotypes isn't valid")
     def test_combine_add(self, data_repeated):
-        """Addition of Genotypes isn't valid"""
-        pass
+        super().test_combine_add(data_repeated)
 
+    @pytest.mark.xfail(
+        reason="Can't pass until it's possible to define dtype as scalar (See Pandas GH #33825)"
+    )
     def test_searchsorted(self, data_for_sorting, as_series):
-        # TODO: Can't pass until it's possible to define dtype as scalar (See Pandas GH #33825)
-        pass
+        super().test_searchsorted(data_for_sorting, as_series)
 
+    @pytest.mark.xfail(
+        reason="Can't pass until it's possible to define dtype as scalar (See Pandas GH #33825)"
+    )
     def test_where_series(self, data, na_value, as_frame):
-        # TODO: Can't pass until it's possible to define dtype as scalar (See Pandas GH #33825)
-        pass
+        super().test_where_series(data, na_value, as_frame)
 
 
 class TestMissing(base.BaseMissingTests):

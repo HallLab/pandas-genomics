@@ -14,46 +14,62 @@ TEST_VAR = Variant(
 
 
 @pytest.mark.parametrize(
-    "input_str,variant,ploidy",
+    "input_str,variant",
     [
         (
-            "genotype(2)[12; 112161652; rs12462; T; C]",
+            "genotype(2n)[12; 112161652; rs12462; T; C]",
             Variant(
                 chromosome="12", position=112161652, id="rs12462", ref="T", alt=["C"]
             ),
-            2,
         ),
         (
-            "genotype(3)[12; 112161652; rs12462; T; C]",
+            "genotype(3n)[12; 112161652; rs12462; T; C]",
             Variant(
-                chromosome="12", position=112161652, id="rs12462", ref="T", alt=["C"]
+                chromosome="12",
+                position=112161652,
+                id="rs12462",
+                ref="T",
+                alt=["C"],
+                ploidy=3,
             ),
-            3,
+        ),
+        (
+            "genotype(3n)[12; 112161652; rs12462; T; C]Q30",
+            Variant(
+                chromosome="12",
+                position=112161652,
+                id="rs12462",
+                ref="T",
+                alt=["C"],
+                ploidy=3,
+                score=30,
+            ),
         ),
         pytest.param(
             "genotype[12; 112161652; rs12462; T; C]",
             None,
+            marks=pytest.mark.xfail(raises=TypeError),
+        ),
+        pytest.param(
+            "genotype(2n)[12; 112161652; T; C]",
             None,
             marks=pytest.mark.xfail(raises=TypeError),
         ),
         pytest.param(
-            "genotype(2)[12; 112161652; T; C]",
-            None,
+            "genotype(2n)[12; 112161652; T; C]q35",
             None,
             marks=pytest.mark.xfail(raises=TypeError),
         ),
         pytest.param(
-            "genotype(2)[12; 112161652; rs12462; T; C]",
+            "genotype(2n)[12; 112161652; rs12462; T; C]",
             Variant(
                 chromosome="12", position=112161652, id="rs12462", ref="T", alt=["C"]
             ),
-            3,
             marks=pytest.mark.xfail(raises=AssertionError),
         ),
     ],
 )
-def test_from_str(input_str, variant, ploidy):
+def test_from_str(input_str, variant):
     """Test creating GenotypeDtype from str"""
     gtdtype = GenotypeDtype.construct_from_string(input_str)
     assert gtdtype.variant == variant
-    assert gtdtype.ploidy == ploidy

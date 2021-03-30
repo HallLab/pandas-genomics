@@ -2,9 +2,10 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
+import numpy as np
 
-from ..arrays import GenotypeArray
-from ..scalars import Variant
+from ..arrays import GenotypeArray, GenotypeDtype
+from ..scalars import Variant, MISSING_IDX, Genotype
 
 
 def from_vcf(
@@ -35,15 +36,20 @@ def from_vcf(
 
     genotype_array_dict = dict()
     for var_num, vcf_variant in enumerate(VCF(filename)):  # or VCF('some.bcf')
-        # TODO: Should FILTER or QUAL be stored in the GenotypeArray?
 
-        # Skip filtered variants unless drop_filtered is True
+        # Skip filtered variants unless drop_filtered is False
         if vcf_variant.FILTER is not None and drop_filtered:
             continue
 
         # Skip variants below the minimum quality
         if vcf_variant.QUAL < min_qual:
             continue
+
+        if len(vcf_variant.ALT) >= MISSING_IDX:
+            raise ValueError(
+                f"Could not load {vcf_variant.ID} due to too many ALT alleles"
+                f" ({len(vcf_variant.ALT)} > {MISSING_IDX-1})"
+            )
 
         # Make variant
         variant = Variant(
@@ -52,14 +58,20 @@ def from_vcf(
             id=vcf_variant.ID,
             ref=vcf_variant.REF,
             alt=vcf_variant.ALT,
+            ploidy=vcf_variant.ploidy,
+            score=int(vcf_variant.QUAL),
         )
+        dtype = GenotypeDtype(variant)
+
+        # Collect genotypes
+        allele_idxs = np.array(vcf_variant.genotypes)[:, :2]
+        allele_idxs = np.where(allele_idxs == -1, MISSING_IDX, allele_idxs)
+        gt_scores = vcf_variant.gt_quals
+        gt_scores = np.where(gt_scores == -1, np.nan, gt_scores)
+        values = np.array(list(zip(allele_idxs, gt_scores)), dtype=dtype._record_type)
+
         # Make the GenotypeArray
-        gt_array = GenotypeArray(
-            values=[
-                variant.make_genotype_from_vcf_record(vcf_record)
-                for vcf_record in vcf_variant.genotypes
-            ]
-        )
+        gt_array = GenotypeArray(values=values, dtype=dtype)
         # Make the variant name
         if gt_array.variant.id is None:
             var_name = f"Variant_{var_num}"

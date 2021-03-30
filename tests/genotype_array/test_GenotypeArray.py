@@ -1,9 +1,16 @@
 """
 Test GenotypeArray methods
 """
+from math import isnan
+
 import pandas as pd
 import pytest
 from pandas._testing import assert_series_equal, assert_extension_array_equal
+
+
+def test_variant_score(data, data_for_encoding):
+    assert pd.Series(data).genotype.variant.score == 30.0
+    assert pd.Series(data_for_encoding).genotype.variant.score is None
 
 
 @pytest.mark.xfail(raises=ValueError)

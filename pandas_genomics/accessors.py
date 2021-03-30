@@ -22,6 +22,29 @@ class GenotypeAccessor:
         return pd.Series(method(*args, **kwargs), self.index, name=self.name)
 
     ####################
+    # Variant Properties
+    ####################
+    @property
+    def variant(self):
+        """Retrieve the variant
+
+        Returns
+        -------
+        variant: Variant
+        """
+        return self._array.variant
+
+    #######################
+    # Genotype Properties #
+    #######################
+    @property
+    def gt_scores(self):
+        """Return an array of genotype scores as float values
+        np.nan when the score is missing
+        """
+        return self._array.gt_scores
+
+    ####################
     # In-place methods #
     ####################
     def set_reference(self, allele) -> None:

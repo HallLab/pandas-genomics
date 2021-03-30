@@ -33,6 +33,11 @@ class Variant:
         Reference allele, 'N' by default
     alt: List[str], optional
         List of possible alternate alleles, empty list by default
+    ploidy: int, optional
+        The number of alleles that should be present.  Assumed to be 2 if not specified.
+    score: int, optional
+        A quality score for the Variant.  No assumptions are made about the meaning.
+
 
     Examples
     --------
@@ -48,10 +53,21 @@ class Variant:
         id: Optional[str] = None,
         ref: Optional[str] = "N",
         alt: Optional[List[str]] = None,
+        ploidy: Optional[int] = None,
+        score: Optional[int] = None,
     ):
         self.chromosome = chromosome
         self.position = position
         self.id = id
+        if ploidy is None:
+            self.ploidy = 2
+        elif ploidy < 1:
+            raise ValueError(
+                f"If specified, ploidy must be >= 1, but was specified as {ploidy}"
+            )
+        else:
+            self.ploidy = ploidy
+        self.score = score
 
         # Validate alleles
         # TODO: Validate ref and alt alleles using regex
@@ -96,12 +112,16 @@ class Variant:
         return ",".join(self.alleles[1:])
 
     def __str__(self):
-        return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]"
+        score_str = ""
+        if self.score is not None:
+            score_str = f"Q{self.score}"
+        return f"{self.id}[chr={self.chromosome};pos={self.position};ref={self.ref};alt={self.alt}]{score_str}"
 
     def __repr__(self):
         return (
-            f"Variant(chromosome={self.chromosome}, position={self.position},"
-            f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]})"
+            f"Variant(chromosome={self.chromosome}, position={self.position}, "
+            f"id={self.id}, ref={self.ref}, alt={self.alleles[1:]}, "
+            f"ploidy={self.ploidy}, score={self.score})"
         )
 
     def __eq__(self, other):
@@ -112,6 +132,8 @@ class Variant:
             & (self.position == other.position)
             & (self.id == other.id)
             & (self.alleles == other.alleles)
+            & (self.ploidy == other.ploidy)
+            & (self.score == other.score)
         )
 
     def add_allele(self, allele):
@@ -137,7 +159,7 @@ class Variant:
             )
         print(f"Alternate alleles = {self.alt}")
 
-    def get_allele_idx(self, allele: Optional[str], add: bool = False) -> int:
+    def get_idx_from_allele(self, allele: Optional[str], add: bool = False) -> int:
         """
         Get the integer value for an allele based on this variant's list of alleles,
         optionally adding it as a new allele
@@ -170,6 +192,29 @@ class Variant:
                     raise ValueError(f"'{allele}' is not an allele in {self}")
             return allele_idx
 
+    def get_allele_from_idx(self, idx: int) -> str:
+        """
+        Get the allele corresponding to an index value for this variant
+
+        Parameters
+        ----------
+        idx: int
+
+        Returns
+        -------
+        str
+            String representation of the allele
+        """
+
+        if idx == MISSING_IDX:
+            return "."  # Missing allele symbol, same as VCF
+        elif idx > len(self.alleles) - 1:
+            raise ValueError(
+                f"Invalid index (idx) for a variant with {len(self.alleles)} alleles"
+            )
+        else:
+            return self.alleles[idx]
+
     def is_valid_allele_idx(self, idx: int) -> bool:
         """
         Validate the integer value for an allele with respect to this variant
@@ -196,9 +241,9 @@ class Variant:
         else:
             return True
 
-    def is_same_variant(self, other):
+    def is_same_position(self, other):
         """
-        Confirms this is the same variant, other than the allele list.
+        Confirms this is a variant at the same position
 
         Parameters
         ----------
@@ -218,6 +263,7 @@ class Variant:
                 and self.chromosome == other.chromosome
                 and self.position == other.position
                 and self.alleles[0] == other.alleles[0]
+                and self.ploidy == other.ploidy
             )
         else:
             return False
@@ -229,7 +275,8 @@ class Variant:
         Parameters
         ----------
         alleles:
-            one or more alleles (as strings) that make up the genotype
+            zero or more alleles (as strings) that make up the genotype.
+            If ploidy > the number of specified alleles, missing alleles will be filled in.
         add_alleles: bool
             False by default.  If True, add alleles if the Variant doesn't have them yet.
 
@@ -238,12 +285,13 @@ class Variant:
         Genotype
             A Genotype based on this variant with the specified alleles
         """
-        if len(alleles) == 0:
-            # Create diploid missing genotype
-            return Genotype(self, [MISSING_IDX, MISSING_IDX])
-        else:
-            allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
-            return Genotype(self, allele_idxs)
+        if len(alleles) > self.ploidy:
+            raise ValueError(
+                f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}"
+            )
+        allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
+        missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
+        return Genotype(self, allele_idxs + missing_idxs)
 
     def make_genotype_from_str(
         self, gt_str: str, sep: str = "/", add_alleles: bool = False
@@ -267,72 +315,13 @@ class Variant:
         """
         # Process Allele String
         alleles = gt_str.split(sep)
-        allele_idxs = [self.get_allele_idx(a, add=add_alleles) for a in alleles]
-        return Genotype(self, allele_idxs)
-
-    def make_genotype_from_plink_bits(self, plink_bits: str) -> "Genotype":
-        """
-        Create a genotype from PLINK Bed file bits.
-        Assumes the Variant has only the first and second alleles from the matching bim file
-
-        Parameters
-        ----------
-        plink_bits: str
-            A string with allele indices as encoded in plink format, one of {'00', '01', '10', '11'}
-
-        Returns
-        -------
-        Genotype
-            A Genotype based on this variant with the specified alleles
-        """
-        # Raise an error if the variant has more than a ref and alt allele
-        if len(self.alleles) != 2:
+        if len(alleles) > self.ploidy:
             raise ValueError(
-                "Genotypes can only be created from plink bitcodes if there are exactly two alleles"
+                f"Too many alleles ({len(alleles)} specified for a variant with ploidy of {self.ploidy}"
             )
-        # Process Allele String
-        if plink_bits == "00":
-            a1 = 0
-            a2 = 0
-        elif plink_bits == "01":
-            a1 = MISSING_IDX
-            a2 = MISSING_IDX
-        elif plink_bits == "10":
-            a1 = 0
-            a2 = 1
-        elif plink_bits == "11":
-            a1 = 1
-            a2 = 1
-        else:
-            raise ValueError(f"Invalid plink_bits: '{plink_bits}'")
-
-        return Genotype(self, [a1, a2])
-
-    def make_genotype_from_vcf_record(self, vcf_record: Tuple) -> "Genotype":
-        """
-        Create a genotype from VCF records loaded as cyvcf2.VCF().genotypes
-
-        Parameters
-        ----------
-        vcf_record: Tuple
-            The list is an array of allele indicies (where "-1" is missing) with a boolean for phased status at the nd
-
-        Returns
-        -------
-        Genotype
-            A Genotype based on this variant with the specified alleles
-        """
-        # TODO: Replace with pysam?
-        allele_idxs = vcf_record[:-1]
-        # is_phased = vcf_record[-1]
-
-        # Replace -1 with MISSING_IDX
-        allele_idxs = [a if a != -1 else MISSING_IDX for a in allele_idxs]
-
-        for a in allele_idxs:
-            assert self.is_valid_allele_idx(a)
-
-        return Genotype(self, allele_idxs)
+        allele_idxs = [self.get_idx_from_allele(a, add=add_alleles) for a in alleles]
+        missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
+        return Genotype(self, allele_idxs + missing_idxs)
 
 
 class Genotype:
@@ -344,8 +333,10 @@ class Genotype:
     Parameters
     ----------
     variant: pandas_genomics.scalars.variant.Variant
-    allele_idxs: Alleles encoded as indexes into the variant allele list
-    ploidy: Number of alleles in the genotype
+    allele_idxs: List[int]
+        Alleles encoded as indexes into the variant allele list
+    score: int, optional
+        A quality score for the Genotype.  No assumptions are made about the meaning.
 
     Examples
     --------
@@ -363,49 +354,49 @@ class Genotype:
         self,
         variant: Variant,
         allele_idxs: Optional[Union[Tuple[int], List[int]]] = None,
-        ploidy: Optional[int] = None,
+        score: Optional[int] = None,
     ):
 
         # Determine alleles/ploidy
-        if allele_idxs is not None and ploidy is not None:
-            # Both specified: ploidy must match
-            if len(allele_idxs) != ploidy:
-                raise ValueError(
-                    f"Ploidy of {ploidy} is not compatible with an "
-                    f"allele_idxs list of {len(allele_idxs)} values"
-                )
+        if allele_idxs is not None and len(allele_idxs) > variant.ploidy:
+            raise ValueError(
+                f"{len(allele_idxs)} alleles given for a variant with ploidy of {variant.ploidy}"
+            )
         elif allele_idxs is None:
-            # allele_idxs not specified, use given ploidy or a default value of 2 to make a missing GT
-            if ploidy is None:
-                ploidy = 2
-            allele_idxs = [
-                MISSING_IDX,
-            ] * ploidy
+            allele_idxs = []
+
+        # Fill in any missing allele_idxs
+        allele_idxs = list(allele_idxs) + [MISSING_IDX] * (
+            variant.ploidy - len(allele_idxs)
+        )
 
         # Ensure allele_idxs is a sorted tuple
         allele_idxs = tuple(sorted(allele_idxs))
 
         self.variant = variant
         self.allele_idxs = allele_idxs
+        self.score = None
+        if score is not None:
+            self.score = int(score)
 
         # Validate parameters
         for a in self.allele_idxs:
             if not self.variant.is_valid_allele_idx(a):
                 raise ValueError(f"Invalid allele index for {self.variant}: {a}")
 
-    @property
-    def ploidy(self):
-        """Number of sets of chromosomes"""
-        return len(self.allele_idxs)
-
     def __str__(self):
-        if all([a == MISSING_IDX for a in self.allele_idxs]):
+        if all([i == MISSING_IDX for i in self.allele_idxs]):
             return "<Missing>"
         else:
-            return "/".join([self.variant.alleles[a] for a in self.allele_idxs])
+            return "/".join(
+                [self.variant.get_allele_from_idx(i) for i in self.allele_idxs]
+            )
 
     def __repr__(self):
-        return f"Genotype(variant={self.variant})[{str(self)}]"
+        score_str = ""
+        if self.score is not None:
+            score_str = f"Q{self.score}"
+        return f"Genotype(variant={self.variant})[{str(self)}]" + score_str
 
     def __hash__(self):
         return hash(repr(self))
@@ -485,3 +476,11 @@ class Genotype:
             True if the variant is missing (both alleles are None), otherwise False
         """
         return all([a == MISSING_IDX for a in self.allele_idxs])
+
+    @property
+    def _float_score(self):
+        """Convenience method for storing score as a float"""
+        if self.score is None:
+            return float("NaN")
+        else:
+            return float(self.score)
