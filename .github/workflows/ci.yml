@@ -27,7 +27,7 @@ jobs:
         run: sudo apt-get install libcurl4-openssl-dev
 
       - name: Install Poetry
-        uses: dschep/install-poetry-action@v1.3
+        uses: snok/install-poetry@v1.1.2
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v1
