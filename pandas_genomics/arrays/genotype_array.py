@@ -768,12 +768,12 @@ class GenotypeArray(ExtensionArray):
         ] + self.variant.alleles[1:]
 
         # Update stored alleles
-        was_ref = self._data == 0
-        was_allele = self._data == allele_idx
+        was_ref = self._data["allele_idxs"] == 0
+        was_allele = self._data["allele_idxs"] == allele_idx
         # What was the reference is now the new reference position
-        self._data[was_ref] = allele_idx
+        self._data["allele_idxs"][was_ref] = allele_idx
         # What was the allele is now reference (0)
-        self._data[was_allele] = 0
+        self._data["allele_idxs"][was_allele] = 0
 
     ######################
     # Encoding Functions #

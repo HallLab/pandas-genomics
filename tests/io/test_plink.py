@@ -43,4 +43,5 @@ def test_swap(plink_small_20, plink_small_20_swap):
     swapped = plink_small_20_swap.iloc[:, 0]
     assert normal.dtype != swapped.dtype
     swapped.genotype.set_reference(1)
+    assert normal.genotype.variant == swapped.genotype.variant
     assert (normal == swapped).all()

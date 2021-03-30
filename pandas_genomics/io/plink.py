@@ -107,15 +107,13 @@ def from_plink(
         variant_id = str(variant_info_dict["variant_id"])
         a1 = str(variant_info_dict["allele1"])
         a2 = str(variant_info_dict["allele2"])
-        if swap_alleles:
-            a1, a2 = a2, a1
         # 0 indicates a missing allele
+        if a2 == "0":
+            ref = None
         if a1 == "0":
             a1 = None
         else:
             a1 = [a1]  # pass as list
-        if a2 == "0":
-            a2 = None
         variant = Variant(
             chromosome=str(variant_info_dict["chromosome"]),
             position=int(variant_info_dict["coordinate"]),
@@ -143,6 +141,8 @@ def from_plink(
         scores[:] = np.nan
         data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
         gt_array = GenotypeArray(values=data, dtype=dtype)
+        if swap_alleles:
+            gt_array.set_reference(1)
         df[f"{v_idx}_{variant_id}"] = gt_array
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
