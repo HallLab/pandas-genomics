@@ -1,7 +1,6 @@
 """
 Test GenotypeArray methods
 """
-from math import isnan
 
 import pandas as pd
 import pytest
@@ -71,3 +70,7 @@ def test_encoding_codominant(data_for_encoding):
     )
     result_series = pd.Series(data_for_encoding).genotype.encode_codominant()
     assert_series_equal(result_series, expected)
+
+
+def test_var_info(genotypearray_df):
+    print(genotypearray_df.genotyping.variant_info)

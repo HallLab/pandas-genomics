@@ -4,8 +4,10 @@ except ModuleNotFoundError:
     import importlib_metadata
 
 from . import arrays, io, scalars
-from .accessors import GenotypeAccessor
+from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
 
 __version__ = importlib_metadata.version(__name__)
 
-__all__ = [__version__, GenotypeAccessor, arrays, io, scalars]
+__all__ = [__version__,
+           GenotypeSeriesAccessor, GenotypeDataframeAccessor,
+           io, scalars]

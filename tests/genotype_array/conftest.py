@@ -2,6 +2,7 @@ import random
 
 import pytest
 
+import pandas as pd
 from pandas_genomics.arrays import GenotypeDtype, GenotypeArray
 from pandas_genomics.scalars import Variant
 
@@ -209,3 +210,20 @@ def data_for_encoding():
     c = variant.make_genotype("T", "T")
     na = variant.make_genotype()
     return GenotypeArray([a, b, c, na])
+
+@pytest.fixture
+def genotypearray_df():
+    variants = [
+        Variant(chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T"], score=30),
+        Variant(chromosome="chr1", position=123456, id="rs12345", ref="T", alt=["A"], score=30),
+        Variant(chromosome="chr2", position=130546, id="rs12345", ref="C", alt=["G", "T"], score=30),
+        Variant(chromosome="chr2", position=131111, id="rs12345", ref="A", alt=["T"], score=30),
+        Variant(chromosome="chrX", position=34245, id="rs12345", ref="A", alt=["T"], score=30),
+    ]
+    return pd.DataFrame([
+        GenotypeArray([var.make_genotype(var.ref, var.alt[0]),
+                       var.make_genotype(var.ref, var.ref),
+                       var.make_genotype(var.alt[0], var.alt[0]),
+                       var.make_genotype(var.ref, var.ref),
+                       var.make_genotype(var.ref, var.alt[0])])
+                      for var in variants])
