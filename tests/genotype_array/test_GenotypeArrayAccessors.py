@@ -8,8 +8,8 @@ from pandas._testing import assert_series_equal, assert_extension_array_equal
 
 
 def test_variant_score(data, data_for_encoding):
-    assert pd.Series(data).genotype.variant.score == 30.0
-    assert pd.Series(data_for_encoding).genotype.variant.score is None
+    assert pd.Series(data).genomics.variant.score == 30.0
+    assert pd.Series(data_for_encoding).genomics.variant.score is None
 
 
 @pytest.mark.xfail(raises=ValueError)
@@ -27,7 +27,7 @@ def test_encoding_additive(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_additive()
+    result_series = pd.Series(data_for_encoding).genomics.encode_additive()
     assert_series_equal(result_series, expected)
 
 
@@ -40,7 +40,7 @@ def test_encoding_dominant(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_dominant()
+    result_series = pd.Series(data_for_encoding).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
 
 
@@ -53,7 +53,7 @@ def test_encoding_recessive(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_recessive()
+    result_series = pd.Series(data_for_encoding).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
 
 
@@ -68,9 +68,9 @@ def test_encoding_codominant(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_codominant()
+    result_series = pd.Series(data_for_encoding).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
 
 
 def test_var_info(genotypearray_df):
-    print(genotypearray_df.genotyping.variant_info)
+    print(genotypearray_df.genomics.variant_info)

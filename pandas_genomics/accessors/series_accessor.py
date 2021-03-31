@@ -3,7 +3,7 @@ import pandas as pd
 from pandas_genomics.arrays import GenotypeDtype
 
 
-@pd.api.extensions.register_series_accessor("genotype")
+@pd.api.extensions.register_series_accessor("genomics")
 class GenotypeSeriesAccessor:
     """
     Series accessor for GenotypeArray methods

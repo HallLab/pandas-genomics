@@ -220,10 +220,10 @@ def genotypearray_df():
         Variant(chromosome="chr2", position=131111, id="rs12345", ref="A", alt=["T"], score=30),
         Variant(chromosome="chrX", position=34245, id="rs12345", ref="A", alt=["T"], score=30),
     ]
-    return pd.DataFrame([
+    return pd.DataFrame({name:
         GenotypeArray([var.make_genotype(var.ref, var.alt[0]),
                        var.make_genotype(var.ref, var.ref),
                        var.make_genotype(var.alt[0], var.alt[0]),
                        var.make_genotype(var.ref, var.ref),
                        var.make_genotype(var.ref, var.alt[0])])
-                      for var in variants])
+                      for var, name in zip(variants, "ABCDE")})
