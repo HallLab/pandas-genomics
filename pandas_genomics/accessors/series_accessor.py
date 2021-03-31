@@ -134,3 +134,7 @@ class GenotypeSeriesAccessor:
             index=self._index,
             name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
         )
+
+    ##############
+    # QC Methods #
+    ##############
