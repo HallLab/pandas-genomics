@@ -62,7 +62,7 @@ print(gt)
 A/C
 ```
 
-The `GenotypeArray` stores genotypes with an associated variant and has useful methods:
+The `GenotypeArray` stores genotypes with an associated variant and has useful methods and properties:
 
 ```python
 from pandas_genomics.scalars import Variant
@@ -98,11 +98,11 @@ print(gt_array.encode_dominant())
     Length: 3, dtype: UInt8
 ```
 
-There is also a SeriesAccessor named `genotype`
+There are also `genomics` accessors for Series and DataFrame
 
 ```python
 import pandas as pd
-print(pd.Series(gt_array).genotype.encode_codominant())
+print(pd.Series(gt_array).genomics.encode_codominant())
 ```
 
 ```
