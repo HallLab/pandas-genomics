@@ -5,6 +5,10 @@ from pandas_genomics.scalars import MISSING_IDX
 
 
 class EncodingMixin:
+    """
+    Genotype Mixin containing functions for performing encoding
+    """
+
     def encode_additive(self) -> pd.arrays.IntegerArray:
         """
         Returns

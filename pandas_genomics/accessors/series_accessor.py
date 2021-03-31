@@ -53,6 +53,16 @@ class GenotypeSeriesAccessor:
         """
         return self._array.gt_scores
 
+    #########################
+    # Calculated Properties #
+    #########################
+    @property
+    def maf(self):
+        """Return the minor allele frequency
+
+        See :py:attr:`GenotypeArray.maf`"""
+        return self._array.maf
+
     ####################
     # In-place methods #
     ####################

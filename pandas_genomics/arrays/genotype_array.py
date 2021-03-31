@@ -9,6 +9,7 @@ from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionD
 from pandas.core.dtypes.inference import is_list_like
 
 from pandas_genomics.arrays.encoding_mixin import EncodingMixin
+from pandas_genomics.arrays.info_mixin import InfoMixin
 from pandas_genomics.scalars import Variant, Genotype, MISSING_IDX
 
 
@@ -233,7 +234,7 @@ class GenotypeDtype(PandasExtensionDtype):
             )
 
 
-class GenotypeArray(ExtensionArray, EncodingMixin):
+class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
     """
     Holder for genotypes
 

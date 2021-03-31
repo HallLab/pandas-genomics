@@ -32,6 +32,18 @@ class GenotypeDataframeAccessor:
             orient="index",
         )
 
+    #########################
+    # Calculated Properties #
+    #########################
+    @property
+    def maf(self):
+        """Return the minor allele frequency
+
+        See :py:attr:`GenotypeArray.maf`"""
+        return pd.Series(
+            {col: self._obj[col].genomics.maf for col in self._obj.columns}
+        )
+
     ############
     # Encoding #
     ############
