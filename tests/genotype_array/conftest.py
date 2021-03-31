@@ -1,8 +1,11 @@
 import random
+from pathlib import Path
 
 import pytest
 
 import pandas as pd
+
+from pandas_genomics import io
 from pandas_genomics.arrays import GenotypeDtype, GenotypeArray
 from pandas_genomics.scalars import Variant
 
@@ -214,59 +217,6 @@ def data_for_encoding():
 
 @pytest.fixture
 def genotypearray_df():
-    variants = [
-        Variant(
-            chromosome="chr1",
-            position=123456,
-            id="rs12345",
-            ref="A",
-            alt=["T"],
-            score=30,
-        ),
-        Variant(
-            chromosome="chr1",
-            position=123456,
-            id="rs12345",
-            ref="T",
-            alt=["A"],
-            score=30,
-        ),
-        Variant(
-            chromosome="chr2",
-            position=130546,
-            id="rs12345",
-            ref="C",
-            alt=["G", "T"],
-            score=30,
-        ),
-        Variant(
-            chromosome="chr2",
-            position=131111,
-            id="rs12345",
-            ref="A",
-            alt=["T"],
-            score=30,
-        ),
-        Variant(
-            chromosome="chrX",
-            position=34245,
-            id="rs12345",
-            ref="A",
-            alt=["T"],
-            score=30,
-        ),
-    ]
-    return pd.DataFrame(
-        {
-            name: GenotypeArray(
-                [
-                    var.make_genotype(var.ref, var.alt[0]),
-                    var.make_genotype(var.ref, var.ref),
-                    var.make_genotype(var.alt[0], var.alt[0]),
-                    var.make_genotype(var.ref, var.ref),
-                    var.make_genotype(var.ref, var.alt[0]),
-                ]
-            )
-            for var, name in zip(variants, "ABCDE")
-        }
-    )
+    DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
+    bed_file = DATA_DIR / "plink_test_small.bed"
+    return io.from_plink(bed_file, max_variants=20, swap_alleles=True)

@@ -3,6 +3,7 @@ Test GenotypeArray Accessors
 """
 
 import pandas as pd
+import pytest
 from pandas._testing import (
     assert_series_equal,
 )
@@ -25,3 +26,11 @@ def test_maf(data):
     df = pd.DataFrame.from_dict({n: pd.Series(data) for n in "ABC"}, orient="columns")
     expected = pd.Series({n: data.maf for n in "ABC"})
     assert_series_equal(df.genomics.maf, expected)
+
+
+@pytest.mark.parametrize(
+    "filter_value, num_vars_left", [(None, 15), (0.05, 1), (0.10, 0)]
+)
+def test_filter_maf(genotypearray_df, filter_value, num_vars_left):
+    result = genotypearray_df.genomics.filter_maf(filter_value)
+    assert len(result.columns) == num_vars_left
