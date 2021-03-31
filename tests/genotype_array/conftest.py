@@ -1,7 +1,11 @@
 import random
+from pathlib import Path
 
 import pytest
 
+import pandas as pd
+
+from pandas_genomics import io
 from pandas_genomics.arrays import GenotypeDtype, GenotypeArray
 from pandas_genomics.scalars import Variant
 
@@ -209,3 +213,10 @@ def data_for_encoding():
     c = variant.make_genotype("T", "T")
     na = variant.make_genotype()
     return GenotypeArray([a, b, c, na])
+
+
+@pytest.fixture
+def genotypearray_df():
+    DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
+    bed_file = DATA_DIR / "plink_test_small.bed"
+    return io.from_plink(bed_file, max_variants=20, swap_alleles=True)

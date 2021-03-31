@@ -323,6 +323,18 @@ class Variant:
         missing_idxs = [MISSING_IDX] * (self.ploidy - len(self.alleles))
         return Genotype(self, allele_idxs + missing_idxs)
 
+    def as_dict(self):
+        """Return the variant information as a dictionary"""
+        return {
+            "id": self.id,
+            "chromsome": self.chromosome,
+            "position": self.position,
+            "ref": self.ref,
+            "alt": self.alt,
+            "ploidy": self.ploidy,
+            "score": self.score,
+        }
+
 
 class Genotype:
     """

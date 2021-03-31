@@ -109,7 +109,7 @@ def from_plink(
         a2 = str(variant_info_dict["allele2"])
         # 0 indicates a missing allele
         if a2 == "0":
-            ref = None
+            a2 = None
         if a1 == "0":
             a1 = None
         else:

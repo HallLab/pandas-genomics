@@ -3,8 +3,8 @@ import pandas as pd
 from pandas_genomics.arrays import GenotypeDtype
 
 
-@pd.api.extensions.register_series_accessor("genotype")
-class GenotypeAccessor:
+@pd.api.extensions.register_series_accessor("genomics")
+class GenotypeSeriesAccessor:
     """
     Series accessor for GenotypeArray methods
     """
@@ -26,13 +26,22 @@ class GenotypeAccessor:
     ####################
     @property
     def variant(self):
-        """Retrieve the variant
+        """Retrieve the variant object
 
         Returns
         -------
         variant: Variant
         """
         return self._array.variant
+
+    @property
+    def variant_info(self):
+        """Retrieve the variant as a pandas Series
+
+        Returns
+        -------
+        variant: pd.Series"""
+        return pd.Series(self._array.variant.as_dict(), name=self._name)
 
     #######################
     # Genotype Properties #
@@ -43,6 +52,16 @@ class GenotypeAccessor:
         np.nan when the score is missing
         """
         return self._array.gt_scores
+
+    #########################
+    # Calculated Properties #
+    #########################
+    @property
+    def maf(self):
+        """Return the minor allele frequency
+
+        See :py:attr:`GenotypeArray.maf`"""
+        return self._array.maf
 
     ####################
     # In-place methods #
@@ -125,3 +144,7 @@ class GenotypeAccessor:
             index=self._index,
             name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
         )
+
+    ##############
+    # QC Methods #
+    ##############

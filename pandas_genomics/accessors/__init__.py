@@ -1,0 +1,2 @@
+from .series_accessor import GenotypeSeriesAccessor
+from .dataframe_accessor import GenotypeDataframeAccessor

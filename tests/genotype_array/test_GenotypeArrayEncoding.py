@@ -1,16 +1,14 @@
 """
-Test GenotypeArray methods
+Test GenotypeArray Encoding methods and accessors to those functions
 """
-from math import isnan
 
 import pandas as pd
 import pytest
-from pandas._testing import assert_series_equal, assert_extension_array_equal
-
-
-def test_variant_score(data, data_for_encoding):
-    assert pd.Series(data).genotype.variant.score == 30.0
-    assert pd.Series(data_for_encoding).genotype.variant.score is None
+from pandas._testing import (
+    assert_extension_array_equal,
+    assert_series_equal,
+    assert_frame_equal,
+)
 
 
 @pytest.mark.xfail(raises=ValueError)
@@ -28,8 +26,13 @@ def test_encoding_additive(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_additive()
+    result_series = pd.Series(data_for_encoding).genomics.encode_additive()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_additive()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_dominant(data_for_encoding):
@@ -41,8 +44,13 @@ def test_encoding_dominant(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_dominant()
+    result_series = pd.Series(data_for_encoding).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_dominant()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_recessive(data_for_encoding):
@@ -54,8 +62,13 @@ def test_encoding_recessive(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_recessive()
+    result_series = pd.Series(data_for_encoding).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_recessive()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_codominant(data_for_encoding):
@@ -69,5 +82,10 @@ def test_encoding_codominant(data_for_encoding):
     expected = pd.Series(
         result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
     )
-    result_series = pd.Series(data_for_encoding).genotype.encode_codominant()
+    result_series = pd.Series(data_for_encoding).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_codominant()
+    assert_frame_equal(result_df, expected)
