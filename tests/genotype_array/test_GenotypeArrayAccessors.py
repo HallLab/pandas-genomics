@@ -4,7 +4,11 @@ Test GenotypeArray methods
 
 import pandas as pd
 import pytest
-from pandas._testing import assert_series_equal, assert_extension_array_equal
+from pandas._testing import (
+    assert_series_equal,
+    assert_extension_array_equal,
+    assert_frame_equal,
+)
 
 
 def test_variant_score(data, data_for_encoding):
@@ -29,6 +33,11 @@ def test_encoding_additive(data_for_encoding):
     )
     result_series = pd.Series(data_for_encoding).genomics.encode_additive()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_additive()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_dominant(data_for_encoding):
@@ -42,6 +51,11 @@ def test_encoding_dominant(data_for_encoding):
     )
     result_series = pd.Series(data_for_encoding).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_dominant()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_recessive(data_for_encoding):
@@ -55,6 +69,11 @@ def test_encoding_recessive(data_for_encoding):
     )
     result_series = pd.Series(data_for_encoding).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_recessive()
+    assert_frame_equal(result_df, expected)
 
 
 def test_encoding_codominant(data_for_encoding):
@@ -70,7 +89,16 @@ def test_encoding_codominant(data_for_encoding):
     )
     result_series = pd.Series(data_for_encoding).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
+    # Test using DataFrame accessor
+    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    expected = pd.concat([result_series] * 3, axis=1)
+    result_df = df.genomics.encode_codominant()
+    assert_frame_equal(result_df, expected)
 
 
 def test_var_info(genotypearray_df):
-    print(genotypearray_df.genomics.variant_info)
+    assert_series_equal(
+        genotypearray_df.genomics.variant_info.iloc[0],
+        genotypearray_df.iloc[:, 0].genomics.variant_info,
+    )
+    print()

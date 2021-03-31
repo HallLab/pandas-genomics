@@ -332,7 +332,7 @@ class Variant:
             "ref": self.ref,
             "alt": self.alt,
             "ploidy": self.ploidy,
-            "score": self.score
+            "score": self.score,
         }
 
 

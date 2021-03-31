@@ -8,6 +8,4 @@ from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
 
 __version__ = importlib_metadata.version(__name__)
 
-__all__ = [__version__,
-           GenotypeSeriesAccessor, GenotypeDataframeAccessor,
-           io, scalars]
+__all__ = [__version__, GenotypeSeriesAccessor, GenotypeDataframeAccessor, io, scalars]

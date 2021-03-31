@@ -26,7 +26,7 @@ class GenotypeSeriesAccessor:
     ####################
     @property
     def variant(self):
-        """Retrieve the variant
+        """Retrieve the variant object
 
         Returns
         -------
@@ -41,7 +41,7 @@ class GenotypeSeriesAccessor:
         Returns
         -------
         variant: pd.Series"""
-        return pd.Series(self._array.variant.as_dict())
+        return pd.Series(self._array.variant.as_dict(), name=self._name)
 
     #######################
     # Genotype Properties #
