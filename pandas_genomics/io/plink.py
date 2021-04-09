@@ -102,6 +102,7 @@ def from_plink(
         chunk_size += 1
     gt_bytes = gt_bytes.reshape(-1, chunk_size)
     # Process each variant
+    gt_array_dict = {}
     for v_idx in range(num_variants):
         variant_info_dict = variant_info.iloc[v_idx].to_dict()
         variant_id = str(variant_info_dict["variant_id"])
@@ -143,10 +144,11 @@ def from_plink(
         gt_array = GenotypeArray(values=data, dtype=dtype)
         if swap_alleles:
             gt_array.set_reference(1)
-        df[f"{v_idx}_{variant_id}"] = gt_array
+        gt_array_dict[f"{v_idx}_{variant_id}"] = gt_array
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
-    # Set sample info as the index
+    # Merge with sample allele index
+    df = pd.concat([df, pd.DataFrame.from_dict(gt_array_dict)], axis=1)
     df = df.set_index(["FID", "IID", "IID_father", "IID_mother", "sex", "phenotype"])
 
     return df
