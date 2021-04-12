@@ -105,46 +105,11 @@ def from_plink(
     gt_array_dict = {}
     for v_idx in range(num_variants):
         variant_info_dict = variant_info.iloc[v_idx].to_dict()
-        variant_id = str(variant_info_dict["variant_id"])
-        a1 = str(variant_info_dict["allele1"])
-        a2 = str(variant_info_dict["allele2"])
-        # 0 indicates a missing allele
-        if a2 == "0":
-            a2 = None
-        if a1 == "0":
-            a1 = None
-        else:
-            a1 = [a1]  # pass as list
-        variant = Variant(
-            chromosome=str(variant_info_dict["chromosome"]),
-            position=int(variant_info_dict["coordinate"]),
-            id=variant_id,
-            ref=a2,
-            alt=a1,
-            ploidy=2,
-        )
-        # Each byte (8 bits) is a concatenation of two bits per sample for 4 samples
-        # These are ordered from right to left, like (sample4, sample3, sample2, sample1)
-        # Convert each byte into 4 2-bits and flip them to order samples correctly
-        genotypes = np.flip(np.unpackbits(gt_bytes[v_idx]).reshape(-1, 4, 2), axis=1)
-        # flatten the middle dimension to give a big list of genotypes in the correct order and
-        # remove excess genotypes at the end that are padding rather than real samples
-        genotypes = genotypes.reshape(-1, 2)[:num_samples]
-        # Replace 0, 1 with missing (1, 0 is heterozygous)
-        missing_gt = (genotypes == (0, 1)).all(axis=1)
-        genotypes[missing_gt] = (MISSING_IDX, MISSING_IDX)
-        # Replace 1, 0 with 0, 1 for heterozygous so the reference allele is first
-        het_gt = (genotypes == (1, 0)).all(axis=1)
-        genotypes[het_gt] = (0, 1)
-        # Create GenotypeArray representation of the data
-        dtype = GenotypeDtype(variant)
-        scores = np.empty(num_samples)
-        scores[:] = np.nan
-        data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
-        gt_array = GenotypeArray(values=data, dtype=dtype)
+        variant_gt_bytes = gt_bytes[v_idx]
+        gt_array = create_gt_array(num_samples, variant_gt_bytes, variant_info_dict)
         if swap_alleles:
             gt_array.set_reference(1)
-        gt_array_dict[f"{v_idx}_{variant_id}"] = gt_array
+        gt_array_dict[f"{v_idx}_{gt_array.variant.id}"] = gt_array
     print(f"\tLoaded genotypes from '{bed_file.name}'")
 
     # Merge with sample allele index
@@ -152,3 +117,44 @@ def from_plink(
     df = df.set_index(["FID", "IID", "IID_father", "IID_mother", "sex", "phenotype"])
 
     return df
+
+
+def create_gt_array(num_samples, variant_gt_bytes, variant_info_dict):
+    variant_id = str(variant_info_dict["variant_id"])
+    a1 = str(variant_info_dict["allele1"])
+    a2 = str(variant_info_dict["allele2"])
+    # 0 indicates a missing allele
+    if a2 == "0":
+        a2 = None
+    if a1 == "0":
+        a1 = None
+    else:
+        a1 = [a1]  # pass as list
+    variant = Variant(
+        chromosome=str(variant_info_dict["chromosome"]),
+        position=int(variant_info_dict["coordinate"]),
+        id=variant_id,
+        ref=a2,
+        alt=a1,
+        ploidy=2,
+    )
+    # Each byte (8 bits) is a concatenation of two bits per sample for 4 samples
+    # These are ordered from right to left, like (sample4, sample3, sample2, sample1)
+    # Convert each byte into 4 2-bits and flip them to order samples correctly
+    genotypes = np.flip(np.unpackbits(variant_gt_bytes).reshape(-1, 4, 2), axis=1)
+    # flatten the middle dimension to give a big list of genotypes in the correct order and
+    # remove excess genotypes at the end that are padding rather than real samples
+    genotypes = genotypes.reshape(-1, 2)[:num_samples]
+    # Replace 0, 1 with missing (1, 0 is heterozygous)
+    missing_gt = (genotypes == (0, 1)).all(axis=1)
+    genotypes[missing_gt] = (MISSING_IDX, MISSING_IDX)
+    # Replace 1, 0 with 0, 1 for heterozygous so the reference allele is first
+    het_gt = (genotypes == (1, 0)).all(axis=1)
+    genotypes[het_gt] = (0, 1)
+    # Create GenotypeArray representation of the data
+    dtype = GenotypeDtype(variant)
+    scores = np.empty(num_samples)
+    scores[:] = np.nan
+    data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
+    gt_array = GenotypeArray(values=data, dtype=dtype)
+    return gt_array
