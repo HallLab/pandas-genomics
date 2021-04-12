@@ -11,7 +11,6 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
 
 def test_loaded_small():
     """Validate the small dataset"""
-    # was 5.76 seconds
     bed_file = DATA_DIR / "plink_test_small.bed"
     result = io.from_plink(bed_file)
     assert result.shape == (150, 3020)
