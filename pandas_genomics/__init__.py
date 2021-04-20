@@ -5,7 +5,7 @@ except ModuleNotFoundError:
 
 from . import arrays, io, scalars
 from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
-from .simulation import BialleleicSimulation, SNPEffectEncodings
+from .simulation import BAMS, SNPEffectEncodings, PenetranceTables
 
 __version__ = importlib_metadata.version(__name__)
 

@@ -1,18 +1,26 @@
 import numpy as np
 
-from pandas_genomics import BialleleicSimulation, SNPEffectEncodings
+from pandas_genomics import BAMS, SNPEffectEncodings, PenetranceTables
 
 
 def test():
-    bas = BialleleicSimulation()
+    assert BAMS() == BAMS.from_model()
+    assert BAMS(PenetranceTables.HET_HET) == BAMS.from_model(
+        eff1=(0, 1, 0), eff2=(0, 1, 0), main1=0, main2=0, interaction=1
+    )
+    bas = BAMS.from_model(
+        SNPEffectEncodings.DOMINANT,
+        SNPEffectEncodings.DOMINANT,
+        main1=0,
+        main2=0,
+        interaction=1,
+    )
     print(bas)
-    print()
-    bas2 = BialleleicSimulation.from_model(SNPEffectEncodings.DOMINANT,
-                                           SNPEffectEncodings.DOMINANT,
-                                           main1=5, main2=5, interaction=0)
-    print(bas2)
-    simulated_df = bas2.generate_case_control()
+    simulated_df = bas.generate_case_control()
     # Count unique rows
-    counts = simulated_df.groupby(['Outcome', 'SNP1', 'SNP2']).size().reset_index(name='Count')
+    counts = (
+        simulated_df.groupby(["Outcome", "SNP1", "SNP2"])
+        .size()
+        .reset_index(name="Count")
+    )
     print()
-
