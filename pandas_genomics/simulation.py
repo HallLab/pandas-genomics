@@ -210,20 +210,24 @@ class BialleleicSimulation:
         gt_data_snp2 = [((0, 0), np.nan), ]*3 + [((0, 1), np.nan), ]*3 + [((1, 1), np.nan), ]*3
 
         # Create GenotypeArrays
-        snp1_case_array = _get_gt_array(case_gt_table_idxs, gt_data_snp1, self.snp1)
-        snp2_case_array = _get_gt_array(case_gt_table_idxs, gt_data_snp2, self.snp2)
-        snp1_control_array = _get_gt_array(control_gt_table_idxs, gt_data_snp1, self.snp1)
-        snp2_control_array = _get_gt_array(control_gt_table_idxs, gt_data_snp2, self.snp2)
+        snp1_case_array = pd.Series(_get_gt_array(case_gt_table_idxs, gt_data_snp1, self.snp1))
+        snp2_case_array = pd.Series(_get_gt_array(case_gt_table_idxs, gt_data_snp2, self.snp2))
+        snp1_control_array = pd.Series(_get_gt_array(control_gt_table_idxs, gt_data_snp1, self.snp1))
+        snp2_control_array = pd.Series(_get_gt_array(control_gt_table_idxs, gt_data_snp2, self.snp2))
 
-        # TODO: Finish
         # Merge data together
-        snp1 = pd.concat(snp1_case_array, snp1_control_array)
+        snp1 = pd.concat([snp1_case_array, snp1_control_array]).reset_index(drop=True)
+        snp2 = pd.concat([snp2_case_array, snp2_control_array]).reset_index(drop=True)
 
         # Generate outcome
-        outcome = pd.Series(["Case"]*n_cases + ["Control"]*n_controls)\
-            .astype("category")\
-            .sample(frac=1)\
-            .reset_index(drop=True)
+        outcome = pd.Series(["Case"]*n_cases + ["Control"]*n_controls).astype("category")
+        result = pd.concat([outcome, snp1, snp2], axis=1)
+        result.columns = ["Outcome", "SNP1", "SNP2"]
+
+        # Scramble outcome
+        result = result.sample(frac=1).reset_index(drop=True)
+
+        return result
 
 
 

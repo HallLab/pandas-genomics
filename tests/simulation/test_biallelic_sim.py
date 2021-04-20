@@ -11,5 +11,8 @@ def test():
                                            SNPEffectEncodings.DOMINANT,
                                            main1=5, main2=5, interaction=0)
     print(bas2)
-    bas2.generate_case_control()
+    simulated_df = bas2.generate_case_control()
+    # Count unique rows
+    counts = simulated_df.groupby(['Outcome', 'SNP1', 'SNP2']).size().reset_index(name='Count')
+    print()
 
