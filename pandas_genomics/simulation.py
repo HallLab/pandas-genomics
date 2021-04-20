@@ -3,6 +3,8 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import patsy
+import statsmodels.api as sm
 
 from pandas_genomics.arrays import GenotypeArray, GenotypeDtype
 from pandas_genomics.scalars import Variant
@@ -35,6 +37,7 @@ class PenetranceTables(Enum):
     XOR = [1, 0, 1, 0, 1, 0, 1, 0, 1]  # XOR Model
     HYP = [0, 0.5, 1, 0.5, 0.5, 0.5, 1, 0.5, 0]  # Hyperbolic Model
     RHYP = [1, 0.5, 0, 0.5, 0.5, 0.5, 0, 0.5, 1]  # Hyperbolic Model
+    NULL = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]  # Null Model (Always 50/50)
 
 
 class BAMS:
@@ -89,11 +92,6 @@ class BAMS:
             pen_table = np.array(pen_table.value).reshape((3, 3))
         elif pen_table.shape != (3, 3):
             raise ValueError(f"Incorrect shape for pen_table, must be 3x3")
-
-        # Scale the penetrance table to be between 0 and 1
-        pen_table_min = pen_table.min()
-        pen_table_range = pen_table.max() - pen_table_min
-        pen_table = (pen_table - pen_table_min) / pen_table_range
 
         # SNPs
         if snp1 is None:
@@ -189,6 +187,7 @@ class BAMS:
         n_controls: int = 1000,
         maf1: float = 0.30,
         maf2: float = 0.30,
+        snr: Optional[float] = None,
     ):
         """
         Simulate genotypes with the specified number of 'case' and 'control' phenotypes
@@ -210,21 +209,19 @@ class BAMS:
             Dataframe with 3 columns: Outcome (categorical), SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
         """
+        np.random.seed(self.random_seed)
         # Validate params
         if n_cases < 1 or n_controls < 0:
             raise ValueError(
                 "Simulation must include at least one case and at least one control"
             )
 
-        # TODO: Calculate min_p and p_diff from snr
-        # Adjust the penetrance table
-        min_p = 0.01
-        p_diff = 1 - (2 * min_p)
-        pen_table = min_p + self.pen_table * p_diff
-
-        #                     P(Case|GT) * P(GT)
-        # Bayes: P(GT|Case) = ------------------
-        #                           P(Case)
+        # Scale the penetrance table to be between 0 and 1
+        pen_table = self.pen_table
+        if (pen_table.min() != 0) or (pen_table.max() != 1):
+            pen_table_min = pen_table.min()
+            pen_table_range = pen_table.max() - pen_table_min
+            pen_table = (pen_table - pen_table_min) / pen_table_range
 
         # Create table of Prob(GT) based on MAF, assuming HWE
         prob_snp1 = np.array([(1 - maf1) ** 2, 2 * maf1 * (1 - maf1), (maf1) ** 2])
@@ -232,6 +229,39 @@ class BAMS:
             [(1 - maf2) ** 2, 2 * maf2 * (1 - maf2), (maf2) ** 2]
         ).transpose()
         prob_gt = np.outer(prob_snp2, prob_snp1)
+
+        if snr is not None:
+            # Set up a dataframe with the penetrance table outcome for each SNP combination (Encoded as codominant)
+            cats = ["Ref", "Het", "Hom"]
+            d = pd.DataFrame(
+                {
+                    "SNP1": pd.Categorical(cats * 3, categories=cats, ordered=True),
+                    "SNP2": pd.Categorical(
+                        [i for c in cats for i in [c] * 3],
+                        categories=cats,
+                        ordered=True,
+                    ),
+                },
+                dtype="category",
+            )
+            d["y"] = pen_table.flatten()
+            # Get the weight vec as variance based on genotype probability
+            wt_vec = (prob_gt * (1 - prob_gt)).flatten()
+            # Regress the possible combinations of genotypes against the penetrance table, using the genotype frequency variance as weights
+            y, X = patsy.dmatrices("y ~ 1 + SNP1 + SNP2", data=d)
+            mod = sm.WLS(y, X, weights=wt_vec)
+            res = mod.fit()
+            sigma = np.sqrt(res.scale)  # sigma is sqrt of the dispersion (aka scale)
+            # Scale the penetrance by the amount of unexplained variance
+            # Odds Ratio = exp(SNP/Sigma)
+            min_p = 1 / (1 + np.exp(1 / sigma * snr))
+            p_diff = 1 - 2 * min_p
+            # Adjust the penetrance
+            pen_table = min_p + pen_table * p_diff
+
+        #                     P(Case|GT) * P(GT)
+        # Bayes: P(GT|Case) = ------------------
+        #                           P(Case)
 
         # Prob(Case|GT) = pen_table
         # Prob(Case) = sum(Prob(Case|GTi) * Prob(GTi) for each GT i)
@@ -255,20 +285,27 @@ class BAMS:
         )
 
         # Create flattened genotype tables for each SNP (snp1 varies by column, snp2 by row
-        gt_data_snp1 = [((0, 0), np.nan), ((0, 1), np.nan), ((1, 1), np.nan)] * 3
+        gt_data_snp1 = (
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+        )
         gt_data_snp2 = (
-            [
-                ((0, 0), np.nan),
-            ]
-            * 3
-            + [
-                ((0, 1), np.nan),
-            ]
-            * 3
-            + [
-                ((1, 1), np.nan),
-            ]
-            * 3
+            ((0, 0), np.nan),
+            ((0, 0), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((0, 1), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((1, 1), np.nan),
+            ((1, 1), np.nan),
         )
 
         # Create GenotypeArrays

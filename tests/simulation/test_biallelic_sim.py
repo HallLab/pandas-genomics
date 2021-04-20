@@ -16,11 +16,12 @@ def test():
         interaction=1,
     )
     print(bas)
-    simulated_df = bas.generate_case_control()
-    # Count unique rows
-    counts = (
-        simulated_df.groupby(["Outcome", "SNP1", "SNP2"])
-        .size()
-        .reset_index(name="Count")
+    test_sim = BAMS.from_model(
+        SNPEffectEncodings.RECESSIVE,
+        SNPEffectEncodings.RECESSIVE,
+        main1=1,
+        main2=1,
+        interaction=1,
     )
-    print()
+    simulated_df = test_sim.generate_case_control()
+    simulated_2 = test_sim.generate_case_control(snr=0.3)
