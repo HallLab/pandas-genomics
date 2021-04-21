@@ -10,15 +10,15 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 
 @pytest.fixture
 def plink_small_20():
-    bed_file = DATA_DIR / "plink" / "plink_test_small.bed"
-    result = io.from_plink(bed_file, max_variants=20)
+    input = DATA_DIR / "plink" / "plink_test_small"
+    result = io.from_plink(input, max_variants=20)
     return result
 
 
 @pytest.fixture
 def plink_small_20_swap():
-    bed_file = DATA_DIR / "plink" / "plink_test_small.bed"
-    result = io.from_plink(bed_file, max_variants=20, swap_alleles=True)
+    input = DATA_DIR / "plink" / "plink_test_small"
+    result = io.from_plink(input, max_variants=20, swap_alleles=True)
     return result
 
 

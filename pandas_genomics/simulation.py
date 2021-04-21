@@ -277,7 +277,9 @@ class BAMS:
         result.columns = ["Outcome", "SNP1", "SNP2"]
 
         # Scramble outcome so cases and controls are mixed
-        result = result.sample(frac=1).reset_index(drop=True)
+        result = result.sample(frac=1, random_state=self.random_seed).reset_index(
+            drop=True
+        )
 
         return result
 

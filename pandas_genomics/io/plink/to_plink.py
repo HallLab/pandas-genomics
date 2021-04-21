@@ -10,7 +10,10 @@ from pandas_genomics.arrays import GenotypeDtype
 def to_plink(
     data: pd.DataFrame,
     output: str,
-    phenotype: Optional[str] = None,
+    phenotype_name: Optional[str] = None,
+    phenotype_case: Optional[str] = None,
+    phenotype_control: Optional[str] = None,
+    id_prefix: str = "sample",
 ):
     """
     Save genetic data to plink v1 files (.bed, .bim, and .fam)
@@ -21,31 +24,46 @@ def to_plink(
         DataFrame containing GenotypeArrays to be saved.
     output: str
         Name to use for the output .bed, .bim, and .fam files
-    phenotype: str, default None
+    phenotype_name: str, default None
         Optional column in `data` to be saved as the phenotype value in the .fam file.
+    phenotype_case, phenotype_control
+        String values indicating the category to be used as "case" or "control" for binary phenotypes.
+        If provided, the phenotype must be categorical.
+        If not provided, the phenotype is not encoded at all (assumed to be quantitative).
+    id_prefix:
+        If the data index is an integer index, this prefix will be added to generate IDs.
 
     Notes
     -----
     If the data index has the required columns (FID, IID, IID_father, IID_mother, sex, phenotype) the fam file will
       be created based on the index.
     If a phenotype name is provided, this will override any phenotype information in the index.
-    If the data has a single index column this will be used for IID and defaults will be used for other .fam data
+    If the data has a single index column this will be used (with the prefix) for FID and IID.  Defaults will be used for other .fam data
 
     """
-    save_fam(data, phenotype, output + ".fam")
+    save_fam(
+        data,
+        output + ".fam",
+        phenotype_name,
+        phenotype_case,
+        phenotype_control,
+        id_prefix,
+    )
     save_bim(data, output + ".bim")
     save_bed(data, output + ".bed")
 
 
-def save_fam(data, phenotype, output_fam):
+def save_fam(
+    data, output_fam, phenotype_name, phenotype_case, phenotype_control, id_prefix
+):
     # Validate phenotype, if provided
-    if phenotype is not None:
-        if phenotype not in data.columns:
-            raise ValueError(f"The phenotype ({phenotype}) was not found in the data")
-        elif not is_numeric_dtype(data[phenotype]):
-            raise ValueError("Only numeric phenotypes are allowed in .fam files.")
+    if phenotype_name is not None:
+        if phenotype_name not in data.columns:
+            raise ValueError(
+                f"The phenotype ({phenotype_name}) was not found in the data"
+            )
         else:
-            phenotype = data["phenotype"]
+            phenotype_data = data[phenotype_name]
 
     # Check for full plink-style index, or create one
     if data.index.names == [
@@ -62,29 +80,37 @@ def save_fam(data, phenotype, output_fam):
             {"male": 1, "female": 2, "unknown": 0}, inplace=True
         )
         # Update phenotype if provided
-        if phenotype is not None:
-            fam_data["phenotype"] = phenotype
+        if phenotype_name is not None:
+            fam_data["phenotype"] = phenotype_data
     elif len(data.index.names) == 1:
-        if 0 in data.index:
-            raise ValueError(
-                "Can't use the index for .fam file IID because it contains '0'"
-            )
+        ids = pd.Series(data.index.values).apply(lambda i: f"{id_prefix}{i}")
         fam_data = pd.DataFrame.from_dict(
             {
-                "FID": data.index,
-                "IID": data.index,
-                "IID_father": np.zeros(len(data)),
-                "IID_mother": np.zeros(len(data)),
-                "sex": np.zeros(len(data)),
+                "FID": ids,
+                "IID": ids,
+                "IID_father": np.zeros(len(data)).astype(int),
+                "IID_mother": np.zeros(len(data)).astype(int),
+                "sex": np.zeros(len(data)).astype(int),
             }
         )
-        if phenotype is None:
+        if phenotype_name is None:
             fam_data["phenotype"] = np.ones(len(data)) * -9  # -9 is missing
         else:
-            fam_data["phenotype"] = phenotype
+            fam_data["phenotype"] = phenotype_data
     else:
         raise ValueError(
             "The data index must contain all 6 .fam file columns, or a single column"
+        )
+
+    # Optionally Encode phenotype
+    if (phenotype_control is not None) and (phenotype_case is not None):
+        if fam_data["phenotype"].dtype.name != "category":
+            raise ValueError(
+                "The phenotype must be categorical to utilize 'phenotype_control' and 'phenotype_case' parameters"
+            )
+        pheno_dict = {phenotype_control: 1, phenotype_case: 2}
+        fam_data["phenotype"].cat.rename_categories(
+            lambda c: pheno_dict.get(c, 0), inplace=True
         )
 
     fam_data.to_csv(output_fam, sep=" ", header=False, index=False)
