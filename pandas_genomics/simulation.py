@@ -270,8 +270,9 @@ class BAMS:
         snp2 = pd.concat([snp2_case_array, snp2_control_array]).reset_index(drop=True)
 
         # Generate outcome
-        outcome = pd.Series(["Case"] * n_cases + ["Control"] * n_controls)\
-                    .astype("category")
+        outcome = pd.Series(["Case"] * n_cases + ["Control"] * n_controls).astype(
+            "category"
+        )
         result = pd.concat([outcome, snp1, snp2], axis=1)
         result.columns = ["Outcome", "SNP1", "SNP2"]
 
@@ -319,7 +320,7 @@ class BAMS:
         if snr is not None:
             sigma = self._calculate_sigma(pen_table, prob_gt)
             # Scale the penetrance by the amount of unexplained variance
-            pen_table = pen_table / (sigma*snr)
+            pen_table = pen_table / (sigma * snr)
 
         # Generate genotypes
         gt_table_idxs = np.random.choice(range(9), size=n_samples, p=prob_gt.flatten())
@@ -382,7 +383,9 @@ class BAMS:
             ((0, 1), np.nan),
             ((1, 1), np.nan),
         )
-        data = np.array([gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type)
+        data = np.array(
+            [gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type
+        )
         return GenotypeArray(values=data, dtype=dtype)
 
     def _get_snp2_gt_array(self, gt_table_idxs):
@@ -399,5 +402,7 @@ class BAMS:
             ((1, 1), np.nan),
             ((1, 1), np.nan),
         )
-        data = np.array([gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type)
+        data = np.array(
+            [gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type
+        )
         return GenotypeArray(values=data, dtype=dtype)

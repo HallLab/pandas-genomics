@@ -9,11 +9,12 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
 # TODO: Check genotypes in plink and double-check that the results are correct
 
 
-def test_loaded_small():
+def test_small():
     """Validate the small dataset"""
     bed_file = DATA_DIR / "plink_test_small.bed"
     result = io.from_plink(bed_file)
     assert result.shape == (150, 3020)
+    io.to_plink(result, "plink_test_small_output")
 
 
 @pytest.mark.slow
