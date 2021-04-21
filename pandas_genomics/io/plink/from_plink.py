@@ -3,8 +3,8 @@ from typing import Optional
 
 import pandas as pd
 import numpy as np
-from ..arrays import GenotypeDtype, GenotypeArray
-from ..scalars import Variant, MISSING_IDX
+from ...arrays import GenotypeDtype, GenotypeArray
+from ...scalars import Variant, MISSING_IDX
 
 
 def from_plink(
