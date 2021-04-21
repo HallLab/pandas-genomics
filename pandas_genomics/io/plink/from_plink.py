@@ -8,7 +8,7 @@ from ...scalars import Variant, MISSING_IDX
 
 
 def from_plink(
-    bed_file: str, swap_alleles: bool = False, max_variants: Optional[int] = None
+    bed_file: str, swap_alleles: bool = False, max_variants: Optional[int] = None, categorical_phenotype: bool = True
 ):
     """
     Load genetic data from plink v1 files (.bed, .bim, and .fam) into a DataFrame.
@@ -22,6 +22,9 @@ def from_plink(
         If True, "allele1" (usually minor) is considered the "reference" allele.
     max_variants: Optional[int]
         If provided, only load this number of variants
+    categorical_phenotype: bool, True by default
+        If True, the phenotype is encoded as a categorical when loaded (1 = "Control", 2 = "Case", otherwise missing.
+        If False, load values directly.
 
     Returns
     -------
@@ -53,7 +56,7 @@ def from_plink(
     print(f"Loading genetic data from '{bed_file.stem}'")
 
     # Load fam file
-    df = load_sample_info(fam_file)
+    df = load_sample_info(fam_file, categorical_phenotype)
     # Lod bim file
     variant_list = load_variant_info(bim_file, max_variants)  # Load bed file
     gt_array_dict = load_genotypes(
@@ -67,14 +70,18 @@ def from_plink(
     return df
 
 
-def load_sample_info(fam_file):
+def load_sample_info(fam_file, categorical_phenotype):
     """Load fam file (PLINK sample information file) into a df"""
     df = pd.read_table(fam_file, header=None, sep=" ")
     df.columns = ["FID", "IID", "IID_father", "IID_mother", "sex", "phenotype"]
     # Update 'sex'
     df["sex"] = df["sex"].astype("category")
     df["sex"] = df["sex"].cat.rename_categories({1: "male", 2: "female", 0: "unknown"})
-    # 'Phenotype' is not encoded because it may be more complicated than just case/control
+    # Encode the phenotype
+    DEFAULT_CAT_MAP = {1: "Control", 2: "Case"}
+    if categorical_phenotype:
+        df["phenotype"] = df["phenotype"].astype("category")
+        df["phenotype"].cat.rename_categories(lambda c: DEFAULT_CAT_MAP.get(c, None), inplace=True)
     print(f"\tLoaded information for {len(df)} samples from '{fam_file.name}'")
     return df
 
