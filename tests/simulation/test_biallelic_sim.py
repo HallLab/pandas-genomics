@@ -1,5 +1,3 @@
-import numpy as np
-
 from pandas_genomics import BAMS, SNPEffectEncodings, PenetranceTables
 
 
@@ -23,5 +21,5 @@ def test():
         main2=1,
         interaction=1,
     )
-    simulated_df = test_sim.generate_case_control()
-    simulated_2 = test_sim.generate_case_control(snr=0.3)
+    simulated_df_cc = test_sim.generate_case_control(snr=0.99)
+    simulated_df_quant = test_sim.generate_quantitative()

@@ -10,11 +10,6 @@ from pandas_genomics.arrays import GenotypeArray, GenotypeDtype
 from pandas_genomics.scalars import Variant
 
 
-# TODO: Penbase/Pendiff
-# TODO: Quant Outcome Sim
-# TODO: SNR
-
-
 class SNPEffectEncodings(Enum):
     """Normalized SNP Effects encoded as 3-length tuples"""
 
@@ -62,8 +57,8 @@ class BAMS:
 
     def __str__(self):
         pen_table_df = pd.DataFrame(self.pen_table)
-        pen_table_df.columns = _get_genotype_strs(self.snp1)
-        pen_table_df.index = _get_genotype_strs(self.snp2)
+        pen_table_df.columns = self._get_genotype_strs(self.snp1)
+        pen_table_df.index = self._get_genotype_strs(self.snp2)
         return (
             f"SNP1 = {str(self.snp1)}\n"
             f"SNP2 = {str(self.snp2)}\n"
@@ -231,27 +226,7 @@ class BAMS:
         prob_gt = np.outer(prob_snp2, prob_snp1)
 
         if snr is not None:
-            # Set up a dataframe with the penetrance table outcome for each SNP combination (Encoded as codominant)
-            cats = ["Ref", "Het", "Hom"]
-            d = pd.DataFrame(
-                {
-                    "SNP1": pd.Categorical(cats * 3, categories=cats, ordered=True),
-                    "SNP2": pd.Categorical(
-                        [i for c in cats for i in [c] * 3],
-                        categories=cats,
-                        ordered=True,
-                    ),
-                },
-                dtype="category",
-            )
-            d["y"] = pen_table.flatten()
-            # Get the weight vec as variance based on genotype probability
-            wt_vec = (prob_gt * (1 - prob_gt)).flatten()
-            # Regress the possible combinations of genotypes against the penetrance table, using the genotype frequency variance as weights
-            y, X = patsy.dmatrices("y ~ 1 + SNP1 + SNP2", data=d)
-            mod = sm.WLS(y, X, weights=wt_vec)
-            res = mod.fit()
-            sigma = np.sqrt(res.scale)  # sigma is sqrt of the dispersion (aka scale)
+            sigma = self._calculate_sigma(pen_table, prob_gt)
             # Scale the penetrance by the amount of unexplained variance
             # Odds Ratio = exp(SNP/Sigma)
             min_p = 1 / (1 + np.exp(1 / sigma * snr))
@@ -284,72 +259,145 @@ class BAMS:
             range(9), size=n_controls, p=prob_gt_given_control.flatten()
         )
 
-        # Create flattened genotype tables for each SNP (snp1 varies by column, snp2 by row
-        gt_data_snp1 = (
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-        )
-        gt_data_snp2 = (
-            ((0, 0), np.nan),
-            ((0, 0), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((0, 1), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((1, 1), np.nan),
-            ((1, 1), np.nan),
-        )
-
         # Create GenotypeArrays
-        snp1_case_array = pd.Series(
-            _get_gt_array(case_gt_table_idxs, gt_data_snp1, self.snp1)
-        )
-        snp2_case_array = pd.Series(
-            _get_gt_array(case_gt_table_idxs, gt_data_snp2, self.snp2)
-        )
-        snp1_control_array = pd.Series(
-            _get_gt_array(control_gt_table_idxs, gt_data_snp1, self.snp1)
-        )
-        snp2_control_array = pd.Series(
-            _get_gt_array(control_gt_table_idxs, gt_data_snp2, self.snp2)
-        )
+        snp1_case_array = pd.Series(self._get_snp1_gt_array(case_gt_table_idxs))
+        snp2_case_array = pd.Series(self._get_snp2_gt_array(case_gt_table_idxs))
+        snp1_control_array = pd.Series(self._get_snp1_gt_array(control_gt_table_idxs))
+        snp2_control_array = pd.Series(self._get_snp2_gt_array(control_gt_table_idxs))
 
         # Merge data together
         snp1 = pd.concat([snp1_case_array, snp1_control_array]).reset_index(drop=True)
         snp2 = pd.concat([snp2_case_array, snp2_control_array]).reset_index(drop=True)
 
         # Generate outcome
-        outcome = pd.Series(["Case"] * n_cases + ["Control"] * n_controls).astype(
-            "category"
-        )
+        outcome = pd.Series(["Case"] * n_cases + ["Control"] * n_controls)\
+                    .astype("category")
         result = pd.concat([outcome, snp1, snp2], axis=1)
         result.columns = ["Outcome", "SNP1", "SNP2"]
 
-        # Scramble outcome
+        # Scramble outcome so cases and controls are mixed
         result = result.sample(frac=1).reset_index(drop=True)
 
         return result
 
+    def generate_quantitative(
+        self,
+        n_samples: int = 1000,
+        maf1: float = 0.30,
+        maf2: float = 0.30,
+        snr: Optional[float] = None,
+    ):
+        """
+        Simulate genotypes with the specified number of 'case' and 'control' phenotypes
 
-def _get_genotype_strs(variant):
-    """Return a list of homozygous-ref, het, and homozygous-alt"""
-    return [
-        f"{variant.ref}{variant.ref}",
-        f"{variant.ref}{variant.alt[0]}",
-        f"{variant.alt[0]}{variant.alt[0]}",
-    ]
+        Parameters
+        ----------
+        n_samples: int, default 1000
+        maf1: float, default 0.30
+            Minor Allele Frequency to use for SNP1
+        maf2: float, default 0.30
+            Minor Allele Frequency to use for SNP2
+        snr: float, default 1.0
+            Signal-to-noise ratio
 
+        Returns
+        -------
+        pd.Dataframe
+            Dataframe with 3 columns: Outcome, SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
-def _get_gt_array(gt_table_idxs, gt_table_data, var):
-    """Assemble a GenotypeArray directly from genotype data"""
-    dtype = GenotypeDtype(var)
-    data = np.array([gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type)
-    return GenotypeArray(values=data, dtype=dtype)
+        """
+        np.random.seed(self.random_seed)
+        pen_table = self.pen_table
+
+        # Create table of Prob(GT) based on MAF, assuming HWE
+        prob_snp1 = np.array([(1 - maf1) ** 2, 2 * maf1 * (1 - maf1), (maf1) ** 2])
+        prob_snp2 = np.array(
+            [(1 - maf2) ** 2, 2 * maf2 * (1 - maf2), (maf2) ** 2]
+        ).transpose()
+        prob_gt = np.outer(prob_snp2, prob_snp1)
+
+        if snr is not None:
+            sigma = self._calculate_sigma(pen_table, prob_gt)
+            # Scale the penetrance by the amount of unexplained variance
+            pen_table = pen_table / (sigma*snr)
+
+        # Generate genotypes
+        gt_table_idxs = np.random.choice(range(9), size=n_samples, p=prob_gt.flatten())
+        snp1_array = pd.Series(self._get_snp1_gt_array(gt_table_idxs))
+        snp2_array = pd.Series(self._get_snp2_gt_array(gt_table_idxs))
+
+        # Calculate outcome
+        outcome = pd.Series(np.take(pen_table.flatten(), gt_table_idxs))
+
+        result = pd.concat([outcome, snp1_array, snp2_array], axis=1)
+        result.columns = ["Outcome", "SNP1", "SNP2"]
+
+        return result
+
+    @staticmethod
+    def _calculate_sigma(pen_table, prob_gt):
+        # Set up a dataframe with the penetrance table outcome for each SNP combination (Encoded as codominant)
+        cats = ["Ref", "Het", "Hom"]
+        d = pd.DataFrame(
+            {
+                "SNP1": pd.Categorical(cats * 3, categories=cats, ordered=True),
+                "SNP2": pd.Categorical(
+                    [i for c in cats for i in [c] * 3],
+                    categories=cats,
+                    ordered=True,
+                ),
+            },
+            dtype="category",
+        )
+        d["y"] = pen_table.flatten()
+        # Get the weight vec as variance based on genotype probability
+        wt_vec = (prob_gt * (1 - prob_gt)).flatten()
+        # Regress the possible combinations of genotypes against the penetrance table, using the genotype frequency variance as weights
+        y, X = patsy.dmatrices("y ~ 1 + SNP1 + SNP2", data=d)
+        mod = sm.WLS(y, X, weights=wt_vec)
+        res = mod.fit()
+        sigma = np.sqrt(res.scale)  # sigma is sqrt of the dispersion (aka scale)
+        return sigma
+
+    @staticmethod
+    def _get_genotype_strs(variant):
+        """Return a list of homozygous-ref, het, and homozygous-alt"""
+        return [
+            f"{variant.ref}{variant.ref}",
+            f"{variant.ref}{variant.alt[0]}",
+            f"{variant.alt[0]}{variant.alt[0]}",
+        ]
+
+    def _get_snp1_gt_array(self, gt_table_idxs):
+        """Assemble a GenotypeArray for SNP1 directly from genotype table indices"""
+        dtype = GenotypeDtype(self.snp1)
+        gt_table_data = (
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+        )
+        data = np.array([gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type)
+        return GenotypeArray(values=data, dtype=dtype)
+
+    def _get_snp2_gt_array(self, gt_table_idxs):
+        """Assemble a GenotypeArray for SNP2 directly from genotype table indices"""
+        dtype = GenotypeDtype(self.snp2)
+        gt_table_data = (
+            ((0, 0), np.nan),
+            ((0, 0), np.nan),
+            ((0, 0), np.nan),
+            ((0, 1), np.nan),
+            ((0, 1), np.nan),
+            ((0, 1), np.nan),
+            ((1, 1), np.nan),
+            ((1, 1), np.nan),
+            ((1, 1), np.nan),
+        )
+        data = np.array([gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type)
+        return GenotypeArray(values=data, dtype=dtype)
