@@ -218,5 +218,5 @@ def data_for_encoding():
 @pytest.fixture
 def genotypearray_df():
     DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
-    bed_file = DATA_DIR / "plink_test_small.bed"
-    return io.from_plink(bed_file, max_variants=20, swap_alleles=True)
+    input = DATA_DIR / "plink_test_small"
+    return io.from_plink(input, max_variants=20, swap_alleles=True)

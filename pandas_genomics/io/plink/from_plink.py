@@ -1,27 +1,33 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import numpy as np
-from ..arrays import GenotypeDtype, GenotypeArray
-from ..scalars import Variant, MISSING_IDX
+from ...arrays import GenotypeDtype, GenotypeArray
+from ...scalars import Variant, MISSING_IDX
 
 
 def from_plink(
-    bed_file: str, swap_alleles: bool = False, max_variants: Optional[int] = None
+    input: Union[str, Path],
+    swap_alleles: bool = False,
+    max_variants: Optional[int] = None,
+    categorical_phenotype: bool = True,
 ):
     """
     Load genetic data from plink v1 files (.bed, .bim, and .fam) into a DataFrame.
 
     Parameters
     ----------
-    bed_file: str or Path
-        PLINK .bed file.  .bim and .fam files with the same name and location must also exist.
+    input: str or Path
+        PLINK sample (no extension):  .bed, .bim and .fam files with the same name and location must exist.
     swap_alleles: bool
         False by default, in which case "allele2" (usually major) in the bim file is considered the "reference" allele.
         If True, "allele1" (usually minor) is considered the "reference" allele.
     max_variants: Optional[int]
         If provided, only load this number of variants
+    categorical_phenotype: bool, True by default
+        If True, the phenotype is encoded as a categorical when loaded (1 = "Control", 2 = "Case", otherwise missing.
+        If False, load values directly.
 
     Returns
     -------
@@ -37,10 +43,10 @@ def from_plink(
     --------
     """
     # All three files are used
-    bed_file = Path(bed_file)
-    name = bed_file.stem
-    bim_file = bed_file.parent / f"{name}.bim"
-    fam_file = bed_file.parent / f"{name}.fam"
+    input = str(input)  # coerce to string in order to add extensions
+    bed_file = Path(input + ".bed")
+    bim_file = Path(input + ".bim")
+    fam_file = Path(input + ".fam")
 
     # Make sure each file exists
     if not Path(bed_file).exists():
@@ -53,7 +59,7 @@ def from_plink(
     print(f"Loading genetic data from '{bed_file.stem}'")
 
     # Load fam file
-    df = load_sample_info(fam_file)
+    df = load_sample_info(fam_file, categorical_phenotype)
     # Lod bim file
     variant_list = load_variant_info(bim_file, max_variants)  # Load bed file
     gt_array_dict = load_genotypes(
@@ -67,14 +73,19 @@ def from_plink(
     return df
 
 
-def load_sample_info(fam_file):
+def load_sample_info(fam_file, categorical_phenotype):
     """Load fam file (PLINK sample information file) into a df"""
     df = pd.read_table(fam_file, header=None, sep=" ")
     df.columns = ["FID", "IID", "IID_father", "IID_mother", "sex", "phenotype"]
     # Update 'sex'
     df["sex"] = df["sex"].astype("category")
     df["sex"] = df["sex"].cat.rename_categories({1: "male", 2: "female", 0: "unknown"})
-    # 'Phenotype' is not encoded because it may be more complicated than just case/control
+    # Encode the phenotype
+    DEFAULT_CAT_MAP = {1: "Control", 2: "Case"}
+    if categorical_phenotype:
+        df["phenotype"] = df["phenotype"].astype("category")
+        df["phenotype"].cat.rename_categories(DEFAULT_CAT_MAP, inplace=True)
+        df.loc[~df["phenotype"].isin(DEFAULT_CAT_MAP.values()), "phenotype"] = None
     print(f"\tLoaded information for {len(df)} samples from '{fam_file.name}'")
     return df
 
@@ -117,8 +128,13 @@ def create_variant(variant_info_row):
         a1 = None
     else:
         a1 = [a1]  # pass as list
+    # Ensure chromosome is None instead of nan
+    if np.isnan(variant_info_row["chromosome"]):
+        chromosome = None
+    else:
+        chromosome = str(variant_info_row["chromosome"])
     variant = Variant(
-        chromosome=str(variant_info_row["chromosome"]),
+        chromosome=chromosome,
         position=int(variant_info_row["coordinate"]),
         id=variant_id,
         ref=a2,

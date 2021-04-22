@@ -1,26 +1,70 @@
 from pathlib import Path
 
 import pytest
+from pandas._testing import assert_frame_equal
 
-from pandas_genomics import io
+from pandas_genomics import io, BAMS
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
 
 # TODO: Check genotypes in plink and double-check that the results are correct
 
 
-def test_loaded_small():
+def test_small():
     """Validate the small dataset"""
-    bed_file = DATA_DIR / "plink_test_small.bed"
-    result = io.from_plink(bed_file)
+    input = DATA_DIR / "plink_test_small"
+    result = io.from_plink(input, categorical_phenotype=True)
     assert result.shape == (150, 3020)
+
+
+def test_round_trip_real(tmp_path):
+    """Load real data, save it, and load it again"""
+    d = tmp_path / "test"
+    d.mkdir()
+    output = str(d / "test")
+    # Load data
+    input = DATA_DIR / "plink_test_small"
+    loaded = io.from_plink(str(input), categorical_phenotype=True, max_variants=100)
+    # Save data
+    io.to_plink(loaded, output)
+    # Reload data
+    reloaded = io.from_plink(str(output), categorical_phenotype=True)
+    # Compare
+    assert_frame_equal(
+        loaded.reset_index(), reloaded.reset_index(), check_categorical=False
+    )
+
+
+def test_round_trip_sim(tmp_path):
+    """Simulate data, save it, and load it again"""
+    d = tmp_path / "test"
+    d.mkdir()
+    output = str(d / "test")
+    data = BAMS().generate_case_control()
+    io.to_plink(
+        data,
+        output,
+        phenotype_name="Outcome",
+        phenotype_case="Case",
+        phenotype_control="Control",
+    )
+    # Load data and reset index to extract phenotype and get original data format back
+    loaded_data = (
+        io.from_plink(output, categorical_phenotype=True)
+        .reset_index(level=-1)
+        .reset_index(drop=True)
+    )
+    loaded_data.columns = data.columns  # Correct column names
+    assert_frame_equal(
+        data, loaded_data, check_categorical=False
+    )  # Categorical order may be different
 
 
 @pytest.mark.slow
 def test_loaded_medium():
     """Validate the medium dataset"""
-    bed_file = DATA_DIR / "plink_test_medium.bed"
-    result = io.from_plink(bed_file)
+    input = DATA_DIR / "plink_test_medium"
+    result = io.from_plink(input)
     assert result.shape == (600, 45100)
 
 
