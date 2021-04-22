@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pandas._testing import assert_frame_equal
 
-from pandas_genomics import io, BAMS
+from pandas_genomics import io, sim
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
 
@@ -40,7 +40,7 @@ def test_round_trip_sim(tmp_path):
     d = tmp_path / "test"
     d.mkdir()
     output = str(d / "test")
-    data = BAMS().generate_case_control()
+    data = sim.BAMS().generate_case_control()
     io.to_plink(
         data,
         output,

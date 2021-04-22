@@ -3,10 +3,16 @@ try:
 except ModuleNotFoundError:
     import importlib_metadata
 
-from . import arrays, io, scalars
+from . import arrays, io, scalars, sim
 from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
-from .simulation import BAMS, SNPEffectEncodings, PenetranceTables
 
 __version__ = importlib_metadata.version(__name__)
 
-__all__ = [__version__, GenotypeSeriesAccessor, GenotypeDataframeAccessor, io, scalars]
+__all__ = [
+    __version__,
+    GenotypeSeriesAccessor,
+    GenotypeDataframeAccessor,
+    io,
+    scalars,
+    sim,
+]

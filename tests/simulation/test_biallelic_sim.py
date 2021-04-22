@@ -1,6 +1,6 @@
 from pandas._testing import assert_frame_equal
 
-from pandas_genomics import BAMS, SNPEffectEncodings, PenetranceTables
+from pandas_genomics.sim import BAMS, SNPEffectEncodings, PenetranceTables
 
 
 def assert_frame_not_equal(*args, **kwargs):
