@@ -41,6 +41,7 @@ def to_plink(
     If the data has a single index column this will be used (with the prefix) for FID and IID.  Defaults will be used for other .fam data
 
     """
+    print(f"Saving genotype data to {output}")
     save_fam(
         data,
         output + ".fam",
@@ -114,6 +115,7 @@ def save_fam(
         )
 
     fam_data.to_csv(output_fam, sep=" ", header=False, index=False)
+    print(f"\tSaved information for {len(fam_data)} samples to {output_fam}")
 
 
 def save_bim(data, output_bim):
@@ -140,6 +142,7 @@ def save_bim(data, output_bim):
     ]
     bim_data = pd.DataFrame(var_dicts)
     bim_data.to_csv(output_bim, sep="\t", header=False, index=False)
+    print(f"\tSaved information for {len(bim_data)} variants to {output_bim}")
 
 
 def save_bed(data, output_bed):
@@ -158,6 +161,7 @@ def save_bed(data, output_bed):
     bytes = np.concatenate([CORRECT_FIRST_BYTES, bytes])
     # Write to file
     bytes.tofile(output_bed)
+    print(f"\tSaved genotypes to {output_bed}")
 
 
 def gt_array_to_plink_bits(gt_series):
