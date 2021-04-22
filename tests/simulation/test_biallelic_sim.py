@@ -1,4 +1,17 @@
+from pandas._testing import assert_frame_equal
+
 from pandas_genomics import BAMS, SNPEffectEncodings, PenetranceTables
+
+
+def assert_frame_not_equal(*args, **kwargs):
+    try:
+        assert_frame_equal(*args, **kwargs)
+    except AssertionError:
+        # frames are not equal
+        pass
+    else:
+        # frames are equal
+        raise AssertionError
 
 
 def test():
@@ -21,5 +34,14 @@ def test():
         main2=1,
         interaction=1,
     )
-    simulated_df_cc = test_sim.generate_case_control(snr=0.99)
+
+    # Test simulating data using random seeds
+    simulated_df_cc = test_sim.generate_case_control(snr=0.1)
+    simulated_df_cc_2 = test_sim.generate_case_control(snr=0.1)
+    assert_frame_equal(simulated_df_cc, simulated_df_cc_2)
+    test_sim.set_random_seed(123)
+    simulated_df_cc_3 = test_sim.generate_case_control(snr=0.1)
+    assert_frame_not_equal(simulated_df_cc_2, simulated_df_cc_3)
+
+    # Test quantitative sim
     simulated_df_quant = test_sim.generate_quantitative()

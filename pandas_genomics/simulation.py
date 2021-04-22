@@ -53,7 +53,7 @@ class BAMS:
         self.pen_table = pen_table
         self.snp1 = snp1
         self.snp2 = snp2
-        self.random_seed = random_seed
+        self._random_seed = random_seed
 
     def __str__(self):
         pen_table_df = pd.DataFrame(self.pen_table)
@@ -66,7 +66,7 @@ class BAMS:
             f"----------------\n"
             f"{pen_table_df}\n"
             f"----------------\n"
-            f"Random Seed = {self.random_seed}"
+            f"Random Seed = {self._random_seed}"
         )
 
     def __eq__(self, other):
@@ -77,8 +77,15 @@ class BAMS:
                 (self.pen_table == other.pen_table).all()
                 & (self.snp1 == other.snp1)
                 & (self.snp2 == other.snp2)
-                & (self.random_seed == other.random_seed)
+                & (self._random_seed == other._random_seed)
             )
+
+    @property
+    def random_seed(self) -> int:
+        return self._random_seed
+
+    def set_random_seed(self, new_seed: int):
+        self._random_seed = new_seed
 
     @staticmethod
     def _validate_params(pen_table, snp1, snp2):
@@ -204,7 +211,7 @@ class BAMS:
             Dataframe with 3 columns: Outcome (categorical), SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
         """
-        np.random.seed(self.random_seed)
+        np.random.seed(self._random_seed)
         # Validate params
         if n_cases < 1 or n_controls < 0:
             raise ValueError(
@@ -277,7 +284,7 @@ class BAMS:
         result.columns = ["Outcome", "SNP1", "SNP2"]
 
         # Scramble outcome so cases and controls are mixed
-        result = result.sample(frac=1, random_state=self.random_seed).reset_index(
+        result = result.sample(frac=1, random_state=self._random_seed).reset_index(
             drop=True
         )
 
@@ -309,7 +316,7 @@ class BAMS:
             Dataframe with 3 columns: Outcome, SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
         """
-        np.random.seed(self.random_seed)
+        np.random.seed(self._random_seed)
         pen_table = self.pen_table
 
         # Create table of Prob(GT) based on MAF, assuming HWE
