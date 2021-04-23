@@ -223,7 +223,9 @@ class BAMS:
         if (pen_table.min() != 0) or (pen_table.max() != 1):
             pen_table_min = pen_table.min()
             pen_table_range = pen_table.max() - pen_table_min
-            pen_table = (pen_table - pen_table_min) / pen_table_range
+            if pen_table_range > 0:
+                pen_table = (pen_table - pen_table_min) / pen_table_range
+                # Otherwise the penetrance table is flat, i.e. a null model
 
         # Create table of Prob(GT) based on MAF, assuming HWE
         prob_snp1 = np.array([(1 - maf1) ** 2, 2 * maf1 * (1 - maf1), (maf1) ** 2])

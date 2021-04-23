@@ -45,3 +45,11 @@ def test():
 
     # Test quantitative sim
     simulated_df_quant = test_sim.generate_quantitative()
+
+
+def test_null():
+    bas = BAMS(PenetranceTables.NULL)
+    simulated = bas.generate_case_control(10000, 1000, 0.1, 0.1)
+    # maf should be similar to the specified one despite a large fraction of cases
+    # specifically assert it is within 5%
+    assert abs(0.1 - simulated["SNP1"].genomics.maf) / 0.1 < 0.05
