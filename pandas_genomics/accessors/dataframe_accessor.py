@@ -46,6 +46,15 @@ class GenotypeDataframeAccessor:
             {col: self._obj[col].genomics.maf for col in self._obj.columns}
         )
 
+    @property
+    def hwe_pval(self):
+        """Return the probability that the samples are in HWE
+
+        See :py:attr:`GenotypeArray.hwe_pval`"""
+        return pd.Series(
+            {col: self._obj[col].genomics.hwe_pval for col in self._obj.columns}
+        )
+
     ############
     # Encoding #
     ############

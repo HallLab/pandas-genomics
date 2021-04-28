@@ -63,6 +63,17 @@ class GenotypeSeriesAccessor:
         See :py:attr:`GenotypeArray.maf`"""
         return self._array.maf
 
+    #########################
+    # Calculated Properties #
+    #########################
+    @property
+    def hwe_pval(self):
+        """Return the probability that the samples are in HWE
+
+        See :py:attr:`GenotypeArray.hwe_pval`"""
+        return self._array.hwe_pval
+
+
     ####################
     # In-place methods #
     ####################

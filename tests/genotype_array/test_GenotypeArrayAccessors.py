@@ -28,6 +28,10 @@ def test_maf(data):
     assert_series_equal(df.genomics.maf, expected)
 
 
+def test_hwe(data):
+    assert pd.Series(data).genomics.hwe_pval == data.hwe_pval
+
+
 @pytest.mark.parametrize(
     "filter_value, num_vars_left", [(None, 15), (0.05, 1), (0.10, 0)]
 )
