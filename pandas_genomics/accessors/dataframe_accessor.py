@@ -117,16 +117,24 @@ class GenotypeDataframeAccessor:
     ###########
     # Filters #
     ###########
-    def filter_maf(self, keep_min_freq: Optional[float] = None) -> pd.DataFrame:
+    def filter_variants_maf(self, keep_min_freq: float = 0.01) -> pd.DataFrame:
         """
         Drop variants with a MAF less than the specified value (0.01 by default)
         """
-        if keep_min_freq is None:
-            keep_min_freq = 0.01
         return self._obj.drop(
             columns=[
                 c
                 for c in self._obj.columns
                 if self._obj[c].genomics.maf < keep_min_freq
+            ]
+        )
+
+    def filter_variants_hwe(self, cutoff: float = 0.05) -> pd.DataFrame:
+        """
+        Drop variants with a probability of HWE less than the specified value (0.05 by default)
+        """
+        return self._obj.drop(
+            columns=[
+                c for c in self._obj.columns if self._obj[c].genomics.hwe_pval < cutoff
             ]
         )

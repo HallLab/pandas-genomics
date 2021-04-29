@@ -73,7 +73,6 @@ class GenotypeSeriesAccessor:
         See :py:attr:`GenotypeArray.hwe_pval`"""
         return self._array.hwe_pval
 
-
     ####################
     # In-place methods #
     ####################

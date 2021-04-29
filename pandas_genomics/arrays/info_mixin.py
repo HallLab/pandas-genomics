@@ -1,5 +1,8 @@
+from itertools import combinations_with_replacement
+
 import numpy as np
 import pandas as pd
+from scipy.stats import chisquare
 
 from pandas_genomics.scalars import MISSING_IDX
 
@@ -44,6 +47,7 @@ class InfoMixin:
 
         Generate expected counts using the allele frequencies and perform a chi-square test.
         Ignore any samples with missing alleles.
+        Uses a typical number of degrees of freedom (the number of observed genotypes minus 1)
         """
         # Only calculate for diploid, otherwise the math is a lot more complicated.
         # Potentially support this in the future
@@ -58,7 +62,7 @@ class InfoMixin:
         # Get allele counts and frequency
         allele_counts = np.bincount(nonmissing_aidxs.flatten())
         total_gt = len(nonmissing_aidxs)
-        total_alleles =  total_gt * 2
+        total_alleles = total_gt * 2
         if len(allele_counts) == 1:
             return 1.0  # All Reference
         if total_gt < 2:
@@ -66,17 +70,17 @@ class InfoMixin:
         allele_freqs = allele_counts / (total_alleles)
 
         # Chisq test
-        # dof = n of genotypes - n of alleles
-        dof = len(allele_freqs)*(len(allele_freqs)+1)/2 - len(allele_freqs)
-        chisq = 0
-        for a1, a1_freq in enumerate(allele_freqs):
-            # Homozygous a1
-            expected = a1_freq * a1_freq * total_alleles
-            observed = (nonmissing_aidxs == (a1, a1)).sum()
-            chisq += (observed-expected)**2 / expected
-            for a2, a2_freq in enumerate(allele_freqs[a1:]):
-                # Heterozygous
-                expected = a1_freq * a2_freq * total_alleles
-                observed = ((nonmissing_aidxs == (a1, a2)) | (nonmissing_aidxs == (a1, a2))).sum()
-                chisq += (observed - expected) ** 2 / expected
-        print()
+        expected = []
+        observed = []
+        for a1, a2 in combinations_with_replacement(range(len(allele_freqs)), 2):
+            a1_freq = allele_freqs[a1]
+            a2_freq = allele_freqs[a2]
+            expected.append(a1_freq * a2_freq * total_alleles)
+            observed.append(
+                (
+                    (nonmissing_aidxs == (a1, a2)).all(axis=1)
+                    | (nonmissing_aidxs == (a1, a2)).all(axis=1)
+                ).sum()
+            )
+        chi, pval = chisquare(observed, expected)
+        return pval
