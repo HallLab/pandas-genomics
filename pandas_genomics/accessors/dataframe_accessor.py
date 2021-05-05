@@ -15,7 +15,7 @@ class GenotypeDataframeAccessor:
         for colname in pandas_obj.columns:
             if not GenotypeDtype.is_dtype(pandas_obj[colname].values.dtype):
                 raise AttributeError(
-                    f"Incompatible datatype: column {colname}  is '{pandas_obj[colname].dtype}',"
+                    f"Incompatible datatype: column {colname}  is '{pandas_obj[colname].values.dtype}',"
                     f" but must be a GenotypeDtype"
                 )
         self._obj = pandas_obj
