@@ -12,12 +12,13 @@ class GenotypeDataframeAccessor:
     """
 
     def __init__(self, pandas_obj):
-        for colname in pandas_obj.columns:
-            if not GenotypeDtype.is_dtype(pandas_obj[colname].values.dtype):
-                raise AttributeError(
-                    f"Incompatible datatype: column {colname}  is '{pandas_obj[colname].values.dtype}',"
-                    f" but must be a GenotypeDtype"
-                )
+        if not pandas_obj.dtypes.apply(lambda dt: GenotypeDtype.is_dtype(dt)).all():
+            incorrect = pandas_obj.dtypes[
+                ~pandas_obj.dtypes.apply(lambda dt: GenotypeDtype.is_dtype(dt))
+            ]
+            raise AttributeError(
+                f"Incompatible datatypes: all columns must be a GenotypeDtype: {incorrect}"
+            )
         self._obj = pandas_obj
 
     ######################
@@ -28,8 +29,8 @@ class GenotypeDataframeAccessor:
         """Return a DataFrame with variant info indexed by the column name"""
         return pd.DataFrame.from_dict(
             {
-                colname: self._obj[colname].genomics.variant_info
-                for colname in self._obj.columns
+                colname: series.genomics.variant_info
+                for colname, series in self._obj.iteritems()
             },
             orient="index",
         )
@@ -42,18 +43,14 @@ class GenotypeDataframeAccessor:
         """Return the minor allele frequency
 
         See :py:attr:`GenotypeArray.maf`"""
-        return pd.Series(
-            {col: self._obj[col].genomics.maf for col in self._obj.columns}
-        )
+        return self._obj.apply(lambda col: col.genomics.maf)
 
     @property
     def hwe_pval(self):
         """Return the probability that the samples are in HWE
 
         See :py:attr:`GenotypeArray.hwe_pval`"""
-        return pd.Series(
-            {col: self._obj[col].genomics.hwe_pval for col in self._obj.columns}
-        )
+        return self._obj.apply(lambda col: col.genomics.hwe_pval)
 
     ############
     # Encoding #
@@ -67,10 +64,7 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return pd.concat(
-            [self._obj[col].genomics.encode_additive() for col in self._obj.columns],
-            axis=1,
-        )
+        return self._obj.apply(lambda col: col.genomics.encode_additive())
 
     def encode_dominant(self) -> pd.DataFrame:
         """Dominant encoding of genotypes.
@@ -81,10 +75,7 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return pd.concat(
-            [self._obj[col].genomics.encode_dominant() for col in self._obj.columns],
-            axis=1,
-        )
+        return self._obj.apply(lambda col: col.genomics.encode_dominant())
 
     def encode_recessive(self) -> pd.DataFrame:
         """Recessive encoding of genotypes.
@@ -95,10 +86,7 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return pd.concat(
-            [self._obj[col].genomics.encode_recessive() for col in self._obj.columns],
-            axis=1,
-        )
+        return self._obj.apply(lambda col: col.genomics.encode_recessive())
 
     def encode_codominant(self) -> pd.DataFrame:
         """Codominant encoding of genotypes.
@@ -109,10 +97,7 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return pd.concat(
-            [self._obj[col].genomics.encode_codominant() for col in self._obj.columns],
-            axis=1,
-        )
+        return self._obj.apply(lambda col: col.genomics.encode_codominant())
 
     ###########
     # Filters #
@@ -121,20 +106,10 @@ class GenotypeDataframeAccessor:
         """
         Drop variants with a MAF less than the specified value (0.01 by default)
         """
-        return self._obj.drop(
-            columns=[
-                c
-                for c in self._obj.columns
-                if self._obj[c].genomics.maf < keep_min_freq
-            ]
-        )
+        return self._obj.loc[:, self._obj.genomics.maf >= keep_min_freq]
 
     def filter_variants_hwe(self, cutoff: float = 0.05) -> pd.DataFrame:
         """
         Drop variants with a probability of HWE less than the specified value (0.05 by default)
         """
-        return self._obj.drop(
-            columns=[
-                c for c in self._obj.columns if self._obj[c].genomics.hwe_pval < cutoff
-            ]
-        )
+        return self._obj.loc[:, self._obj.genomics.hwe_pval >= cutoff]
