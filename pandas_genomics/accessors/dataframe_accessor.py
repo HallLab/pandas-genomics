@@ -64,7 +64,9 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return self._obj.apply(lambda col: col.genomics.encode_additive())
+        return pd.concat(
+            [s.genomics.encode_additive() for _, s in self._obj.iteritems()], axis=1
+        )
 
     def encode_dominant(self) -> pd.DataFrame:
         """Dominant encoding of genotypes.
@@ -75,7 +77,9 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return self._obj.apply(lambda col: col.genomics.encode_dominant())
+        return pd.concat(
+            [s.genomics.encode_dominant() for _, s in self._obj.iteritems()], axis=1
+        )
 
     def encode_recessive(self) -> pd.DataFrame:
         """Recessive encoding of genotypes.
@@ -86,7 +90,9 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return self._obj.apply(lambda col: col.genomics.encode_recessive())
+        return pd.concat(
+            [s.genomics.encode_recessive() for _, s in self._obj.iteritems()], axis=1
+        )
 
     def encode_codominant(self) -> pd.DataFrame:
         """Codominant encoding of genotypes.
@@ -97,7 +103,9 @@ class GenotypeDataframeAccessor:
         -------
         pd.DataFrame
         """
-        return self._obj.apply(lambda col: col.genomics.encode_codominant())
+        return pd.concat(
+            [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
+        )
 
     ###########
     # Filters #
