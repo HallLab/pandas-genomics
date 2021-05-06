@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from pandas_genomics.arrays import GenotypeDtype
@@ -118,6 +119,11 @@ class GenotypeDataframeAccessor:
 
     def filter_variants_hwe(self, cutoff: float = 0.05) -> pd.DataFrame:
         """
-        Drop variants with a probability of HWE less than the specified value (0.05 by default)
+        Drop variants with a probability of HWE less than the specified value (0.05 by default).
+        Keep np.nan results, which occur for non-diploid variants and insufficient sample sizes
         """
-        return self._obj.loc[:, self._obj.genomics.hwe_pval >= cutoff]
+        return self._obj.loc[
+            :,
+            (self._obj.genomics.hwe_pval >= cutoff)
+            | (np.isnan(self._obj.genomics.hwe_pval)),
+        ]

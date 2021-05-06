@@ -44,11 +44,12 @@ def test_filter_maf(genotypearray_df, filter_value, num_vars_left):
 
 
 @pytest.mark.parametrize(
-    "filter_value, num_vars_left", [(None, 1), (0.04, 1), (1e-18, 17)]
+    "filter_value, num_vars_left", [(None, 1), (0.05, 1), (1e-300, 2)]
 )
-def test_filter_hwe(genotypearray_df, filter_value, num_vars_left):
+def test_filter_hwe(ga_inhwe, ga_nothwe, filter_value, num_vars_left):
+    data = pd.DataFrame({"yes": ga_inhwe, "no": ga_nothwe})
     if filter_value is None:
-        result = genotypearray_df.genomics.filter_variants_hwe()
+        result = data.genomics.filter_variants_hwe()
     else:
-        result = genotypearray_df.genomics.filter_variants_hwe(filter_value)
+        result = data.genomics.filter_variants_hwe(filter_value)
     assert len(result.columns) == num_vars_left
