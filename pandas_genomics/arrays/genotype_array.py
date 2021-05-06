@@ -667,20 +667,23 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
     # ----------
     def _get_alleles_for_ops(self, other):
         """
-        Get the scalar allele values (Genotype)
+        Get the scalar allele values (Genotype or str)
                 or arrays of allele values (GenotypeArray)
                 or None (NotImplemented)
         """
         if isinstance(other, Genotype) or isinstance(other, GenotypeArray):
             # Get scalar values for alleles
             allele_idxs = other.allele_idxs
+            # Ensure the comparison is using the same variant
+            if self.variant != other.variant:
+                return None
+        elif type(other) == str:
+            allele_idxs = tuple(
+                self.variant.get_idx_from_allele(a) for a in other.split("/")
+            )
         else:
             return None
-        # Ensure the comparison is using the same variant
-        if self.variant != other.variant:
-            return None
-        else:
-            return allele_idxs
+        return allele_idxs
 
     def __eq__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)

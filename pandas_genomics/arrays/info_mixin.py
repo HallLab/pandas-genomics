@@ -15,7 +15,7 @@ class InfoMixin:
     @property
     def is_missing(self):
         """
-        Get a boolean array indicating which samples are missing
+        Get a boolean array indicating which samples are missing both alleles
         """
         return np.array((self.allele_idxs == (MISSING_IDX, MISSING_IDX)).all(axis=1))
 

@@ -25,6 +25,19 @@ def test_is_missing():
         ]
     )
     assert (ga_ftf.is_missing == np.array([False, True, False])).all()
+    assert (ga_ftf.is_missing == (ga_ftf == "./.")).all()
+
+
+def test_equality():
+    var = Variant("chr1", ref="A", alt="a")
+    ga_AA_Aa_aa = GenotypeArray(
+        [
+            var.make_genotype_from_str("A/A"),
+            var.make_genotype_from_str("A/a"),
+            var.make_genotype_from_str("a/a"),
+        ]
+    )
+    assert ((ga_AA_Aa_aa == "a/a") == np.array([False, False, True])).all()
 
 
 def test_maf():

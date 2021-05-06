@@ -18,7 +18,6 @@ def test_encoding_extra_alt(data):
 
 
 def test_encoding_additive(data_for_encoding):
-    # TODO: dataframe accessor isn't renaming the columns
     # Test arrays directly
     expected = pd.array([0, 1, 2, None], dtype="UInt8")
     result = data_for_encoding.encode_additive()

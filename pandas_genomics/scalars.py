@@ -31,12 +31,16 @@ class Variant:
         None by default
     ref: str, optional
         Reference allele, 'N' by default
-    alt: List[str], optional
-        List of possible alternate alleles, empty list by default
+    alt: List[str] or str, optional
+        One (or a list of) possible alternate alleles, empty list by default
     ploidy: int, optional
         The number of alleles that should be present.  Assumed to be 2 if not specified.
     score: int, optional
         A quality score for the Variant.  No assumptions are made about the meaning.
+
+    Notes
+    -----
+    Missing alleles are shown as `.`, such as `A/.` or `./.`
 
 
     Examples
@@ -52,7 +56,7 @@ class Variant:
         position: int = 0,
         id: Optional[str] = None,
         ref: Optional[str] = "N",
-        alt: Optional[List[str]] = None,
+        alt: Optional[Union[List[str], str]] = None,
         ploidy: Optional[int] = None,
         score: Optional[int] = None,
     ):
@@ -75,6 +79,10 @@ class Variant:
             ref = "N"
         if alt is None:
             alt = []
+        elif type(alt) == str:
+            alt = [
+                alt,
+            ]
         if ref in alt:
             raise ValueError(
                 f"The ref allele ({ref}) was also listed as an alt allele."
@@ -177,7 +185,7 @@ class Variant:
             The integer value for the allele in the variant
 
         """
-        if allele is None:
+        if allele is None or (allele == "."):
             return MISSING_IDX
         else:
             try:
