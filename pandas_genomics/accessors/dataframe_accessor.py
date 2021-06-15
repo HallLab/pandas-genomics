@@ -108,6 +108,48 @@ class GenotypeDataframeAccessor:
             [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
         )
 
+    def encode_weighted(self,
+                        encoding_info: pd.DataFrame) -> pd.DataFrame:
+        """Weighted (edge) encoding of genotypes.
+
+        See :meth:`GenotypeArray.encode_weighted`
+
+        Parameters
+        ----------
+        encoding_info: pd.DataFrame
+            columns:
+                Variant ID - used to match variants
+                Alpha Value - used for heterozygous genotypes
+                Ref Allele - which allele is considered reference
+                Alt Allele - which allele is considered alternate
+                Minor Allele Frequency - MAF of data used during calculation of alpha values
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        # Validate the input DataFrame
+        for required_col in ["Variant ID", "Alpha Value", "Ref Allele", "Alt Allele", "Minor Allele Frequency"]:
+            if required_col not in list(encoding_info):
+                raise ValueError(f"Missing one or more required columns in the encoding info: `{required_col}`")
+        id_counts = encoding_info["Variant ID"].value_counts()
+        if sum(id_counts > 1):
+            raise ValueError(f"Duplicate IDs: {', '.join([v for v in id_counts[id_counts>1].index])}")
+
+        # Convert the encoding info to a dictionary mapped by Variant ID
+        # TODO: HERE
+        encoding_info = encoding_info.set_index("Variant ID").to_dict(orient="rows")
+
+        # Match variant info to the current dataframe, this could likely use some optimization
+        result = dict()
+        for _, row in encoding_info.iterrows():
+            name = "_".join(row['Variant ID', 'Ref Allele', 'Alt Allele'])
+
+
+        return pd.concat(
+            [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
+        )
+
     ###########
     # Filters #
     ###########

@@ -95,3 +95,54 @@ class EncodingMixin:
             ordered=True,
         )
         return result
+
+    def encode_weighted(self,
+                        alpha_value: float,
+                        ref_allele: str,
+                        alt_allele: str,
+                        minor_allele_freq: float) -> pd.DataFrame:
+        """Perform weighted (edge) encoding.
+
+        Parameters
+        ----------
+        alpha_value: float
+            Alpha value to use for heterozygous genotypes
+        ref_allele: str
+            Reference allele when the alpha was calculated
+        alt_allele: str
+            Alternate allele when the alpha was calculated
+        minor_allele_freq: float
+            Minor allele frequency when the alpha was calculated
+
+        Returns
+        -------
+        pd.arrays.IntegerArray
+            1 for Homozygous Alt
+            alpha for Heterozygous Alt
+            0 for Homozygous Ref
+            np.NaN for any other genotype
+
+        Notes
+        -----
+        See [1]_ for more information about weighted encoding.
+        Encoding will be based on the provided ref and alt alleles, since the alpha value would be specific to them.
+        If the existing minor allele frequency differs greatly from the provided value, a warning is issued.
+
+        References
+        ----------
+        .. [1] Hall, Molly A., et al.
+               "Novel EDGE encoding method enhances ability to identify genetic interactions."
+               PLoS genetics 17.6 (2021): e1009534.
+        """
+        # Get ref and alt allele idxes, throwing an error if the allele doesn't exist in the variant
+        ref_allele_idx = self.variant.get_idx_from_allele(ref_allele)
+        alt_allele_idx = self.variant.get_idx_from_allele(alt_allele)
+
+        # TODO: Validate MAF.  Need to determine a reasonable warning threshold.
+
+        encoded_values = pd.array(np.full(len(self), np.nan))
+        encoded_values[(self.allele_idxs == ref_allele_idx).all(axis=1)] = 0.0
+        encoded_values[(self.allele_idxs == alt_allele_idx).all(axis=1)] = 1.0
+        encoded_values[(self.allele_idxs == sorted([ref_allele_idx, alt_allele_idx])).all(axis=1)] = alpha_value
+
+        return encoded_values

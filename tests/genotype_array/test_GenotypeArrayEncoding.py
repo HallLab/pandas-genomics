@@ -1,6 +1,7 @@
 """
 Test GenotypeArray Encoding methods and accessors to those functions
 """
+import copy
 
 import pandas as pd
 import pytest
@@ -89,3 +90,31 @@ def test_encoding_codominant(data_for_encoding):
     expected = pd.concat([result_series] * 3, axis=1)
     result_df = df.genomics.encode_codominant()
     assert_frame_equal(result_df, expected)
+
+
+@pytest.mark.parametrize(
+    "alpha_value,ref_allele,alt_allele,minor_allele_freq,expected",
+    [
+        (0.25, "A", "T", 0.45, pd.array([0.0, 0.25, 1.0, None], dtype="Float64")),
+        (0.25, "T", "A", 0.45, pd.array([1.0, 0.25, 0.0, None], dtype="Float64")),
+        (1.0, "T", "A", 0.45, pd.array([1.0, 1.0, 0.0, None], dtype="Float64")),
+        pytest.param(0.25, "A", "C", 0.45, None,
+                     marks=pytest.mark.xfail(raises=ValueError, strict=True, reason="Wrong Allele"))
+    ],
+)
+def test_encoding_weighted(data_for_encoding, alpha_value, ref_allele, alt_allele, minor_allele_freq, expected):
+    result = data_for_encoding.encode_weighted(alpha_value, ref_allele, alt_allele, minor_allele_freq)
+    assert_extension_array_equal(expected, result)
+
+
+def test_encoding_weighted_df(data_for_encoding):
+    df = pd.DataFrame({name: copy.deepcopy(data_for_encoding) for name in ["Var1", "Var2", "Var3"]})
+    for colname, col in df.iteritems():
+        col.array.variant.id = colname
+    encoding_info = pd.DataFrame({"Variant ID": ["Var1", "Var2", "Var3"],
+                                  "Alpha Value": [0.70, 1.14, 0.21],
+                                  "Ref Allele": ["T", "T", "T"],
+                                  "Alt Allele": ["A", "A", "A"],
+                                  "Minor Allele Frequency": [0.1, 0.1, 0.1]})
+    result = df.genomics.encode_weighted(encoding_info)
+    assert_extension_array_equal(expected, result)

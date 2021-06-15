@@ -155,6 +155,25 @@ class GenotypeSeriesAccessor:
             name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
         )
 
+    def encode_weighted(self,
+                        alpha_value: float,
+                        ref_allele: str,
+                        alt_allele: str,
+                        minor_allele_freq: float) -> pd.Series:
+        """Weighted (edge) encoding of genotypes.
+
+        See :meth:`GenotypeArray.encode_weighted`
+
+        Returns
+        -------
+        pd.Series
+        """
+        return pd.Series(
+            data=self._array.encode_weighted(alpha_value, ref_allele, alt_allele, minor_allele_freq),
+            index=self._index,
+            name=f"{self._array.variant.id}_{alt_allele}",
+        )
+
     ##############
     # QC Methods #
     ##############
