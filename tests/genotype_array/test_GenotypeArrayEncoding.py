@@ -11,6 +11,40 @@ from pandas._testing import (
     assert_frame_equal,
 )
 
+from pandas_genomics import GenotypeArray
+from pandas_genomics.scalars import Variant
+
+
+@pytest.fixture
+def encoding_df():
+    """
+    5 variants, 5 genotypes each:
+      Homozygous Ref
+      Heterozygous
+      Homozygous Alt
+      Missing one allele
+      Missing both alleles
+    """
+    data = dict()
+    for idx, base in enumerate("ABCDE"):
+        var = Variant(
+            chromosome="chr1",
+            position=idx + 1,
+            id=f"rs{idx+1}",
+            ref=base,
+            alt=[base.lower()],
+        )
+        data[f"var{idx}"] = GenotypeArray(
+            [
+                var.make_genotype(base, base),
+                var.make_genotype(base, base.lower()),
+                var.make_genotype(base.lower(), base.lower()),
+                var.make_genotype(base),
+                var.make_genotype(),
+            ]
+        )
+    return pd.DataFrame(data)
+
 
 @pytest.mark.xfail(raises=ValueError)
 def test_encoding_extra_alt(data):
@@ -98,23 +132,76 @@ def test_encoding_codominant(data_for_encoding):
         (0.25, "A", "T", 0.45, pd.array([0.0, 0.25, 1.0, None], dtype="Float64")),
         (0.25, "T", "A", 0.45, pd.array([1.0, 0.25, 0.0, None], dtype="Float64")),
         (1.0, "T", "A", 0.45, pd.array([1.0, 1.0, 0.0, None], dtype="Float64")),
-        pytest.param(0.25, "A", "C", 0.45, None,
-                     marks=pytest.mark.xfail(raises=ValueError, strict=True, reason="Wrong Allele"))
+        pytest.param(
+            0.25,
+            "A",
+            "C",
+            0.45,
+            None,
+            marks=pytest.mark.xfail(
+                raises=ValueError, strict=True, reason="Wrong Allele"
+            ),
+        ),
     ],
 )
-def test_encoding_weighted(data_for_encoding, alpha_value, ref_allele, alt_allele, minor_allele_freq, expected):
-    result = data_for_encoding.encode_weighted(alpha_value, ref_allele, alt_allele, minor_allele_freq)
+def test_encoding_weighted(
+    data_for_encoding, alpha_value, ref_allele, alt_allele, minor_allele_freq, expected
+):
+    result = data_for_encoding.encode_weighted(
+        alpha_value, ref_allele, alt_allele, minor_allele_freq
+    )
     assert_extension_array_equal(expected, result)
 
 
-def test_encoding_weighted_df(data_for_encoding):
-    df = pd.DataFrame({name: copy.deepcopy(data_for_encoding) for name in ["Var1", "Var2", "Var3"]})
-    for colname, col in df.iteritems():
-        col.array.variant.id = colname
-    encoding_info = pd.DataFrame({"Variant ID": ["Var1", "Var2", "Var3"],
-                                  "Alpha Value": [0.70, 1.14, 0.21],
-                                  "Ref Allele": ["T", "T", "T"],
-                                  "Alt Allele": ["A", "A", "A"],
-                                  "Minor Allele Frequency": [0.1, 0.1, 0.1]})
-    result = df.genomics.encode_weighted(encoding_info)
-    assert_extension_array_equal(expected, result)
+@pytest.mark.parametrize(
+    "encoding_info,expected",
+    [
+        # Standard working test
+        (
+            pd.DataFrame(
+                {
+                    "Variant ID": ["rs1", "rs2", "rs3", "rs4", "rs5"],
+                    "Alpha Value": [0.10, 0.20, 0.30, 0.40, 0.50],
+                    "Ref Allele": ["A", "B", "C", "D", "E"],
+                    "Alt Allele": ["a", "b", "c", "d", "e"],
+                    "Minor Allele Frequency": [0.1, 0.1, 0.1, 0.1, 0.1],
+                }
+            ),
+            pd.DataFrame(
+                {
+                    "rs1_a": [0.0, 0.1, 1.0, None, None],
+                    "rs2_b": [0.0, 0.2, 1.0, None, None],
+                    "rs3_c": [0.0, 0.3, 1.0, None, None],
+                    "rs4_d": [0.0, 0.4, 1.0, None, None],
+                    "rs5_e": [0.0, 0.5, 1.0, None, None],
+                },
+                dtype="Float64",
+            ),
+        ),
+        # Missing one variant, swapping one variant, wrong allele one variant
+        (
+            pd.DataFrame(
+                {
+                    "Variant ID": ["rs1", "rs2", "rs4", "rs5"],
+                    "Alpha Value": [0.10, 0.20, 0.40, 0.50],
+                    "Ref Allele": ["A", "B", "D", "e"],
+                    "Alt Allele": ["a", "b", "X", "E"],
+                    "Minor Allele Frequency": [0.1, 0.1, 0.1, 0.1],
+                }
+            ),
+            pd.DataFrame(
+                {
+                    "rs1_a": [0.0, 0.1, 1.0, None, None],
+                    "rs2_b": [0.0, 0.2, 1.0, None, None],
+                    "rs5_E": [1.0, 0.5, 0.0, None, None],
+                },
+                dtype="Float64",
+            ),
+        ),
+    ],
+)
+def test_encoding_weighted_df(encoding_df, encoding_info, expected):
+    print()
+    result = encoding_df.genomics.encode_weighted(encoding_info)
+    print(result)
+    assert_frame_equal(expected, result)

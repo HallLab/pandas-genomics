@@ -108,8 +108,7 @@ class GenotypeDataframeAccessor:
             [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
         )
 
-    def encode_weighted(self,
-                        encoding_info: pd.DataFrame) -> pd.DataFrame:
+    def encode_weighted(self, encoding_info: pd.DataFrame) -> pd.DataFrame:
         """Weighted (edge) encoding of genotypes.
 
         See :meth:`GenotypeArray.encode_weighted`
@@ -129,26 +128,69 @@ class GenotypeDataframeAccessor:
         pd.DataFrame
         """
         # Validate the input DataFrame
-        for required_col in ["Variant ID", "Alpha Value", "Ref Allele", "Alt Allele", "Minor Allele Frequency"]:
+        for required_col in [
+            "Variant ID",
+            "Alpha Value",
+            "Ref Allele",
+            "Alt Allele",
+            "Minor Allele Frequency",
+        ]:
             if required_col not in list(encoding_info):
-                raise ValueError(f"Missing one or more required columns in the encoding info: `{required_col}`")
+                raise ValueError(
+                    f"Missing one or more required columns in the encoding info: `{required_col}`"
+                )
         id_counts = encoding_info["Variant ID"].value_counts()
         if sum(id_counts > 1):
-            raise ValueError(f"Duplicate IDs: {', '.join([v for v in id_counts[id_counts>1].index])}")
+            raise ValueError(
+                f"Duplicate IDs: {', '.join([v for v in id_counts[id_counts>1].index])}"
+            )
 
-        # Convert the encoding info to a dictionary mapped by Variant ID
-        # TODO: HERE
-        encoding_info = encoding_info.set_index("Variant ID").to_dict(orient="rows")
-
-        # Match variant info to the current dataframe, this could likely use some optimization
-        result = dict()
-        for _, row in encoding_info.iterrows():
-            name = "_".join(row['Variant ID', 'Ref Allele', 'Alt Allele'])
-
-
-        return pd.concat(
-            [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
+        # Rename the columns to match parameter names for simplicity
+        encoding_info = encoding_info.rename(
+            columns={
+                "Alpha Value": "alpha_value",
+                "Ref Allele": "ref_allele",
+                "Alt Allele": "alt_allele",
+                "Minor Allele Frequency": "minor_allele_freq",
+            }
         )
+
+        # Convert the encoding info into a Dict("Variant ID" = {param names : param values})
+        encoding_info = {
+            d["Variant ID"]: {k: v for k, v in d.items() if k != "Variant ID"}
+            for d in encoding_info.to_dict(orient="rows")
+        }
+
+        # Log messages for any warnings
+        warnings = dict()
+
+        # Process each variant
+        results = []
+        for _, s in self._obj.iteritems():
+            info = encoding_info.get(s.array.variant.id, None)
+            if info is None:
+                warnings[
+                    s.array.variant.id
+                ] = "No matching information found in the encoding data"
+                continue
+            elif (s.genomics.maf / info["minor_allele_freq"]) > 10e30:
+                # TODO: replace this with a reasonable comparison to the data MAF.  For now it is an always-pass criteria
+                warnings[
+                    s.array.variant.id
+                ] = f"Large MAF Difference: {s.genomics.maf} in sample, {info['minor_allele_freq']} in encoding data"
+                continue
+            else:
+                try:
+                    results.append(s.genomics.encode_weighted(**info))
+                except Exception as e:
+                    warnings[s.array.variant.id] = str(e)
+        # Print Warnings
+        if len(warnings) > 0:
+            print(f"{len(warnings):,} Variables failed encoding")
+            for var, warning in warnings.items():
+                print(f"\t{var}: {warning}")
+        # Concatenate results
+        return pd.concat(results, axis=1)
 
     ###########
     # Filters #

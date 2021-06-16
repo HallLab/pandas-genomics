@@ -96,11 +96,13 @@ class EncodingMixin:
         )
         return result
 
-    def encode_weighted(self,
-                        alpha_value: float,
-                        ref_allele: str,
-                        alt_allele: str,
-                        minor_allele_freq: float) -> pd.DataFrame:
+    def encode_weighted(
+        self,
+        alpha_value: float,
+        ref_allele: str,
+        alt_allele: str,
+        minor_allele_freq: float,
+    ) -> pd.DataFrame:
         """Perform weighted (edge) encoding.
 
         Parameters
@@ -143,6 +145,8 @@ class EncodingMixin:
         encoded_values = pd.array(np.full(len(self), np.nan))
         encoded_values[(self.allele_idxs == ref_allele_idx).all(axis=1)] = 0.0
         encoded_values[(self.allele_idxs == alt_allele_idx).all(axis=1)] = 1.0
-        encoded_values[(self.allele_idxs == sorted([ref_allele_idx, alt_allele_idx])).all(axis=1)] = alpha_value
+        encoded_values[
+            (self.allele_idxs == sorted([ref_allele_idx, alt_allele_idx])).all(axis=1)
+        ] = alpha_value
 
         return encoded_values
