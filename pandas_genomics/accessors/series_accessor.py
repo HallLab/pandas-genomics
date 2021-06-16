@@ -105,9 +105,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_additive(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_additive(), index=self._index, name=self._name
         )
 
     def encode_dominant(self) -> pd.Series:
@@ -120,9 +118,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_dominant(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_dominant(), index=self._index, name=self._name
         )
 
     def encode_recessive(self) -> pd.Series:
@@ -135,9 +131,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_recessive(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_recessive(), index=self._index, name=self._name
         )
 
     def encode_codominant(self) -> pd.Series:
@@ -150,9 +144,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_codominant(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_codominant(), index=self._index, name=self._name
         )
 
     def encode_weighted(
@@ -175,7 +167,7 @@ class GenotypeSeriesAccessor:
                 alpha_value, ref_allele, alt_allele, minor_allele_freq
             ),
             index=self._index,
-            name=f"{self._array.variant.id}_{alt_allele}",
+            name=self._name,
         )
 
     ##############

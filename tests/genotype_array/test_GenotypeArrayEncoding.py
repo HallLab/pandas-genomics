@@ -1,7 +1,6 @@
 """
 Test GenotypeArray Encoding methods and accessors to those functions
 """
-import copy
 
 import pandas as pd
 import pytest
@@ -11,7 +10,8 @@ from pandas._testing import (
     assert_frame_equal,
 )
 
-from pandas_genomics import GenotypeArray
+import numpy as np
+from pandas_genomics import GenotypeArray, generate_weighted_encodings
 from pandas_genomics.scalars import Variant
 
 
@@ -58,14 +58,12 @@ def test_encoding_additive(data_for_encoding):
     result = data_for_encoding.encode_additive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
-    expected = pd.Series(
-        result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
-    )
+    expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding).genomics.encode_additive()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
     df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
-    expected = pd.concat([result_series] * 3, axis=1)
+    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_additive()
     assert_frame_equal(result_df, expected)
 
@@ -76,14 +74,12 @@ def test_encoding_dominant(data_for_encoding):
     result = data_for_encoding.encode_dominant()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
-    expected = pd.Series(
-        result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
-    )
+    expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
     df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
-    expected = pd.concat([result_series] * 3, axis=1)
+    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_dominant()
     assert_frame_equal(result_df, expected)
 
@@ -94,14 +90,12 @@ def test_encoding_recessive(data_for_encoding):
     result = data_for_encoding.encode_recessive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
-    expected = pd.Series(
-        result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
-    )
+    expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
     df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
-    expected = pd.concat([result_series] * 3, axis=1)
+    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_recessive()
     assert_frame_equal(result_df, expected)
 
@@ -114,14 +108,12 @@ def test_encoding_codominant(data_for_encoding):
     result = data_for_encoding.encode_codominant()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
-    expected = pd.Series(
-        result, name=f"{data_for_encoding.variant.id}_{data_for_encoding.variant.alt}"
-    )
+    expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
     df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
-    expected = pd.concat([result_series] * 3, axis=1)
+    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_codominant()
     assert_frame_equal(result_df, expected)
 
@@ -169,11 +161,11 @@ def test_encoding_weighted(
             ),
             pd.DataFrame(
                 {
-                    "rs1_a": [0.0, 0.1, 1.0, None, None],
-                    "rs2_b": [0.0, 0.2, 1.0, None, None],
-                    "rs3_c": [0.0, 0.3, 1.0, None, None],
-                    "rs4_d": [0.0, 0.4, 1.0, None, None],
-                    "rs5_e": [0.0, 0.5, 1.0, None, None],
+                    "var0": [0.0, 0.1, 1.0, None, None],
+                    "var1": [0.0, 0.2, 1.0, None, None],
+                    "var2": [0.0, 0.3, 1.0, None, None],
+                    "var3": [0.0, 0.4, 1.0, None, None],
+                    "var4": [0.0, 0.5, 1.0, None, None],
                 },
                 dtype="Float64",
             ),
@@ -191,9 +183,9 @@ def test_encoding_weighted(
             ),
             pd.DataFrame(
                 {
-                    "rs1_a": [0.0, 0.1, 1.0, None, None],
-                    "rs2_b": [0.0, 0.2, 1.0, None, None],
-                    "rs5_E": [1.0, 0.5, 0.0, None, None],
+                    "var0": [0.0, 0.1, 1.0, None, None],
+                    "var1": [0.0, 0.2, 1.0, None, None],
+                    "var4": [1.0, 0.5, 0.0, None, None],
                 },
                 dtype="Float64",
             ),
@@ -201,7 +193,19 @@ def test_encoding_weighted(
     ],
 )
 def test_encoding_weighted_df(encoding_df, encoding_info, expected):
-    print()
     result = encoding_df.genomics.encode_weighted(encoding_info)
-    print(result)
     assert_frame_equal(expected, result)
+
+
+def test_generated_encodings(genotypearray_df):
+    data = pd.DataFrame(
+        {
+            "outcome": np.random.rand(len(genotypearray_df)),
+            "covar1": np.random.rand(len(genotypearray_df)),
+        },
+        index=genotypearray_df.index,
+    )
+    result = generate_weighted_encodings(
+        genotypearray_df, data, outcome_variable="outcome", covariates=["covar1"]
+    )
+    print()
