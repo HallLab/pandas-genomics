@@ -199,13 +199,11 @@ def test_encoding_weighted_df(encoding_df, encoding_info, expected):
 
 def test_generated_encodings(genotypearray_df):
     data = pd.DataFrame(
-        {
-            "outcome": np.random.rand(len(genotypearray_df)),
-            "covar1": np.random.rand(len(genotypearray_df)),
-        },
+        {"phenotype": genotypearray_df.index.get_level_values("phenotype")},
         index=genotypearray_df.index,
     )
     result = generate_weighted_encodings(
-        genotypearray_df, data, outcome_variable="outcome", covariates=["covar1"]
+        genotypearray_df, data, outcome_variable="phenotype"
     )
+    # TODO: Make better test
     print()
