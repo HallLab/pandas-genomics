@@ -13,6 +13,7 @@ from pandas._testing import (
 import numpy as np
 from pandas_genomics import GenotypeArray, generate_weighted_encodings
 from pandas_genomics.scalars import Variant
+from pandas_genomics.sim import BAMS, SNPEffectEncodings
 
 
 @pytest.fixture
@@ -197,7 +198,7 @@ def test_encoding_weighted_df(encoding_df, encoding_info, expected):
     assert_frame_equal(expected, result)
 
 
-def test_generated_encodings(genotypearray_df):
+def test_generated_encodings_plink(genotypearray_df):
     data = pd.DataFrame(
         {"phenotype": genotypearray_df.index.get_level_values("phenotype")},
         index=genotypearray_df.index,
@@ -205,5 +206,76 @@ def test_generated_encodings(genotypearray_df):
     result = generate_weighted_encodings(
         genotypearray_df, data, outcome_variable="phenotype"
     )
-    # TODO: Make better test
-    print()
+    expected = pd.DataFrame(
+        {
+            "Variant ID": ["nullA_18"],
+            "Alpha Value": [0.0],
+            "Ref Allele": ["D"],
+            "Alt Allele": ["d"],
+            "Minor Allele Frequency": [40 / 3000],
+        }
+    )
+    assert_frame_equal(expected, result)
+
+
+@pytest.mark.parametrize(
+    "bam,expected_alphas",
+    [
+        (
+            BAMS.from_model(
+                SNPEffectEncodings.DOMINANT,
+                SNPEffectEncodings.DOMINANT,
+                main1=1,
+                main2=1,
+                interaction=0,
+            ),
+            [0.884755, 1.292038],
+        ),
+        (
+            BAMS.from_model(
+                SNPEffectEncodings.SUPER_ADDITIVE,
+                SNPEffectEncodings.SUPER_ADDITIVE,
+                main1=1,
+                main2=1,
+                interaction=0,
+            ),
+            [0.504485, 0.757154],
+        ),
+        (
+            BAMS.from_model(
+                SNPEffectEncodings.ADDITIVE,
+                SNPEffectEncodings.ADDITIVE,
+                main1=1,
+                main2=1,
+                interaction=0,
+            ),
+            [0.21231, 0.41846],
+        ),
+        (
+            BAMS.from_model(
+                SNPEffectEncodings.SUB_ADDITIVE,
+                SNPEffectEncodings.SUB_ADDITIVE,
+                main1=1,
+                main2=1,
+                interaction=0,
+            ),
+            [0.091149, 0.163882],
+        ),
+        (
+            BAMS.from_model(
+                SNPEffectEncodings.RECESSIVE,
+                SNPEffectEncodings.RECESSIVE,
+                main1=1,
+                main2=1,
+                interaction=0,
+            ),
+            [-0.332334, -0.252329],
+        ),
+    ],
+)
+def test_generated_encodings_bams(bam, expected_alphas):
+    genotypes = bam.generate_case_control()
+    data = genotypes["Outcome"]
+    genotypes = genotypes.drop(columns="Outcome")
+    result = generate_weighted_encodings(genotypes, data, outcome_variable="Outcome")
+    assert np.isclose(result["Alpha Value"], expected_alphas).all()

@@ -26,7 +26,6 @@ def test():
         main2=0,
         interaction=1,
     )
-    print(bas)
     test_sim = BAMS.from_model(
         SNPEffectEncodings.RECESSIVE,
         SNPEffectEncodings.RECESSIVE,
@@ -36,7 +35,7 @@ def test():
     )
 
     # Test simulating data using random seeds
-    simulated_df_cc = test_sim.generate_case_control(snr=0.1)
+    simulated_df_cc = test_sim.generate_case_control(snr=0.01)
     simulated_df_cc_2 = test_sim.generate_case_control(snr=0.1)
     assert_frame_equal(simulated_df_cc, simulated_df_cc_2)
     test_sim.set_random_seed(123)
@@ -44,6 +43,7 @@ def test():
     assert_frame_not_equal(simulated_df_cc_2, simulated_df_cc_3)
 
     # Test quantitative sim
+    # TODO: Quantitative model is unfinished
     simulated_df_quant = test_sim.generate_quantitative()
 
 

@@ -56,15 +56,24 @@ def generate_weighted_encodings(
         raise ValueError("'covariates' must be specified as a list or set to None")
 
     # Extract specific data
-    try:
-        data = data[
-            [
-                outcome_variable,
+    if isinstance(data, pd.Series):
+        if data.name != outcome_variable:
+            raise ValueError(
+                f"The data is a Series but it's name doesn't match the outcome variable"
+            )
+        data = pd.DataFrame(
+            data
+        )  # Ensure data is a DataFrame from here on for simplicity
+    else:
+        try:
+            data = data[
+                [
+                    outcome_variable,
+                ]
+                + covariates
             ]
-            + covariates
-        ]
-    except KeyError as e:
-        raise ValueError(f"Missing variable in provided data: {e}")
+        except KeyError as e:
+            raise ValueError(f"Missing variable in provided data: {e}")
 
     # Check Types to determine which kind of regression to run
     dtypes = _get_types(data)
