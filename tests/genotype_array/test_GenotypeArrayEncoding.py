@@ -56,14 +56,16 @@ def test_encoding_extra_alt(data):
 def test_encoding_additive(data_for_encoding):
     # Test arrays directly
     expected = pd.array([0, 1, 2, None], dtype="UInt8")
-    result = data_for_encoding.encode_additive()
+    result = data_for_encoding().encode_additive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
-    result_series = pd.Series(data_for_encoding).genomics.encode_additive()
+    result_series = pd.Series(data_for_encoding()).genomics.encode_additive()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
-    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    df = pd.DataFrame.from_dict(
+        {n: data_for_encoding() for n in "ABC"}, orient="columns"
+    )
     expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_additive()
     assert_frame_equal(result_df, expected)
@@ -72,14 +74,16 @@ def test_encoding_additive(data_for_encoding):
 def test_encoding_dominant(data_for_encoding):
     # Test arrays directly
     expected = pd.array([0, 1, 1, None], dtype="UInt8")
-    result = data_for_encoding.encode_dominant()
+    result = data_for_encoding().encode_dominant()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
-    result_series = pd.Series(data_for_encoding).genomics.encode_dominant()
+    result_series = pd.Series(data_for_encoding()).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
-    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    df = pd.DataFrame.from_dict(
+        {n: data_for_encoding() for n in "ABC"}, orient="columns"
+    )
     expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_dominant()
     assert_frame_equal(result_df, expected)
@@ -88,14 +92,16 @@ def test_encoding_dominant(data_for_encoding):
 def test_encoding_recessive(data_for_encoding):
     # Test arrays directly
     expected = pd.array([0, 0, 1, None], dtype="UInt8")
-    result = data_for_encoding.encode_recessive()
+    result = data_for_encoding().encode_recessive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
-    result_series = pd.Series(data_for_encoding).genomics.encode_recessive()
+    result_series = pd.Series(data_for_encoding()).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
-    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    df = pd.DataFrame.from_dict(
+        {n: data_for_encoding() for n in "ABC"}, orient="columns"
+    )
     expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_recessive()
     assert_frame_equal(result_df, expected)
@@ -106,14 +112,16 @@ def test_encoding_codominant(data_for_encoding):
     expected = pd.Categorical(
         ["Ref", "Het", "Hom", None], categories=["Ref", "Het", "Hom"], ordered=True
     )
-    result = data_for_encoding.encode_codominant()
+    result = data_for_encoding().encode_codominant()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
-    result_series = pd.Series(data_for_encoding).genomics.encode_codominant()
+    result_series = pd.Series(data_for_encoding()).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
     # Test using DataFrame accessor
-    df = pd.DataFrame.from_dict({n: data_for_encoding for n in "ABC"}, orient="columns")
+    df = pd.DataFrame.from_dict(
+        {n: data_for_encoding() for n in "ABC"}, orient="columns"
+    )
     expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
     result_df = df.genomics.encode_codominant()
     assert_frame_equal(result_df, expected)
@@ -140,7 +148,7 @@ def test_encoding_codominant(data_for_encoding):
 def test_encoding_weighted(
     data_for_encoding, alpha_value, ref_allele, alt_allele, minor_allele_freq, expected
 ):
-    result = data_for_encoding.encode_weighted(
+    result = data_for_encoding().encode_weighted(
         alpha_value, ref_allele, alt_allele, minor_allele_freq
     )
     assert_extension_array_equal(expected, result)

@@ -1,5 +1,6 @@
 import operator
 import re
+from copy import copy
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
 
 import numpy as np
@@ -199,6 +200,10 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __hash__(self):
         return hash(str(self))
+
+    def __copy__(self):
+        """Create a copy to avoid references to the same variant"""
+        return GenotypeDtype(copy(self.variant))
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -556,7 +561,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         return self._from_sequence(scalars=output, dtype=self.dtype)
 
     def copy(self):
-        return GenotypeArray(self._data.copy(), self.dtype)
+        return GenotypeArray(self._data.copy(), copy(self.dtype))
 
     def factorize(self, na_sentinel: int = -1) -> Tuple[np.ndarray, "GenotypeArray"]:
         """

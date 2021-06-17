@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import Optional
 
 import numpy as np
@@ -19,6 +20,13 @@ class GenotypeDataframeAccessor:
             ]
             raise AttributeError(
                 f"Incompatible datatypes: all columns must be a GenotypeDtype: {incorrect}"
+            )
+        id_counts = Counter([s.genomics.variant.id for _, s in pandas_obj.iteritems()])
+        if len(id_counts) < len(pandas_obj.columns):
+            duplicates = [(k, v) for k, v in id_counts.items() if v >= 2]
+            raise AttributeError(
+                f"Duplicate Variant IDs.  Column names may differ from variant IDs, but variant IDs must be unique.\n\tDuplicates: "
+                + ", ".join([f"{dupe} ({count:,})" for dupe, count in duplicates])
             )
         self._obj = pandas_obj
 

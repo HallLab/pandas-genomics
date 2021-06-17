@@ -11,7 +11,7 @@ from pandas._testing import (
 
 def test_variant_score(data, data_for_encoding):
     assert pd.Series(data).genomics.variant.score == float(data.variant.score)
-    assert pd.Series(data_for_encoding).genomics.variant.score is None
+    assert pd.Series(data_for_encoding()).genomics.variant.score is None
 
 
 def test_var_info(genotypearray_df):
@@ -23,7 +23,11 @@ def test_var_info(genotypearray_df):
 
 def test_maf(data):
     assert pd.Series(data).genomics.maf == data.maf
-    df = pd.DataFrame.from_dict({n: pd.Series(data) for n in "ABC"}, orient="columns")
+    df = pd.DataFrame.from_dict(
+        {n: pd.Series(data.copy()) for n in "ABC"}, orient="columns"
+    )
+    for colname in "ABC":
+        df[colname].genomics.variant.id = colname
     expected = pd.Series({n: data.maf for n in "ABC"})
     assert_series_equal(df.genomics.maf, expected)
 

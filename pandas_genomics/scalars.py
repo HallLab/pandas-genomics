@@ -9,7 +9,7 @@ This module contains scalar types used in the ExtensionArrays.  They may also be
      Variant
      Genotype
 """
-
+import uuid
 from typing import Optional, List, Tuple, Union
 
 MISSING_IDX = (
@@ -62,6 +62,9 @@ class Variant:
     ):
         self.chromosome = chromosome
         self.position = position
+        if id is None:
+            # Use a UUID to avoid duplicate IDs
+            id = str(uuid.uuid4())
         self.id = id
         if ploidy is None:
             self.ploidy = 2

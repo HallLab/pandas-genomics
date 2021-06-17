@@ -201,18 +201,20 @@ def data_for_grouping():
 
 @pytest.fixture
 def data_for_encoding():
-    """Data for encoding tests.
+    """Returns a function creating a unique variant with data for encoding tests.
     Contains one alt allele.
     Variants are Homozygouse Ref, Heterozygous, Homozygous Alt, and Missing
     """
-    variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T"]
-    )
-    a = variant.make_genotype("A", "A")
-    b = variant.make_genotype("A", "T")
-    c = variant.make_genotype("T", "T")
-    na = variant.make_genotype()
-    return GenotypeArray([a, b, c, na])
+
+    def __get_data_for_encoding():
+        variant = Variant(id=None, ref="A", alt=["T"])
+        a = variant.make_genotype("A", "A")
+        b = variant.make_genotype("A", "T")
+        c = variant.make_genotype("T", "T")
+        na = variant.make_genotype()
+        return GenotypeArray([a, b, c, na])
+
+    return __get_data_for_encoding
 
 
 @pytest.fixture
