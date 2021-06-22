@@ -207,12 +207,13 @@ def data_for_encoding():
     """
 
     def __get_data_for_encoding():
-        variant = Variant(id=None, ref="A", alt=["T"])
+        variant = Variant(id=None, ref="A", alt=["T", "C"])
         a = variant.make_genotype("A", "A")
         b = variant.make_genotype("A", "T")
         c = variant.make_genotype("T", "T")
+        d = variant.make_genotype("T", "C")
         na = variant.make_genotype()
-        return GenotypeArray([a, b, c, na])
+        return GenotypeArray([a, b, c, d, na])
 
     return __get_data_for_encoding
 

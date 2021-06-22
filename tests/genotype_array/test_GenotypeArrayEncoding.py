@@ -47,15 +47,9 @@ def encoding_df():
     return pd.DataFrame(data)
 
 
-@pytest.mark.xfail(raises=ValueError)
-def test_encoding_extra_alt(data):
-    """Fail encoding when there are multiple alt alleles"""
-    data.encode_additive()
-
-
 def test_encoding_additive(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 1, 2, None], dtype="UInt8")
+    expected = pd.array([0, 1, 2, 2, None], dtype="UInt8")
     result = data_for_encoding().encode_additive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
@@ -73,7 +67,7 @@ def test_encoding_additive(data_for_encoding):
 
 def test_encoding_dominant(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 1, 1, None], dtype="UInt8")
+    expected = pd.array([0, 1, 1, 1, None], dtype="UInt8")
     result = data_for_encoding().encode_dominant()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
@@ -91,7 +85,7 @@ def test_encoding_dominant(data_for_encoding):
 
 def test_encoding_recessive(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 0, 1, None], dtype="UInt8")
+    expected = pd.array([0, 0, 1, 1, None], dtype="UInt8")
     result = data_for_encoding().encode_recessive()
     assert_extension_array_equal(result, expected)
     # Test using series accessor
@@ -110,7 +104,9 @@ def test_encoding_recessive(data_for_encoding):
 def test_encoding_codominant(data_for_encoding):
     # Test arrays directly
     expected = pd.Categorical(
-        ["Ref", "Het", "Hom", None], categories=["Ref", "Het", "Hom"], ordered=True
+        ["Ref", "Het", "Hom", "Hom", None],
+        categories=["Ref", "Het", "Hom"],
+        ordered=True,
     )
     result = data_for_encoding().encode_codominant()
     assert_extension_array_equal(result, expected)
@@ -130,17 +126,17 @@ def test_encoding_codominant(data_for_encoding):
 @pytest.mark.parametrize(
     "alpha_value,ref_allele,alt_allele,minor_allele_freq,expected",
     [
-        (0.25, "A", "T", 0.45, pd.array([0.0, 0.25, 1.0, None], dtype="Float64")),
-        (0.25, "T", "A", 0.45, pd.array([1.0, 0.25, 0.0, None], dtype="Float64")),
-        (1.0, "T", "A", 0.45, pd.array([1.0, 1.0, 0.0, None], dtype="Float64")),
+        (0.25, "A", "T", 0.45, pd.array([0.0, 0.25, 1.0, None, None], dtype="Float64")),
+        (0.25, "T", "A", 0.45, pd.array([1.0, 0.25, 0.0, None, None], dtype="Float64")),
+        (1.0, "T", "A", 0.45, pd.array([1.0, 1.0, 0.0, None, None], dtype="Float64")),
         pytest.param(
             0.25,
             "A",
-            "C",
+            "G",
             0.45,
             None,
             marks=pytest.mark.xfail(
-                raises=ValueError, strict=True, reason="Wrong Allele"
+                raises=ValueError, strict=True, reason="Missing Alt Allele"
             ),
         ),
     ],

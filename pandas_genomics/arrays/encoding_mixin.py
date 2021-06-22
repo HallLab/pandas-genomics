@@ -16,15 +16,11 @@ class EncodingMixin:
         Returns
         -------
         pd.arrays.IntegerArray
-            Number of copies of the minor allele
+            Number of copies of non-reference allele
             pd.NA when any alleles are missing
             Raises ValueError if there is more than 1 alternate allele
         """
-        # TODO: Return multiple arrays for multiple alternate alleles?
-        if len(self.variant.alleles) > 2:
-            raise ValueError("Additive encoding can only be used with one allele")
-
-        allele_sum = self.allele_idxs.sum(axis=1).astype("float")
+        allele_sum = (self.allele_idxs != 0).sum(axis=1).astype("float")
         allele_sum[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=allele_sum, dtype="UInt8")
         return result
@@ -34,16 +30,11 @@ class EncodingMixin:
         Returns
         -------
         pd.arrays.IntegerArray
-            0 for no copies of the minor allele
-            1 for any copies of the minor allele
+            0 for Homozygous Reference
+            1 for any other case
             pd.NA when any alleles are missing
-            Raises an error if there is more than 1 alternate allele
         """
-        # TODO: Return multiple arrays for multiple alternate alleles?
-        if len(self.variant.alleles) > 2:
-            raise ValueError("Dominant encoding can only be used with one allele")
-
-        has_minor = (self.allele_idxs == 1).any(axis=1).astype("float")
+        has_minor = (self.allele_idxs != 0).any(axis=1).astype("float")
         has_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=has_minor, dtype="UInt8")
         return result
@@ -53,16 +44,11 @@ class EncodingMixin:
         Returns
         -------
         pd.arrays.IntegerArray
-            1 for Homozygous Alt
+            1 for Homozygous Non-reference
             0 for anything else
             pd.NA when any alleles are missing
-            Raises an error if there is more than 1 alternate allele
         """
-        # TODO: Return multiple arrays for multiple alternate alleles?
-        if len(self.variant.alleles) > 2:
-            raise ValueError("Recessive encoding can only be used with one allele")
-
-        all_minor = (self.allele_idxs == 1).all(axis=1).astype("float")
+        all_minor = (self.allele_idxs != 0).all(axis=1).astype("float")
         all_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
         result = pd.array(data=all_minor, dtype="UInt8")
         return result
@@ -77,25 +63,23 @@ class EncodingMixin:
         pd.arrays.Categorical
             'Ref' for Homozygous Reference
             'Het' for Heterozygous
-            'Hom' for Homozygous Alt
+            'Hom' for Homozygous Non-Reference
             pd.NA for missing
-            Raises an error if there is more than 1 alternate allele or ploidy is not 2
+            Raises an error if ploidy is not 2
         """
-        # TODO: Return multiple arrays for multiple alternate alleles?
-        if len(self.variant.alleles) > 2:
-            raise ValueError("Codominant encoding can only be used with one allele")
         if self.dtype.variant.ploidy != 2:
             raise ValueError(
                 "Codominant encoding can only be used with diploid genotypes"
             )
 
-        allele_sum = self.allele_idxs.sum(axis=1)
+        allele_sum = (self.allele_idxs != 0).sum(axis=1)
         categories = ["Ref", "Het", "Hom"]
         result = pd.Categorical(
             values=[categories[n] if n in {0, 1, 2} else None for n in allele_sum],
             categories=categories,
             ordered=True,
         )
+        result[(self.allele_idxs == MISSING_IDX).any(axis=1)] = None
         return result
 
     def encode_weighted(
@@ -130,7 +114,7 @@ class EncodingMixin:
         -----
         See [1]_ for more information about weighted encoding.
         Encoding will be based on the provided ref and alt alleles, since the alpha value would be specific to them.
-        If the existing minor allele frequency differs greatly from the provided value, a warning is issued.
+        In the future, if the existing minor allele frequency differs greatly from the provided value, a warning will be issued.
 
         References
         ----------
