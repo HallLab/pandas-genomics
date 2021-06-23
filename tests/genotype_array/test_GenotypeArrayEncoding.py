@@ -11,7 +11,7 @@ from pandas._testing import (
 )
 
 import numpy as np
-from pandas_genomics import GenotypeArray, generate_weighted_encodings
+from pandas_genomics import GenotypeArray
 from pandas_genomics.scalars import Variant
 from pandas_genomics.sim import BAMS, SNPEffectEncodings
 
@@ -285,5 +285,7 @@ def test_generated_encodings_bams(bam, expected_alphas):
     genotypes = bam.generate_case_control()
     data = genotypes["Outcome"]
     genotypes = genotypes.drop(columns="Outcome")
-    result = generate_weighted_encodings(genotypes, data, outcome_variable="Outcome")
+    result = genotypes.genomics.generate_weighted_encodings(
+        data, outcome_variable="Outcome"
+    )
     assert np.isclose(result["Alpha Value"], expected_alphas).all()
