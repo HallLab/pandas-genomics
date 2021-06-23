@@ -59,7 +59,7 @@ TEST_VAR = Variant(
             "genotype(2n)[12; 112161652; T; C]q35",
             None,
             marks=pytest.mark.xfail(raises=TypeError, strict=True),
-        )
+        ),
     ],
 )
 def test_from_str(input_str, variant):
