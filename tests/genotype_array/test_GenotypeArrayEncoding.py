@@ -207,9 +207,12 @@ def test_generated_encodings_plink(genotypearray_df):
         {"phenotype": genotypearray_df.index.get_level_values("phenotype")},
         index=genotypearray_df.index,
     )
-    result = generate_weighted_encodings(
-        genotypearray_df, data, outcome_variable="phenotype"
+    result_df = genotypearray_df.genomics.generate_weighted_encodings(
+        data, outcome_variable="phenotype"
     )
+    result_series = genotypearray_df[
+        "18_nullA_18"
+    ].genomics.generate_weighted_encodings(data, outcome_variable="phenotype")
     expected = pd.DataFrame(
         {
             "Variant ID": ["nullA_18"],
@@ -219,7 +222,8 @@ def test_generated_encodings_plink(genotypearray_df):
             "Minor Allele Frequency": [40 / 3000],
         }
     )
-    assert_frame_equal(expected, result)
+    assert_frame_equal(expected, result_df)
+    assert_frame_equal(expected, result_series)
 
 
 @pytest.mark.parametrize(

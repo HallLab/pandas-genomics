@@ -6,7 +6,7 @@ import pandas as pd
 import patsy
 import statsmodels.api as sm
 
-from ..arrays import GenotypeDtype
+from pandas_genomics.arrays import GenotypeDtype
 
 
 def generate_weighted_encodings(
@@ -54,6 +54,10 @@ def generate_weighted_encodings(
     # Covariates must be a list
     if type(covariates) != list:
         raise ValueError("'covariates' must be specified as a list or set to None")
+
+    # Convert Series to a DataFrame for simpler processing later on
+    if isinstance(genotypes, pd.Series):
+        genotypes = pd.DataFrame(genotypes)
 
     # Extract specific data
     if isinstance(data, pd.Series):

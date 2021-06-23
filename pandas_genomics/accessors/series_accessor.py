@@ -1,5 +1,8 @@
+from typing import Optional, List
+
 import pandas as pd
 
+from .utils import generate_weighted_encodings
 from pandas_genomics.arrays import GenotypeDtype
 
 
@@ -168,6 +171,50 @@ class GenotypeSeriesAccessor:
             ),
             index=self._index,
             name=self._name,
+        )
+
+    def generate_weighted_encodings(
+        self,
+        data: pd.DataFrame,
+        outcome_variable: str,
+        covariates: Optional[List[str]] = None,
+    ):
+        """
+        Calculate alpha values to be used in weighted encoding
+
+        Parameters
+        ----------
+        data:
+            Data to be used in the regression, including the outcome and covariates
+        outcome_variable:
+            The variable to be used as the output (y) of the regression
+        covariates:
+            Other variables to be included in the regression formula
+
+        Returns
+        -------
+        Dict
+          Variant ID: str
+          Alpha Value - used for heterozygous genotypes
+          Ref Allele - which allele is considered reference
+          Alt Allele - which allele is considered alternate
+          Minor Allele Frequency - MAF of data used during calculation of alpha values
+
+        Notes
+        -----
+        See [1]_ for more information about weighted encoding.
+
+        References
+        ----------
+        .. [1] Hall, Molly A., et al.
+               "Novel EDGE encoding method enhances ability to identify genetic interactions."
+               PLoS genetics 17.6 (2021): e1009534.
+        """
+        return generate_weighted_encodings(
+            genotypes=pd.Series(self._array, name=self._name, index=self._index),
+            data=data,
+            outcome_variable=outcome_variable,
+            covariates=covariates,
         )
 
     ##############
