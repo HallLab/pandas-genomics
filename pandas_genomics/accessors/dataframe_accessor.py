@@ -167,7 +167,7 @@ class GenotypeDataframeAccessor:
         # Convert the encoding info into a Dict("Variant ID" = {param names : param values})
         encoding_info = {
             d["Variant ID"]: {k: v for k, v in d.items() if k != "Variant ID"}
-            for d in encoding_info.to_dict(orient="rows")
+            for d in encoding_info.to_dict(orient="records")
         }
 
         # Log messages for any warnings
