@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "pandas-genomics"
-copyright = "2020, John McGuigan"
+copyright = "2021, John McGuigan"
 author = "John McGuigan"
 
 import pandas_genomics

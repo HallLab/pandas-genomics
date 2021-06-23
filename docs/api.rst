@@ -10,8 +10,14 @@ API Reference
 
 ----
 
-.. automodule:: pandas_genomics.arrays
+.. automodule:: pandas_genomics.sim
 
 ----
 
-.. autoclass:: pandas_genomics.GenotypeAccessor
+.. autoclass:: pandas_genomics.GenotypeDtype
+.. autoclass:: pandas_genomics.GenotypeArray
+
+----
+
+.. autoclass:: pandas_genomics.GenotypeDataframeAccessor
+.. autoclass:: pandas_genomics.GenotypeSeriesAccessor

@@ -201,18 +201,21 @@ def data_for_grouping():
 
 @pytest.fixture
 def data_for_encoding():
-    """Data for encoding tests.
+    """Returns a function creating a unique variant with data for encoding tests.
     Contains one alt allele.
     Variants are Homozygouse Ref, Heterozygous, Homozygous Alt, and Missing
     """
-    variant = Variant(
-        chromosome="chr1", position=123456, id="rs12345", ref="A", alt=["T"]
-    )
-    a = variant.make_genotype("A", "A")
-    b = variant.make_genotype("A", "T")
-    c = variant.make_genotype("T", "T")
-    na = variant.make_genotype()
-    return GenotypeArray([a, b, c, na])
+
+    def __get_data_for_encoding():
+        variant = Variant(id=None, ref="A", alt=["T", "C"])
+        a = variant.make_genotype("A", "A")
+        b = variant.make_genotype("A", "T")
+        c = variant.make_genotype("T", "T")
+        d = variant.make_genotype("T", "C")
+        na = variant.make_genotype()
+        return GenotypeArray([a, b, c, d, na])
+
+    return __get_data_for_encoding
 
 
 @pytest.fixture
@@ -220,3 +223,60 @@ def genotypearray_df():
     DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
     input = DATA_DIR / "plink_test_small"
     return io.from_plink(input, max_variants=20, swap_alleles=True)
+
+
+@pytest.fixture
+def ga_AA_Aa_aa_BB_Bb_bb():
+    var = Variant("chr1", ref="A", alt=["a", "B", "b"])
+    return GenotypeArray(
+        [
+            var.make_genotype_from_str("A/A"),
+            var.make_genotype_from_str("A/a"),
+            var.make_genotype_from_str("a/a"),
+            var.make_genotype_from_str("B/B"),
+            var.make_genotype_from_str("B/b"),
+            var.make_genotype_from_str("b/b"),
+        ]
+    )
+
+
+@pytest.fixture
+def ga_inhwe():
+    """
+    1000-sample array in HWE
+    """
+    var = Variant("chr1", ref="A", alt=["a"])
+    return GenotypeArray(
+        [
+            var.make_genotype_from_str("A/A"),
+        ]
+        * 640
+        + [
+            var.make_genotype_from_str("A/a"),
+        ]
+        * 320
+        + [
+            var.make_genotype_from_str("a/a"),
+        ]
+        * 40
+    )
+
+
+@pytest.fixture
+def ga_nothwe():
+    """1000-sample array not in HWE"""
+    var = Variant("chr1", ref="A", alt=["a"])
+    return GenotypeArray(
+        [
+            var.make_genotype_from_str("A/A"),
+        ]
+        * 800
+        + [
+            var.make_genotype_from_str("A/a"),
+        ]
+        * 0
+        + [
+            var.make_genotype_from_str("a/a"),
+        ]
+        * 200
+    )

@@ -19,14 +19,6 @@ def test():
     assert BAMS(PenetranceTables.HET_HET) == BAMS.from_model(
         eff1=(0, 1, 0), eff2=(0, 1, 0), main1=0, main2=0, interaction=1
     )
-    bas = BAMS.from_model(
-        SNPEffectEncodings.DOMINANT,
-        SNPEffectEncodings.DOMINANT,
-        main1=0,
-        main2=0,
-        interaction=1,
-    )
-    print(bas)
     test_sim = BAMS.from_model(
         SNPEffectEncodings.RECESSIVE,
         SNPEffectEncodings.RECESSIVE,
@@ -44,6 +36,7 @@ def test():
     assert_frame_not_equal(simulated_df_cc_2, simulated_df_cc_3)
 
     # Test quantitative sim
+    # TODO: Quantitative model is unfinished
     simulated_df_quant = test_sim.generate_quantitative()
 
 

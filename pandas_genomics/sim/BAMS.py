@@ -261,6 +261,7 @@ class BAMS:
 
         # Generate genotypes based on the simulated cases and controls
         # Pick int index into the table (0 through 8) counted left to right then top to bottom (due to flatten())
+        # TODO: This isn't always consistent in multiple runs
         case_gt_table_idxs = np.random.choice(
             range(9), size=n_cases, p=prob_gt_given_case.flatten()
         )

@@ -1,5 +1,6 @@
 import operator
 import re
+from copy import copy
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
 
 import numpy as np
@@ -199,6 +200,10 @@ class GenotypeDtype(PandasExtensionDtype):
 
     def __hash__(self):
         return hash(str(self))
+
+    def __copy__(self):
+        """Create a copy to avoid references to the same variant"""
+        return GenotypeDtype(copy(self.variant))
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -556,7 +561,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         return self._from_sequence(scalars=output, dtype=self.dtype)
 
     def copy(self):
-        return GenotypeArray(self._data.copy(), self.dtype)
+        return GenotypeArray(self._data.copy(), copy(self.dtype))
 
     def factorize(self, na_sentinel: int = -1) -> Tuple[np.ndarray, "GenotypeArray"]:
         """
@@ -667,20 +672,23 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
     # ----------
     def _get_alleles_for_ops(self, other):
         """
-        Get the scalar allele values (Genotype)
+        Get the scalar allele values (Genotype or str)
                 or arrays of allele values (GenotypeArray)
                 or None (NotImplemented)
         """
         if isinstance(other, Genotype) or isinstance(other, GenotypeArray):
             # Get scalar values for alleles
             allele_idxs = other.allele_idxs
+            # Ensure the comparison is using the same variant
+            if self.variant != other.variant:
+                return None
+        elif type(other) == str:
+            allele_idxs = tuple(
+                self.variant.get_idx_from_allele(a) for a in other.split("/")
+            )
         else:
             return None
-        # Ensure the comparison is using the same variant
-        if self.variant != other.variant:
-            return None
-        else:
-            return allele_idxs
+        return allele_idxs
 
     def __eq__(self, other):
         allele_idxs = self._get_alleles_for_ops(other)

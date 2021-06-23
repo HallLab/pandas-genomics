@@ -1,5 +1,8 @@
+from typing import Optional, List
+
 import pandas as pd
 
+from .utils import generate_weighted_encodings
 from pandas_genomics.arrays import GenotypeDtype
 
 
@@ -63,6 +66,16 @@ class GenotypeSeriesAccessor:
         See :py:attr:`GenotypeArray.maf`"""
         return self._array.maf
 
+    #########################
+    # Calculated Properties #
+    #########################
+    @property
+    def hwe_pval(self):
+        """Return the probability that the samples are in HWE
+
+        See :py:attr:`GenotypeArray.hwe_pval`"""
+        return self._array.hwe_pval
+
     ####################
     # In-place methods #
     ####################
@@ -95,9 +108,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_additive(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_additive(), index=self._index, name=self._name
         )
 
     def encode_dominant(self) -> pd.Series:
@@ -110,9 +121,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_dominant(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_dominant(), index=self._index, name=self._name
         )
 
     def encode_recessive(self) -> pd.Series:
@@ -125,9 +134,7 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_recessive(),
-            index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            data=self._array.encode_recessive(), index=self._index, name=self._name
         )
 
     def encode_codominant(self) -> pd.Series:
@@ -140,9 +147,74 @@ class GenotypeSeriesAccessor:
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_codominant(),
+            data=self._array.encode_codominant(), index=self._index, name=self._name
+        )
+
+    def encode_weighted(
+        self,
+        alpha_value: float,
+        ref_allele: str,
+        alt_allele: str,
+        minor_allele_freq: float,
+    ) -> pd.Series:
+        """Weighted (edge) encoding of genotypes.
+
+        See :meth:`GenotypeArray.encode_weighted`
+
+        Returns
+        -------
+        pd.Series
+        """
+        return pd.Series(
+            data=self._array.encode_weighted(
+                alpha_value, ref_allele, alt_allele, minor_allele_freq
+            ),
             index=self._index,
-            name=f"{self._array.variant.id}_{self._array.variant.alleles[1]}",
+            name=self._name,
+        )
+
+    def generate_weighted_encodings(
+        self,
+        data: pd.DataFrame,
+        outcome_variable: str,
+        covariates: Optional[List[str]] = None,
+    ):
+        """
+        Calculate alpha values to be used in weighted encoding
+
+        Parameters
+        ----------
+        data:
+            Data to be used in the regression, including the outcome and covariates
+        outcome_variable:
+            The variable to be used as the output (y) of the regression
+        covariates:
+            Other variables to be included in the regression formula
+
+        Returns
+        -------
+        Dict
+          Variant ID: str
+          Alpha Value - used for heterozygous genotypes
+          Ref Allele - which allele is considered reference
+          Alt Allele - which allele is considered alternate
+          Minor Allele Frequency - MAF of data used during calculation of alpha values
+
+        Notes
+        -----
+        See [1]_ for more information about weighted encoding.
+
+        References
+        ----------
+        .. [1] Hall, Molly A., et al.
+               "Novel EDGE encoding method enhances ability to identify genetic interactions."
+               PLoS genetics 17.6 (2021): e1009534.
+        """
+        return generate_weighted_encodings(
+            genotypes=pd.Series(self._array, name=self._name, index=self._index),
+            data=data,
+            outcome_variable=outcome_variable,
+            covariates=covariates,
         )
 
     ##############
