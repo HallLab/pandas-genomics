@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.5.1 (2021-06-23)
+-------------------
+
+* Update dependencies to fix doc building
+
 v0.5.0 (2021-06-23)
 -------------------
 
