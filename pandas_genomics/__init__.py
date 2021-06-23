@@ -10,12 +10,12 @@ from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
 __version__ = importlib_metadata.version(__name__)
 
 __all__ = [
-    __version__,
-    GenotypeSeriesAccessor,
-    GenotypeDataframeAccessor,
-    GenotypeDtype,
-    GenotypeArray,
-    io,
-    scalars,
-    sim,
+    "__version__",
+    "GenotypeSeriesAccessor",
+    "GenotypeDataframeAccessor",
+    "GenotypeDtype",
+    "GenotypeArray",
+    "io",
+    "scalars",
+    "sim",
 ]

@@ -11,7 +11,7 @@ from pandas_genomics.scalars import Variant
 
 
 class SNPEffectEncodings(Enum):
-    """Normalized SNP Effects encoded as 3-length tuples"""
+    """Enum: Normalized SNP Effects encoded as 3-length tuples"""
 
     DOMINANT = (0, 1, 1)
     SUPER_ADDITIVE = (0, 0.75, 1)
@@ -22,7 +22,7 @@ class SNPEffectEncodings(Enum):
 
 
 class PenetranceTables(Enum):
-    """Penetrance Tables for Simple Models"""
+    """Enum: Penetrance Tables for Simple Models"""
 
     HR_HR = [1, 0, 0, 0, 0, 0, 0, 0, 0]  # Homozygous Referent X Homozygous Referent
     HR_HET = [0, 1, 0, 0, 0, 0, 0, 0, 0]  # Homozygous Referent X Heterozygous
@@ -38,6 +38,8 @@ class PenetranceTables(Enum):
 class BAMS:
     """
     Biallelic Model Simulator.  Used to simulate two SNPs with phenotype data based on a penetrance table.
+
+    It can be initialized using the PenetranceTables enum or using `from_model` with values from the SNPEffectEncodings enum.
     """
 
     def __init__(

@@ -14,10 +14,8 @@ API Reference
 
 ----
 
-.. autoclass:: pandas_genomics.GenotypeDtype
-.. autoclass:: pandas_genomics.GenotypeArray
+.. automodule:: pandas_genomics.arrays
 
 ----
 
-.. autoclass:: pandas_genomics.GenotypeDataframeAccessor
-.. autoclass:: pandas_genomics.GenotypeSeriesAccessor
+.. automodule:: pandas_genomics.accessors

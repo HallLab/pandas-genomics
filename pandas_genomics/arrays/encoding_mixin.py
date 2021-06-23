@@ -13,12 +13,14 @@ class EncodingMixin:
 
     def encode_additive(self) -> pd.arrays.IntegerArray:
         """
+        Additive Encoding
+
+        - Number of copies of non-reference allele
+        - pd.NA when any alleles are missing
+
         Returns
         -------
         pd.arrays.IntegerArray
-            Number of copies of non-reference allele
-            pd.NA when any alleles are missing
-            Raises ValueError if there is more than 1 alternate allele
         """
         allele_sum = (self.allele_idxs != 0).sum(axis=1).astype("float")
         allele_sum[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -27,12 +29,15 @@ class EncodingMixin:
 
     def encode_dominant(self) -> pd.arrays.IntegerArray:
         """
+        Dominant Encoding
+
+        - 0 for Homozygous Reference
+        - 1 for any other case
+        - pd.NA when any alleles are missing
+
         Returns
         -------
         pd.arrays.IntegerArray
-            0 for Homozygous Reference
-            1 for any other case
-            pd.NA when any alleles are missing
         """
         has_minor = (self.allele_idxs != 0).any(axis=1).astype("float")
         has_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -41,12 +46,15 @@ class EncodingMixin:
 
     def encode_recessive(self) -> pd.arrays.IntegerArray:
         """
+        Recessive Encoding
+
+        - 1 for Homozygous Non-reference
+        - 0 for anything else
+        - pd.NA when any alleles are missing
+
         Returns
         -------
         pd.arrays.IntegerArray
-            1 for Homozygous Non-reference
-            0 for anything else
-            pd.NA when any alleles are missing
         """
         all_minor = (self.allele_idxs != 0).all(axis=1).astype("float")
         all_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -58,14 +66,15 @@ class EncodingMixin:
         This encodes the genotype into three categories.  When utilized in regression, this results in two variables
         due to dummy encoding- "Het" as 0 or 1 and "Hom" as 0 or 1.  0 in both indicates "Ref".
 
+        - 'Ref' for Homozygous Reference
+        - 'Het' for Heterozygous
+        - 'Hom' for Homozygous Non-Reference
+        - pd.NA for missing
+        - Raises an error if ploidy is not 2
+
         Returns
         -------
         pd.arrays.Categorical
-            'Ref' for Homozygous Reference
-            'Het' for Heterozygous
-            'Hom' for Homozygous Non-Reference
-            pd.NA for missing
-            Raises an error if ploidy is not 2
         """
         if self.dtype.variant.ploidy != 2:
             raise ValueError(

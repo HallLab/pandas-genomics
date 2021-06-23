@@ -35,8 +35,7 @@ def to_plink(
 
     Notes
     -----
-    If the data index has the required columns (FID, IID, IID_father, IID_mother, sex, phenotype) the fam file will
-      be created based on the index.
+    If the data index has the required columns (FID, IID, IID_father, IID_mother, sex, phenotype) the fam file will be created based on the index.
     If a phenotype name is provided, this will override any phenotype information in the index.
     If the data has a single index column this will be used (with the prefix) for FID and IID.  Defaults will be used for other .fam data
 

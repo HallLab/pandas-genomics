@@ -10,6 +10,12 @@ from pandas_genomics.arrays import GenotypeDtype
 class GenotypeSeriesAccessor:
     """
     Series accessor for GenotypeArray methods
+
+
+    .. code-block:: python
+
+        s.genomics.variant_info
+        s.genomics.encode_additive()
     """
 
     def __init__(self, obj):

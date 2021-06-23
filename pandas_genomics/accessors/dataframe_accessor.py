@@ -12,6 +12,11 @@ from pandas_genomics.arrays import GenotypeDtype
 class GenotypeDataframeAccessor:
     """
     DataFrame accessor for GenotypeArray methods
+
+    .. code-block:: python
+
+        df.genomics.variant_info
+        df.genomics.encode_additive()
     """
 
     def __init__(self, pandas_obj):
@@ -118,7 +123,7 @@ class GenotypeDataframeAccessor:
         )
 
     def encode_weighted(self, encoding_info: pd.DataFrame) -> pd.DataFrame:
-        """Weighted (edge) encoding of genotypes.
+        """Weighted (EDGE) encoding of genotypes.
 
         See :meth:`GenotypeArray.encode_weighted`
 
@@ -126,11 +131,11 @@ class GenotypeDataframeAccessor:
         ----------
         encoding_info: pd.DataFrame
             columns:
-                Variant ID - used to match variants
-                Alpha Value - used for heterozygous genotypes
-                Ref Allele - which allele is considered reference
-                Alt Allele - which allele is considered alternate
-                Minor Allele Frequency - MAF of data used during calculation of alpha values
+                - Variant ID - used to match variants
+                - Alpha Value - used for heterozygous genotypes
+                - Ref Allele - which allele is considered reference
+                - Alt Allele - which allele is considered alternate
+                - Minor Allele Frequency - MAF of data used during calculation of alpha values
 
         Returns
         -------
