@@ -51,6 +51,8 @@ variant = Variant('12', 112161652, id='rs12462', ref='A', alt=['C', 'T'])
 print(variant)
 ```
     rs12462[chr=12;pos=112161652;ref=A;alt=C,T]
+    
+Each variant should have a unique ID, and a random ID is generated if one is not specified.
 
 `Genotype` objects are associated with a particular `Variant`:
 

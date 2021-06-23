@@ -2,6 +2,29 @@
 Release History
 ===============
 
+v0.5.0 (2021-06-23)
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+* Add Series and DataFrame Accessors
+* Speed up Plink file import
+* Add prototype BiAllelic Model Simulator
+* Add random genotype simulator
+* Add Plink Output
+
+Docs
+^^^^
+
+v0.4.0 (2021-03-30)
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+* Updates to the backing structure of the GenotypeArray
+* Added Variant quality scores
+* Added Genotype quality scores
+
 v0.3.0 (2020-10-23)
 -------------------
 
