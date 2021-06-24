@@ -56,11 +56,19 @@ def test_encoding_additive(data_for_encoding):
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_additive()
     assert_series_equal(result_series, expected)
-    # Test using DataFrame accessor
+    # Test using DataFrame accessor with extra col
     df = pd.DataFrame.from_dict(
         {n: data_for_encoding() for n in "ABC"}, orient="columns"
     )
-    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
+    df["float"] = np.ones(len(df))
+    expected = pd.DataFrame.from_dict(
+        {
+            "A": result_series,
+            "B": result_series,
+            "C": result_series,
+            "float": df["float"],
+        }
+    )
     result_df = df.genomics.encode_additive()
     assert_frame_equal(result_df, expected)
 
@@ -74,11 +82,19 @@ def test_encoding_dominant(data_for_encoding):
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_dominant()
     assert_series_equal(result_series, expected)
-    # Test using DataFrame accessor
+    # Test using DataFrame accessor with extra col
     df = pd.DataFrame.from_dict(
         {n: data_for_encoding() for n in "ABC"}, orient="columns"
     )
-    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
+    df["float"] = np.ones(len(df))
+    expected = pd.DataFrame.from_dict(
+        {
+            "A": result_series,
+            "B": result_series,
+            "C": result_series,
+            "float": df["float"],
+        }
+    )
     result_df = df.genomics.encode_dominant()
     assert_frame_equal(result_df, expected)
 
@@ -92,11 +108,19 @@ def test_encoding_recessive(data_for_encoding):
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_recessive()
     assert_series_equal(result_series, expected)
-    # Test using DataFrame accessor
+    # Test using DataFrame accessor with extra col
     df = pd.DataFrame.from_dict(
         {n: data_for_encoding() for n in "ABC"}, orient="columns"
     )
-    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
+    df["float"] = np.ones(len(df))
+    expected = pd.DataFrame.from_dict(
+        {
+            "A": result_series,
+            "B": result_series,
+            "C": result_series,
+            "float": df["float"],
+        }
+    )
     result_df = df.genomics.encode_recessive()
     assert_frame_equal(result_df, expected)
 
@@ -114,11 +138,19 @@ def test_encoding_codominant(data_for_encoding):
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_codominant()
     assert_series_equal(result_series, expected)
-    # Test using DataFrame accessor
+    # Test using DataFrame accessor with extra col
     df = pd.DataFrame.from_dict(
         {n: data_for_encoding() for n in "ABC"}, orient="columns"
     )
-    expected = pd.DataFrame.from_dict({n: result_series for n in "ABC"})
+    df["float"] = np.ones(len(df))
+    expected = pd.DataFrame.from_dict(
+        {
+            "A": result_series,
+            "B": result_series,
+            "C": result_series,
+            "float": df["float"],
+        }
+    )
     result_df = df.genomics.encode_codominant()
     assert_frame_equal(result_df, expected)
 
@@ -171,6 +203,7 @@ def test_encoding_weighted(
                     "var2": [0.0, 0.3, 1.0, None, None],
                     "var3": [0.0, 0.4, 1.0, None, None],
                     "var4": [0.0, 0.5, 1.0, None, None],
+                    "num": [1.0, 1.0, 1.0, 1.0, 1.0],
                 },
                 dtype="Float64",
             ),
@@ -191,6 +224,7 @@ def test_encoding_weighted(
                     "var0": [0.0, 0.1, 1.0, None, None],
                     "var1": [0.0, 0.2, 1.0, None, None],
                     "var4": [1.0, 0.5, 0.0, None, None],
+                    "num": [1.0, 1.0, 1.0, 1.0, 1.0],
                 },
                 dtype="Float64",
             ),
@@ -198,7 +232,9 @@ def test_encoding_weighted(
     ],
 )
 def test_encoding_weighted_df(encoding_df, encoding_info, expected):
-    result = encoding_df.genomics.encode_weighted(encoding_info)
+    df = encoding_df.copy()
+    df["num"] = pd.Series(np.ones(len(df))).astype("Float64")
+    result = df.genomics.encode_weighted(encoding_info)
     assert_frame_equal(expected, result)
 
 

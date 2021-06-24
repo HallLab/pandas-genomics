@@ -20,15 +20,18 @@ class GenotypeDataframeAccessor:
     """
 
     def __init__(self, pandas_obj):
-        if not pandas_obj.dtypes.apply(lambda dt: GenotypeDtype.is_dtype(dt)).all():
-            incorrect = pandas_obj.dtypes[
-                ~pandas_obj.dtypes.apply(lambda dt: GenotypeDtype.is_dtype(dt))
-            ]
+        if not pandas_obj.dtypes.apply(lambda dt: GenotypeDtype.is_dtype(dt)).any():
             raise AttributeError(
-                f"Incompatible datatypes: all columns must be a GenotypeDtype: {incorrect}"
+                "Incompatible datatypes: at least one column must be a GenotypeDtype."
             )
-        id_counts = Counter([s.genomics.variant.id for _, s in pandas_obj.iteritems()])
-        if len(id_counts) < len(pandas_obj.columns):
+        id_counts = Counter(
+            [
+                s.genomics.variant.id
+                for _, s in pandas_obj.iteritems()
+                if GenotypeDtype.is_dtype(s)
+            ]
+        )
+        if len(id_counts) < len(pandas_obj.select_dtypes([GenotypeDtype]).columns):
             duplicates = [(k, v) for k, v in id_counts.items() if v >= 2]
             raise AttributeError(
                 f"Duplicate Variant IDs.  Column names may differ from variant IDs, but variant IDs must be unique.\n\tDuplicates: "
@@ -41,10 +44,12 @@ class GenotypeDataframeAccessor:
     ######################
     @property
     def variant_info(self) -> pd.DataFrame:
-        """Return a DataFrame with variant info indexed by the column name"""
+        """Return a DataFrame with variant info indexed by the column name (one row per GenotypeArray)"""
         return pd.DataFrame.from_dict(
             {
                 colname: series.genomics.variant_info
+                if GenotypeDtype.is_dtype(series.dtype)
+                else dict()
                 for colname, series in self._obj.iteritems()
             },
             orient="index",
@@ -58,14 +63,20 @@ class GenotypeDataframeAccessor:
         """Return the minor allele frequency
 
         See :py:attr:`GenotypeArray.maf`"""
-        return self._obj.apply(lambda col: col.genomics.maf)
+        return self._obj.apply(
+            lambda col: col.genomics.maf if GenotypeDtype.is_dtype(col.dtype) else pd.NA
+        )
 
     @property
     def hwe_pval(self):
         """Return the probability that the samples are in HWE
 
         See :py:attr:`GenotypeArray.hwe_pval`"""
-        return self._obj.apply(lambda col: col.genomics.hwe_pval)
+        return self._obj.apply(
+            lambda col: col.genomics.hwe_pval
+            if GenotypeDtype.is_dtype(col.dtype)
+            else pd.NA
+        )
 
     ############
     # Encoding #
@@ -80,7 +91,11 @@ class GenotypeDataframeAccessor:
         pd.DataFrame
         """
         return pd.concat(
-            [s.genomics.encode_additive() for _, s in self._obj.iteritems()], axis=1
+            [
+                s.genomics.encode_additive() if GenotypeDtype.is_dtype(s) else s
+                for _, s in self._obj.iteritems()
+            ],
+            axis=1,
         )
 
     def encode_dominant(self) -> pd.DataFrame:
@@ -93,7 +108,11 @@ class GenotypeDataframeAccessor:
         pd.DataFrame
         """
         return pd.concat(
-            [s.genomics.encode_dominant() for _, s in self._obj.iteritems()], axis=1
+            [
+                s.genomics.encode_dominant() if GenotypeDtype.is_dtype(s) else s
+                for _, s in self._obj.iteritems()
+            ],
+            axis=1,
         )
 
     def encode_recessive(self) -> pd.DataFrame:
@@ -106,7 +125,11 @@ class GenotypeDataframeAccessor:
         pd.DataFrame
         """
         return pd.concat(
-            [s.genomics.encode_recessive() for _, s in self._obj.iteritems()], axis=1
+            [
+                s.genomics.encode_recessive() if GenotypeDtype.is_dtype(s) else s
+                for _, s in self._obj.iteritems()
+            ],
+            axis=1,
         )
 
     def encode_codominant(self) -> pd.DataFrame:
@@ -119,7 +142,11 @@ class GenotypeDataframeAccessor:
         pd.DataFrame
         """
         return pd.concat(
-            [s.genomics.encode_codominant() for _, s in self._obj.iteritems()], axis=1
+            [
+                s.genomics.encode_codominant() if GenotypeDtype.is_dtype(s) else s
+                for _, s in self._obj.iteritems()
+            ],
+            axis=1,
         )
 
     def encode_weighted(self, encoding_info: pd.DataFrame) -> pd.DataFrame:
@@ -181,6 +208,9 @@ class GenotypeDataframeAccessor:
         # Process each variant
         results = []
         for _, s in self._obj.iteritems():
+            if not GenotypeDtype.is_dtype(s):
+                results.append(s)
+                continue
             info = encoding_info.get(s.array.variant.id, None)
             if info is None:
                 warnings[
@@ -244,7 +274,7 @@ class GenotypeDataframeAccessor:
                PLoS genetics 17.6 (2021): e1009534.
         """
         return generate_weighted_encodings(
-            genotypes=self._obj,
+            genotypes=self._obj.select_dtypes([GenotypeDtype]),
             data=data,
             outcome_variable=outcome_variable,
             covariates=covariates,
@@ -257,15 +287,18 @@ class GenotypeDataframeAccessor:
         """
         Drop variants with a MAF less than the specified value (0.01 by default)
         """
-        return self._obj.loc[:, self._obj.genomics.maf >= keep_min_freq]
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        removed = genotypes.loc[:, genotypes.genomics.maf < keep_min_freq].columns
+        return self._obj.drop(columns=removed)
 
     def filter_variants_hwe(self, cutoff: float = 0.05) -> pd.DataFrame:
         """
         Drop variants with a probability of HWE less than the specified value (0.05 by default).
         Keep np.nan results, which occur for non-diploid variants and insufficient sample sizes
         """
-        return self._obj.loc[
-            :,
-            (self._obj.genomics.hwe_pval >= cutoff)
-            | (np.isnan(self._obj.genomics.hwe_pval)),
-        ]
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        genotype_hwe_pval = genotypes.genomics.hwe_pval
+        removed = genotypes.loc[
+            :, (genotype_hwe_pval < cutoff) & ~np.isnan(genotype_hwe_pval)
+        ].columns
+        return self._obj.drop(columns=removed)
