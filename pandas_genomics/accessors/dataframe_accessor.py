@@ -42,45 +42,41 @@ class GenotypeDataframeAccessor:
     ######################
     # Variant Properties #
     ######################
+    # These methods generally only return a result for each GenotypeArray column, ignoring other columns
+
     @property
     def variant_info(self) -> pd.DataFrame:
         """Return a DataFrame with variant info indexed by the column name (one row per GenotypeArray)"""
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
         return pd.DataFrame.from_dict(
             {
                 colname: series.genomics.variant_info
-                if GenotypeDtype.is_dtype(series.dtype)
-                else dict()
-                for colname, series in self._obj.iteritems()
+                for colname, series in genotypes.iteritems()
             },
             orient="index",
         )
 
-    #########################
-    # Calculated Properties #
-    #########################
     @property
     def maf(self):
-        """Return the minor allele frequency
+        """Return the minor allele frequency of each variant
 
         See :py:attr:`GenotypeArray.maf`"""
-        return self._obj.apply(
-            lambda col: col.genomics.maf if GenotypeDtype.is_dtype(col.dtype) else pd.NA
-        )
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        return genotypes.apply(lambda col: col.genomics.maf)
 
     @property
     def hwe_pval(self):
         """Return the probability that the samples are in HWE
 
         See :py:attr:`GenotypeArray.hwe_pval`"""
-        return self._obj.apply(
-            lambda col: col.genomics.hwe_pval
-            if GenotypeDtype.is_dtype(col.dtype)
-            else pd.NA
-        )
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        return genotypes.apply(lambda col: col.genomics.hwe_pval)
 
     ############
     # Encoding #
     ############
+    # These methods generally return encoded values for any GenotypeArray columns without modifying other columns
+
     def encode_additive(self) -> pd.DataFrame:
         """Additive encoding of genotypes.
 
@@ -283,6 +279,8 @@ class GenotypeDataframeAccessor:
     ###########
     # Filters #
     ###########
+    # These methods drop genotypes that fail the filter, ignoring other columns
+
     def filter_variants_maf(self, keep_min_freq: float = 0.01) -> pd.DataFrame:
         """
         Drop variants with a MAF less than the specified value (0.01 by default)

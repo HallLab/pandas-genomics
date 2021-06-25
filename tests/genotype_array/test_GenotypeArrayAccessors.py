@@ -29,7 +29,7 @@ def test_maf(data):
     for colname in "ABC":
         df[colname].genomics.variant.id = colname
     df["D"] = np.ones(len(data))
-    expected = pd.Series({"A": data.maf, "B": data.maf, "C": data.maf, "D": pd.NA})
+    expected = pd.Series({"A": data.maf, "B": data.maf, "C": data.maf})
     assert_series_equal(df.genomics.maf, expected)
 
 
