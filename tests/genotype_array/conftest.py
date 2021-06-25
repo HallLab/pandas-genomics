@@ -222,7 +222,10 @@ def data_for_encoding():
 def genotypearray_df():
     DATA_DIR = Path(__file__).parent.parent / "data" / "plink"
     input = DATA_DIR / "plink_test_small"
-    return io.from_plink(input, max_variants=20, swap_alleles=True)
+    df = io.from_plink(input, max_variants=20, swap_alleles=True)
+    df["num"] = [1.0 for n in range(len(df))]
+    df["bool"] = [True if n % 3 == 0 else False for n in range(len(df))]
+    return df
 
 
 @pytest.fixture

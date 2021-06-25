@@ -2,6 +2,19 @@
 Release History
 ===============
 
+v0.6.0 (2021-06-25)
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+* The *genomics* DataFrame Accessor no longer requires that all columns in the DataFrame are backed by a GenotypeArray
+
+v0.5.2 (2021-06-24)
+-------------------
+
+* Update numpy version requirement
+
 v0.5.1 (2021-06-23)
 -------------------
 
