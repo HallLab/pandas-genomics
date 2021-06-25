@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandas-genomics"
-version = "0.6.0"
+version = "v0.6.1"
 description = "Pandas ExtensionDtypes and ExtensionArray for working with genomics data"
 license = "BSD-3-Clause"
 authors = ["John McGuigan <jrm5100@psu.edu>"]

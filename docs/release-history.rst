@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.6.1 (2021-06-26)
+-------------------
+
+Specify only alternate allele frequencies when generating random genotypes, to avoid float rounding problems
+
 v0.6.0 (2021-06-25)
 -------------------
 
