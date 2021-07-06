@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.7.0 (2021-07-06)
+-------------------
+
+Return float values for encoding instead of newer (and less compatible) pandas types
+
 v0.6.1 (2021-06-26)
 -------------------
 
