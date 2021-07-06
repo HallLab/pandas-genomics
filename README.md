@@ -96,8 +96,8 @@ print(gt_array.encode_dominant())
 
 ```
     <IntegerArray>
-    [1, 1, 0]
-    Length: 3, dtype: UInt8
+    [1.0, 1.0, 0.0]
+    Length: 3, dtype: float
 ```
 
 There are also `genomics` accessors for Series and DataFrame

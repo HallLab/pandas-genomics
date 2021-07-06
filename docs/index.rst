@@ -51,14 +51,14 @@ The `genotype` Series accessor allows those methods and properties to be accesse
 
     >>> print(gt_array.encode_dominant())
     <IntegerArray>
-    [1, 1, 0]
-    Length: 3, dtype: UInt8
+    [1.0, 1.0, 0.0]
+    Length: 3, dtype: float
 
     >>> print(pd.Series(gt_array).genotype.encode_dominant())
-    0    1
-    1    1
-    2    0
-    Name: rs12462_C, dtype: UInt8
+    0    1.0
+    1    1.0
+    2    0.0
+    Name: rs12462_C, dtype: float
 
     >>> print(pd.Series(gt_array).genotype.variant)
     rs12462[chr=12;pos=112161652;ref=A;alt=C]

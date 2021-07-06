@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 import numpy as np
 import pandas as pd
 
@@ -16,7 +14,7 @@ class EncodingMixin:
         Additive Encoding
 
         - Number of copies of non-reference allele
-        - pd.NA when any alleles are missing
+        - np.nan when any alleles are missing
 
         Returns
         -------
@@ -24,8 +22,7 @@ class EncodingMixin:
         """
         allele_sum = (self.allele_idxs != 0).sum(axis=1).astype("float")
         allele_sum[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
-        result = pd.array(data=allele_sum, dtype="UInt8")
-        return result
+        return allele_sum
 
     def encode_dominant(self) -> pd.arrays.IntegerArray:
         """
@@ -33,7 +30,7 @@ class EncodingMixin:
 
         - 0 for Homozygous Reference
         - 1 for any other case
-        - pd.NA when any alleles are missing
+        - np.nan when any alleles are missing
 
         Returns
         -------
@@ -41,8 +38,7 @@ class EncodingMixin:
         """
         has_minor = (self.allele_idxs != 0).any(axis=1).astype("float")
         has_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
-        result = pd.array(data=has_minor, dtype="UInt8")
-        return result
+        return has_minor
 
     def encode_recessive(self) -> pd.arrays.IntegerArray:
         """
@@ -50,7 +46,7 @@ class EncodingMixin:
 
         - 1 for Homozygous Non-reference
         - 0 for anything else
-        - pd.NA when any alleles are missing
+        - np.nan when any alleles are missing
 
         Returns
         -------
@@ -58,8 +54,7 @@ class EncodingMixin:
         """
         all_minor = (self.allele_idxs != 0).all(axis=1).astype("float")
         all_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
-        result = pd.array(data=all_minor, dtype="UInt8")
-        return result
+        return all_minor
 
     def encode_codominant(self) -> pd.arrays.Categorical:
         """

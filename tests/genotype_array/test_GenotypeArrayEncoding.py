@@ -4,6 +4,7 @@ Test GenotypeArray Encoding methods and accessors to those functions
 
 import pandas as pd
 import pytest
+from numpy.testing import assert_array_equal
 from pandas._testing import (
     assert_extension_array_equal,
     assert_series_equal,
@@ -49,9 +50,9 @@ def encoding_df():
 
 def test_encoding_additive(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 1, 2, 2, None], dtype="UInt8")
+    expected = np.array([0, 1, 2, 2, np.nan])
     result = data_for_encoding().encode_additive()
-    assert_extension_array_equal(result, expected)
+    assert_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_additive()
@@ -75,9 +76,9 @@ def test_encoding_additive(data_for_encoding):
 
 def test_encoding_dominant(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 1, 1, 1, None], dtype="UInt8")
+    expected = np.array([0, 1, 1, 1, np.nan])
     result = data_for_encoding().encode_dominant()
-    assert_extension_array_equal(result, expected)
+    assert_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_dominant()
@@ -101,9 +102,9 @@ def test_encoding_dominant(data_for_encoding):
 
 def test_encoding_recessive(data_for_encoding):
     # Test arrays directly
-    expected = pd.array([0, 0, 1, 1, None], dtype="UInt8")
+    expected = np.array([0, 0, 1, 1, np.nan])
     result = data_for_encoding().encode_recessive()
-    assert_extension_array_equal(result, expected)
+    assert_array_equal(result, expected)
     # Test using series accessor
     expected = pd.Series(result)
     result_series = pd.Series(data_for_encoding()).genomics.encode_recessive()
