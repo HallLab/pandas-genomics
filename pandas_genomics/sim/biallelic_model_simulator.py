@@ -47,11 +47,29 @@ class BAMS:
         pen_table: Union[np.array, PenetranceTables] = np.array(
             [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 1.0, 2.0]]
         ),
+        penetrance_base: float = 0.25,
+        penetrance_diff: Optional[float] = None,
         snp1: Optional[Variant] = None,
         snp2: Optional[Variant] = None,
         random_seed: int = 1855,
     ):
-        pen_table, snp1, snp2 = self._validate_params(pen_table, snp1, snp2)
+        """
+        Parameters
+        ----------
+        pen_table: 3x3 np array or PenetranceTables enum
+            Penetrance values.  Will be scaled between 0 and 1 if needed.
+        penetrance_base: float, default 0.25
+            Baseline to use in the final penetrance table, must be in [0,1]
+        penetrance_diff: optional float, default None (use 1-2*penetrance_base)
+            Difference between minimum and maximimum probabilities in the penetrance table.
+            penetrance_base + penetrance_diff must be in [0,1]
+        snp1: Optional[Variant]
+        snp2: Optional[Variant]
+        random_seed: int, default 1855
+        """
+        pen_table, snp1, snp2 = self._validate_params(
+            pen_table, penetrance_base, penetrance_diff, snp1, snp2
+        )
         self.pen_table = pen_table
         self.snp1 = snp1
         self.snp2 = snp2
@@ -90,12 +108,41 @@ class BAMS:
         self._random_seed = new_seed
 
     @staticmethod
-    def _validate_params(pen_table, snp1, snp2):
+    def _validate_params(pen_table, penetrance_base, penetrance_diff, snp1, snp2):
+        """Validate parameters and calculate final penetrance table"""
         # Process Enum
         if type(pen_table) is PenetranceTables:
             pen_table = np.array(pen_table.value).reshape((3, 3))
-        elif pen_table.shape != (3, 3):
-            raise ValueError(f"Incorrect shape for pen_table, must be 3x3")
+        elif isinstance(pen_table, np.ndarray):
+            if pen_table.shape != (3, 3):
+                raise ValueError(f"Incorrect shape for pen_table, must be 3x3")
+        else:
+            raise ValueError(
+                f"pen_table must be a 3x3 numpy array or PenetranceTables enum, not {type(pen_table)}"
+            )
+
+        if (pen_table < 0).any():
+            raise ValueError(f"Penetrance table values cannot be negative.")
+
+        # Scale penetrance table if needed
+        if (pen_table.min() != 0) or (pen_table.max() != 1):
+            pen_table_min = pen_table.min()
+            pen_table_range = pen_table.max() - pen_table_min
+            if pen_table_range > 0:
+                pen_table = (pen_table - pen_table_min) / pen_table_range
+                # Otherwise the penetrance table is flat, i.e. a null model
+
+        # Process base and diff
+        if (penetrance_base < 0) or (penetrance_base > 1):
+            raise ValueError(
+                f"penetrance_base must be in [0,1], {penetrance_base} was outside this range"
+            )
+        if penetrance_diff is None:
+            penetrance_diff = 1 - (2 * penetrance_base)
+        elif penetrance_diff < 0:
+            raise ValueError("penetrance_diff must be > 0")
+        elif (penetrance_diff + penetrance_base) > 1:
+            raise ValueError(f"penetrance_base + penetrance_diff must be <= 1")
 
         # SNPs
         if snp1 is None:
@@ -108,6 +155,9 @@ class BAMS:
         if len(snp2.alt) != 1:
             raise ValueError(f"SNP2 is not Bialleleic: {snp2}")
 
+        # Create final pen_table
+        pen_table = penetrance_base + penetrance_diff * pen_table
+
         return pen_table, snp1, snp2
 
     @classmethod
@@ -119,7 +169,8 @@ class BAMS:
         eff2: Union[
             Tuple[float, float, float], SNPEffectEncodings
         ] = SNPEffectEncodings.RECESSIVE,
-        baseline: float = 0.0,
+        penetrance_base: float = 0.25,
+        penetrance_diff: Optional[float] = None,
         main1: float = 1.0,
         main2: float = 1.0,
         interaction: float = 0.0,
@@ -139,8 +190,10 @@ class BAMS:
         eff2: tuple of 3 floats
             Normalized effect of SNP2
             May be passed a value from the `Effects` enum
-        baseline: float, default 0.0
+        penetrance_base: float, default 0.25
             β0 in the formula
+        penetrance_diff: Optional[float] = None
+            Difference between min and max probabilities in the penetrance table, 1-(2*baseline) if not specified
         main1: float, default 1.0
             Main effect of SNP1, β1 in the formula
         main2: float, default 1.0
@@ -177,13 +230,12 @@ class BAMS:
             eff2 = (eff2 - eff2.min()) / (eff2.max() - eff2.min())
 
         pen_table = (
-            baseline
-            + main1 * np.repeat(eff1, 3, axis=0)
+            +main1 * np.repeat(eff1, 3, axis=0)
             + main2 * np.repeat(eff2, 3, axis=1)
             + interaction * np.outer(eff2, eff1)
         )
 
-        return cls(pen_table, snp1, snp2, random_seed)
+        return cls(pen_table, penetrance_base, penetrance_diff, snp1, snp2, random_seed)
 
     def generate_case_control(
         self,
@@ -220,15 +272,6 @@ class BAMS:
                 "Simulation must include at least one case and at least one control"
             )
 
-        # Scale the penetrance table to be between 0 and 1
-        pen_table = self.pen_table
-        if (pen_table.min() != 0) or (pen_table.max() != 1):
-            pen_table_min = pen_table.min()
-            pen_table_range = pen_table.max() - pen_table_min
-            if pen_table_range > 0:
-                pen_table = (pen_table - pen_table_min) / pen_table_range
-                # Otherwise the penetrance table is flat, i.e. a null model
-
         # Create table of Prob(GT) based on MAF, assuming HWE
         prob_snp1 = np.array([(1 - maf1) ** 2, 2 * maf1 * (1 - maf1), (maf1) ** 2])
         prob_snp2 = np.array(
@@ -236,7 +279,13 @@ class BAMS:
         ).transpose()
         prob_gt = np.outer(prob_snp2, prob_snp1)
 
+        pen_table = self.pen_table
         if snr is not None:
+            # Scale penetrance table from 0 to 1
+            pen_table = (pen_table - pen_table.min()) / (
+                pen_table.max() - pen_table.min()
+            )
+            # Calcualte sigma
             sigma = self._calculate_sigma(pen_table, prob_gt)
             # Scale the penetrance by the amount of unexplained variance
             # Odds Ratio = exp(SNP/Sigma)
@@ -332,9 +381,14 @@ class BAMS:
         prob_gt = np.outer(prob_snp2, prob_snp1)
 
         if snr is not None:
+            # Scale penetrance table from 0 to 1
+            pen_table = (pen_table - pen_table.min()) / (
+                pen_table.max() - pen_table.min()
+            )
+            # Calculate sigma
             sigma = self._calculate_sigma(pen_table, prob_gt)
             # Scale the penetrance by the amount of unexplained variance
-            pen_table = pen_table / (sigma * snr)
+            pen_table = (pen_table / sigma) * snr
 
         # Generate genotypes
         gt_table_idxs = np.random.choice(range(9), size=n_samples, p=prob_gt.flatten())
@@ -371,6 +425,10 @@ class BAMS:
         y, X = patsy.dmatrices("y ~ 1 + SNP1 + SNP2", data=d)
         mod = sm.WLS(y, X, weights=wt_vec)
         res = mod.fit()
+        # If rsquared is 1, there is no interaction, so use constant endogenous values
+        if res.rsquared == 1:
+            mod = sm.WLS(y, exog=np.ones(len(y)), weights=wt_vec)
+            res = mod.fit()
         sigma = np.sqrt(res.scale)  # sigma is sqrt of the dispersion (aka scale)
         return sigma
 
