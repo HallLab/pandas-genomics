@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.8.0 (2021-07-09)
+-------------------
+
+Improve randomness handling in BAMS and fix calculations to ensure they work as expected (especially quantitative)
+
 v0.7.0 (2021-07-06)
 -------------------
 
