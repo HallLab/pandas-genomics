@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import patsy
 import statsmodels.api as sm
+from numpy.random._generator import default_rng
 
 from pandas_genomics.arrays import GenotypeArray, GenotypeDtype
 from pandas_genomics.scalars import Variant
@@ -74,6 +75,7 @@ class BAMS:
         self.snp1 = snp1
         self.snp2 = snp2
         self._random_seed = random_seed
+        self.rng = default_rng(self._random_seed)
 
     def __str__(self):
         pen_table_df = pd.DataFrame(self.pen_table)
@@ -106,6 +108,7 @@ class BAMS:
 
     def set_random_seed(self, new_seed: int):
         self._random_seed = new_seed
+        self.rng = default_rng(self._random_seed)
 
     @staticmethod
     def _validate_params(pen_table, penetrance_base, penetrance_diff, snp1, snp2):
@@ -265,7 +268,6 @@ class BAMS:
             Dataframe with 3 columns: Outcome (categorical), SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
         """
-        np.random.seed(self._random_seed)
         # Validate params
         if n_cases < 1 or n_controls < 0:
             raise ValueError(
@@ -312,11 +314,10 @@ class BAMS:
 
         # Generate genotypes based on the simulated cases and controls
         # Pick int index into the table (0 through 8) counted left to right then top to bottom (due to flatten())
-        # TODO: This isn't always consistent in multiple runs
-        case_gt_table_idxs = np.random.choice(
+        case_gt_table_idxs = self.rng.choice(
             range(9), size=n_cases, p=prob_gt_given_case.flatten()
         )
-        control_gt_table_idxs = np.random.choice(
+        control_gt_table_idxs = self.rng.choice(
             range(9), size=n_controls, p=prob_gt_given_control.flatten()
         )
 
@@ -352,7 +353,7 @@ class BAMS:
         snr: Optional[float] = None,
     ):
         """
-        Simulate genotypes with the specified number of 'case' and 'control' phenotypes
+        Simulate genotypes with a quantitative outcome (mean = probability based on genotypes, sd = 1)
 
         Parameters
         ----------
@@ -370,7 +371,6 @@ class BAMS:
             Dataframe with 3 columns: Outcome, SNP1 (GenotypeArray), and SNP2 (GenotypeArray)
 
         """
-        np.random.seed(self._random_seed)
         pen_table = self.pen_table
 
         # Create table of Prob(GT) based on MAF, assuming HWE
@@ -391,12 +391,14 @@ class BAMS:
             pen_table = (pen_table / sigma) * snr
 
         # Generate genotypes
-        gt_table_idxs = np.random.choice(range(9), size=n_samples, p=prob_gt.flatten())
+        gt_table_idxs = self.rng.choice(range(9), size=n_samples, p=prob_gt.flatten())
         snp1_array = pd.Series(self._get_snp1_gt_array(gt_table_idxs))
         snp2_array = pd.Series(self._get_snp2_gt_array(gt_table_idxs))
 
-        # Calculate outcome
-        outcome = pd.Series(np.take(pen_table.flatten(), gt_table_idxs))
+        # Calculate outcome: Normal distribution with mean=probability and sd = 1
+        outcome = pd.Series(
+            self.rng.normal(loc=np.take(pen_table.flatten(), gt_table_idxs))
+        )
 
         result = pd.concat([outcome, snp1_array, snp2_array], axis=1)
         result.columns = ["Outcome", "SNP1", "SNP2"]

@@ -102,6 +102,16 @@ def test_pen_table_direct(pen_table, baseline, diff, expected):
             10,
             [0.1, 1 / 6, 1 / 6, 1 / 6, 0.9, 0.9, 1 / 6, 0.9, 0.9],
         ),
+        (
+            sim.SNPEffectEncodings.ADDITIVE,
+            sim.SNPEffectEncodings.RECESSIVE,
+            0.2,
+            0.4,
+            1,
+            1,
+            -1,
+            [0.2, 0.4, 0.6, 0.2, 0.4, 0.6, 0.6, 0.6, 0.6],
+        ),
     ],
 )
 def test_pen_table_model(
@@ -117,36 +127,44 @@ def test_pen_table_model(
         main2=main2,
         interaction=interaction,
     )
-    test = model.generate_quantitative(100, snr=0.1)
     assert np.isclose(
         model.pen_table, np.reshape(np.array(expected), newshape=(3, 3))
     ).all()
 
 
-def test():
-    assert BAMS() == BAMS.from_model()
-    assert BAMS(PenetranceTables.HET_HET) == BAMS.from_model(
-        eff1=(0, 1, 0), eff2=(0, 1, 0), main1=0, main2=0, interaction=1
-    )
+def test_random_seed():
     test_sim = BAMS.from_model(
         SNPEffectEncodings.RECESSIVE,
         SNPEffectEncodings.RECESSIVE,
         main1=1,
         main2=1,
         interaction=1,
+        random_seed=123,
     )
 
     # Test simulating data using random seeds
-    simulated_df_cc = test_sim.generate_case_control(snr=0.1)
-    simulated_df_cc_2 = test_sim.generate_case_control(snr=0.1)
-    assert_frame_equal(simulated_df_cc, simulated_df_cc_2)
+    original_cc_sim = test_sim.generate_case_control(snr=0.1)
+    original_quant_sim = test_sim.generate_quantitative(snr=0.1)
+    repeat_cc_sim = test_sim.generate_case_control(snr=0.1)
+    repeat_quant_sim = test_sim.generate_quantitative(snr=0.1)
+    test_sim.set_random_seed(456)
+    newseed_cc_sim = test_sim.generate_case_control(snr=0.1)
+    newseed_quant_sim = test_sim.generate_quantitative(snr=0.1)
     test_sim.set_random_seed(123)
-    simulated_df_cc_3 = test_sim.generate_case_control(snr=0.1)
-    assert_frame_not_equal(simulated_df_cc_2, simulated_df_cc_3)
+    redo_cc_sim = test_sim.generate_case_control(snr=0.1)
+    redo_quant_sim = test_sim.generate_quantitative(snr=0.1)
 
-    # Test quantitative sim
-    # TODO: Quantitative model is unfinished
-    simulated_df_quant = test_sim.generate_quantitative()
+    # Subsequent runs are different
+    assert_frame_not_equal(original_cc_sim, repeat_cc_sim)
+    assert_frame_not_equal(original_quant_sim, repeat_quant_sim)
+
+    # New seed should be different
+    assert_frame_not_equal(original_cc_sim, newseed_cc_sim)
+    assert_frame_not_equal(original_quant_sim, newseed_quant_sim)
+
+    # Resetting seed should match original
+    assert_frame_equal(original_cc_sim, redo_cc_sim)
+    assert_frame_equal(original_quant_sim, redo_quant_sim)
 
 
 def test_null():
