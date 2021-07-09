@@ -274,7 +274,7 @@ def test_generated_encodings_plink(genotypearray_df):
                 main2=1,
                 interaction=0,
             ),
-            [0.884755, 1.292038],
+            [0.871592, 2.247621],
         ),
         (
             BAMS.from_model(
@@ -284,7 +284,7 @@ def test_generated_encodings_plink(genotypearray_df):
                 main2=1,
                 interaction=0,
             ),
-            [0.504485, 0.757154],
+            [0.550661, 0.881530],
         ),
         (
             BAMS.from_model(
@@ -294,7 +294,7 @@ def test_generated_encodings_plink(genotypearray_df):
                 main2=1,
                 interaction=0,
             ),
-            [0.21231, 0.41846],
+            [0.284881, 0.395801],
         ),
         (
             BAMS.from_model(
@@ -304,7 +304,7 @@ def test_generated_encodings_plink(genotypearray_df):
                 main2=1,
                 interaction=0,
             ),
-            [0.091149, 0.163882],
+            [0.111338, 0.075326],
         ),
         (
             BAMS.from_model(
@@ -314,7 +314,7 @@ def test_generated_encodings_plink(genotypearray_df):
                 main2=1,
                 interaction=0,
             ),
-            [-0.332334, -0.252329],
+            [-0.154431, -0.101037],
         ),
     ],
 )
