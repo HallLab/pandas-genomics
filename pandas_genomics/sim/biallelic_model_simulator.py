@@ -107,6 +107,9 @@ class BAMS:
         return self._random_seed
 
     def set_random_seed(self, new_seed: int):
+        """
+        Reset the random number generator with the specified seed.
+        """
         self._random_seed = new_seed
         self.rng = default_rng(self._random_seed)
 
