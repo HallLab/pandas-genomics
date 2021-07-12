@@ -159,9 +159,9 @@ def test_encoding_codominant(data_for_encoding):
 @pytest.mark.parametrize(
     "alpha_value,ref_allele,alt_allele,minor_allele_freq,expected",
     [
-        (0.25, "A", "T", 0.45, pd.array([0.0, 0.25, 1.0, None, None], dtype="Float64")),
-        (0.25, "T", "A", 0.45, pd.array([1.0, 0.25, 0.0, None, None], dtype="Float64")),
-        (1.0, "T", "A", 0.45, pd.array([1.0, 1.0, 0.0, None, None], dtype="Float64")),
+        (0.25, "A", "T", 0.45, np.array([0.0, 0.25, 1.0, np.nan, np.nan])),
+        (0.25, "T", "A", 0.45, np.array([1.0, 0.25, 0.0, np.nan, np.nan])),
+        (1.0, "T", "A", 0.45, np.array([1.0, 1.0, 0.0, np.nan, np.nan])),
         pytest.param(
             0.25,
             "A",
@@ -180,7 +180,7 @@ def test_encoding_weighted(
     result = data_for_encoding().encode_weighted(
         alpha_value, ref_allele, alt_allele, minor_allele_freq
     )
-    assert_extension_array_equal(expected, result)
+    assert_array_equal(expected, result)
 
 
 @pytest.mark.parametrize(
@@ -199,14 +199,13 @@ def test_encoding_weighted(
             ),
             pd.DataFrame(
                 {
-                    "var0": [0.0, 0.1, 1.0, None, None],
-                    "var1": [0.0, 0.2, 1.0, None, None],
-                    "var2": [0.0, 0.3, 1.0, None, None],
-                    "var3": [0.0, 0.4, 1.0, None, None],
-                    "var4": [0.0, 0.5, 1.0, None, None],
+                    "var0": [0.0, 0.1, 1.0, np.nan, np.nan],
+                    "var1": [0.0, 0.2, 1.0, np.nan, np.nan],
+                    "var2": [0.0, 0.3, 1.0, np.nan, np.nan],
+                    "var3": [0.0, 0.4, 1.0, np.nan, np.nan],
+                    "var4": [0.0, 0.5, 1.0, np.nan, np.nan],
                     "num": [1.0, 1.0, 1.0, 1.0, 1.0],
-                },
-                dtype="Float64",
+                }
             ),
         ),
         # Missing one variant, swapping one variant, wrong allele one variant
@@ -222,19 +221,18 @@ def test_encoding_weighted(
             ),
             pd.DataFrame(
                 {
-                    "var0": [0.0, 0.1, 1.0, None, None],
-                    "var1": [0.0, 0.2, 1.0, None, None],
-                    "var4": [1.0, 0.5, 0.0, None, None],
+                    "var0": [0.0, 0.1, 1.0, np.nan, np.nan],
+                    "var1": [0.0, 0.2, 1.0, np.nan, np.nan],
+                    "var4": [1.0, 0.5, 0.0, np.nan, np.nan],
                     "num": [1.0, 1.0, 1.0, 1.0, 1.0],
-                },
-                dtype="Float64",
+                }
             ),
         ),
     ],
 )
 def test_encoding_weighted_df(encoding_df, encoding_info, expected):
     df = encoding_df.copy()
-    df["num"] = pd.Series(np.ones(len(df))).astype("Float64")
+    df["num"] = pd.Series(np.ones(len(df)))
     result = df.genomics.encode_weighted(encoding_info)
     assert_frame_equal(expected, result)
 

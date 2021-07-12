@@ -18,7 +18,7 @@ class EncodingMixin:
 
         Returns
         -------
-        pd.arrays.IntegerArray
+        ndarray
         """
         allele_sum = (self.allele_idxs != 0).sum(axis=1).astype("float")
         allele_sum[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -34,7 +34,7 @@ class EncodingMixin:
 
         Returns
         -------
-        pd.arrays.IntegerArray
+        ndarray
         """
         has_minor = (self.allele_idxs != 0).any(axis=1).astype("float")
         has_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -50,7 +50,7 @@ class EncodingMixin:
 
         Returns
         -------
-        pd.arrays.IntegerArray
+        ndarray
         """
         all_minor = (self.allele_idxs != 0).all(axis=1).astype("float")
         all_minor[(self.allele_idxs == MISSING_IDX).any(axis=1)] = np.nan
@@ -108,7 +108,7 @@ class EncodingMixin:
 
         Returns
         -------
-        pd.arrays.IntegerArray
+        ndarray
             1 for Homozygous Alt
             alpha for Heterozygous Alt
             0 for Homozygous Ref
@@ -139,4 +139,4 @@ class EncodingMixin:
             (self.allele_idxs == sorted([ref_allele_idx, alt_allele_idx])).all(axis=1)
         ] = alpha_value
 
-        return encoded_values
+        return encoded_values.astype("float")
