@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.9.0 (2021-07-12)
+-------------------
+
+Remove fancy new pandas dtypes from edge encoding (and rename weighted encoding to edge encoding).
+
 v0.8.0 (2021-07-09)
 -------------------
 
