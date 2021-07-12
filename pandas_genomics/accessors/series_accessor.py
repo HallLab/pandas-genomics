@@ -2,7 +2,7 @@ from typing import Optional, List
 
 import pandas as pd
 
-from .utils import generate_weighted_encodings
+from .utils import calculate_edge_alphas
 from pandas_genomics.arrays import GenotypeDtype
 
 
@@ -156,30 +156,30 @@ class GenotypeSeriesAccessor:
             data=self._array.encode_codominant(), index=self._index, name=self._name
         )
 
-    def encode_weighted(
+    def encode_edge(
         self,
         alpha_value: float,
         ref_allele: str,
         alt_allele: str,
         minor_allele_freq: float,
     ) -> pd.Series:
-        """Weighted (edge) encoding of genotypes.
+        """EDGE (weighted) encoding of genotypes.
 
-        See :meth:`GenotypeArray.encode_weighted`
+        See :meth:`GenotypeArray.encode_edge`
 
         Returns
         -------
         pd.Series
         """
         return pd.Series(
-            data=self._array.encode_weighted(
+            data=self._array.encode_edge(
                 alpha_value, ref_allele, alt_allele, minor_allele_freq
             ),
             index=self._index,
             name=self._name,
         )
 
-    def generate_weighted_encodings(
+    def calculate_edge_encoding_values(
         self,
         data: pd.DataFrame,
         outcome_variable: str,
@@ -216,7 +216,7 @@ class GenotypeSeriesAccessor:
                "Novel EDGE encoding method enhances ability to identify genetic interactions."
                PLoS genetics 17.6 (2021): e1009534.
         """
-        return generate_weighted_encodings(
+        return calculate_edge_alphas(
             genotypes=pd.Series(self._array, name=self._name, index=self._index),
             data=data,
             outcome_variable=outcome_variable,

@@ -1,1 +1,1 @@
-from .weighted_encodings import generate_weighted_encodings
+from .edge_encoding import calculate_edge_alphas

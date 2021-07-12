@@ -86,14 +86,14 @@ class EncodingMixin:
         result[(self.allele_idxs == MISSING_IDX).any(axis=1)] = None
         return result
 
-    def encode_weighted(
+    def encode_edge(
         self,
         alpha_value: float,
         ref_allele: str,
         alt_allele: str,
         minor_allele_freq: float,
     ) -> pd.DataFrame:
-        """Perform weighted (edge) encoding.
+        """Perform EDGE (weighted) encoding.
 
         Parameters
         ----------
@@ -116,7 +116,7 @@ class EncodingMixin:
 
         Notes
         -----
-        See [1]_ for more information about weighted encoding.
+        See [1]_ for more information about edge encoding.
         Encoding will be based on the provided ref and alt alleles, since the alpha value would be specific to them.
         In the future, if the existing minor allele frequency differs greatly from the provided value, a warning will be issued.
 

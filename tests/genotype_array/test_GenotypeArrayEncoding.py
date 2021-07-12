@@ -177,7 +177,7 @@ def test_encoding_codominant(data_for_encoding):
 def test_encoding_weighted(
     data_for_encoding, alpha_value, ref_allele, alt_allele, minor_allele_freq, expected
 ):
-    result = data_for_encoding().encode_weighted(
+    result = data_for_encoding().encode_edge(
         alpha_value, ref_allele, alt_allele, minor_allele_freq
     )
     assert_array_equal(expected, result)
@@ -233,7 +233,7 @@ def test_encoding_weighted(
 def test_encoding_weighted_df(encoding_df, encoding_info, expected):
     df = encoding_df.copy()
     df["num"] = pd.Series(np.ones(len(df)))
-    result = df.genomics.encode_weighted(encoding_info)
+    result = df.genomics.encode_edge(encoding_info)
     assert_frame_equal(expected, result)
 
 
@@ -242,12 +242,12 @@ def test_generated_encodings_plink(genotypearray_df):
         {"phenotype": genotypearray_df.index.get_level_values("phenotype")},
         index=genotypearray_df.index,
     )
-    result_df = genotypearray_df.genomics.generate_weighted_encodings(
+    result_df = genotypearray_df.genomics.calculate_edge_encoding_values(
         data, outcome_variable="phenotype"
     )
     result_series = genotypearray_df[
         "18_nullA_18"
-    ].genomics.generate_weighted_encodings(data, outcome_variable="phenotype")
+    ].genomics.calculate_edge_encoding_values(data, outcome_variable="phenotype")
     expected = pd.DataFrame(
         {
             "Variant ID": ["nullA_18"],
@@ -320,7 +320,7 @@ def test_generated_encodings_bams(bam, expected_alphas):
     genotypes = bam.generate_case_control()
     data = genotypes["Outcome"]
     genotypes = genotypes.drop(columns="Outcome")
-    result = genotypes.genomics.generate_weighted_encodings(
+    result = genotypes.genomics.calculate_edge_encoding_values(
         data, outcome_variable="Outcome"
     )
     assert np.isclose(result["Alpha Value"], expected_alphas).all()

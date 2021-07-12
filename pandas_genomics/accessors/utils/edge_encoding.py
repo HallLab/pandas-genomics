@@ -9,14 +9,14 @@ import statsmodels.api as sm
 from pandas_genomics.arrays import GenotypeDtype
 
 
-def generate_weighted_encodings(
+def calculate_edge_alphas(
     genotypes: Union[pd.Series, pd.DataFrame],
     data: pd.DataFrame,
     outcome_variable: str,
     covariates: Optional[List[str]] = None,
 ):
     """
-    Calculate alpha values to be used in weighted encoding
+    Calculate alpha values to be used in EDGE encoding
 
     Parameters
     ----------
@@ -40,7 +40,7 @@ def generate_weighted_encodings(
 
     Notes
     -----
-    See [1]_ for more information about weighted encoding.
+    See [1]_ for more information about EDGE encoding.
 
     References
     ----------

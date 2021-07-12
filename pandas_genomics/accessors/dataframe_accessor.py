@@ -4,7 +4,7 @@ from typing import Optional, List
 import numpy as np
 import pandas as pd
 
-from .utils import generate_weighted_encodings
+from .utils import calculate_edge_alphas
 from pandas_genomics.arrays import GenotypeDtype
 
 
@@ -145,10 +145,10 @@ class GenotypeDataframeAccessor:
             axis=1,
         )
 
-    def encode_weighted(self, encoding_info: pd.DataFrame) -> pd.DataFrame:
-        """Weighted (EDGE) encoding of genotypes.
+    def encode_edge(self, encoding_info: pd.DataFrame) -> pd.DataFrame:
+        """EDGE (weighted) encoding of genotypes.
 
-        See :meth:`GenotypeArray.encode_weighted`
+        See :meth:`GenotypeArray.encode_edge`
 
         Parameters
         ----------
@@ -221,7 +221,7 @@ class GenotypeDataframeAccessor:
                 continue
             else:
                 try:
-                    results.append(s.genomics.encode_weighted(**info))
+                    results.append(s.genomics.encode_edge(**info))
                 except Exception as e:
                     warnings[s.array.variant.id] = str(e)
         # Print Warnings
@@ -232,14 +232,14 @@ class GenotypeDataframeAccessor:
         # Concatenate results
         return pd.concat(results, axis=1)
 
-    def generate_weighted_encodings(
+    def calculate_edge_encoding_values(
         self,
         data: pd.DataFrame,
         outcome_variable: str,
         covariates: Optional[List[str]] = None,
     ):
         """
-        Calculate alpha values to be used in weighted encoding
+        Calculate alpha values to be used in edge encoding
 
         Parameters
         ----------
@@ -261,7 +261,7 @@ class GenotypeDataframeAccessor:
 
         Notes
         -----
-        See [1]_ for more information about weighted encoding.
+        See [1]_ for more information about edge encoding.
 
         References
         ----------
@@ -269,7 +269,7 @@ class GenotypeDataframeAccessor:
                "Novel EDGE encoding method enhances ability to identify genetic interactions."
                PLoS genetics 17.6 (2021): e1009534.
         """
-        return generate_weighted_encodings(
+        return calculate_edge_alphas(
             genotypes=self._obj.select_dtypes([GenotypeDtype]),
             data=data,
             outcome_variable=outcome_variable,
