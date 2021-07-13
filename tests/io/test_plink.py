@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from numpy.testing import assert_array_equal
 from pandas._testing import assert_frame_equal
 
 from pandas_genomics import io, sim
@@ -41,6 +42,7 @@ def test_round_trip_sim(tmp_path):
     d.mkdir()
     output = str(d / "test")
     data = sim.BAMS().generate_case_control()
+    original = data.copy()
     io.to_plink(
         data,
         output,
@@ -58,6 +60,11 @@ def test_round_trip_sim(tmp_path):
     assert_frame_equal(
         data, loaded_data, check_categorical=False
     )  # Categorical order may be different
+
+    # Ensure there were no side effects
+    assert_array_equal(
+        original["SNP1"].array.allele_idxs, data["SNP1"].array.allele_idxs
+    )
 
 
 @pytest.mark.slow

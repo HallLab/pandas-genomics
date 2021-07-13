@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.9.1 (2021-07-13)
+-------------------
+
+Fix a side-effect of to_plink that swapped allele idxs which could affect edge encoding
+
 v0.9.0 (2021-07-12)
 -------------------
 

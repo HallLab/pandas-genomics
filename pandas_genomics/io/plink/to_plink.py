@@ -164,7 +164,7 @@ def save_bed(data, output_bed):
 
 
 def gt_array_to_plink_bits(gt_series):
-    allele_ids = gt_series.array.allele_idxs
+    allele_ids = gt_series.array.allele_idxs.copy()
     # Replace missing with 0,1
     missing = gt_series.array.is_missing
     allele_ids[missing] = (0, 1)
