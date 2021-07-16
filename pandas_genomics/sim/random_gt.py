@@ -3,7 +3,7 @@ from typing import List, Union
 import numpy as np
 
 from pandas_genomics.arrays import GenotypeArray, GenotypeDtype
-from pandas_genomics.scalars import Variant
+from pandas_genomics.scalars import Variant, MISSING_IDX
 
 
 def generate_random_gt(
@@ -58,8 +58,7 @@ def generate_random_gt(
 
     # Create GenotypeArray representation of the data
     dtype = GenotypeDtype(variant)
-    scores = np.empty(n)
-    scores[:] = np.nan
+    scores = np.ones(n) * MISSING_IDX
     data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
     gt_array = GenotypeArray(values=data, dtype=dtype)
 

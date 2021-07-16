@@ -8,7 +8,7 @@ import statsmodels.api as sm
 from numpy.random._generator import default_rng
 
 from pandas_genomics.arrays import GenotypeArray, GenotypeDtype
-from pandas_genomics.scalars import Variant
+from pandas_genomics.scalars import Variant, MISSING_IDX
 
 
 class SNPEffectEncodings(Enum):
@@ -450,15 +450,15 @@ class BAMS:
         """Assemble a GenotypeArray for SNP1 directly from genotype table indices"""
         dtype = GenotypeDtype(self.snp1)
         gt_table_data = (
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
+            ((0, 0), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
+            ((0, 0), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
+            ((0, 0), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
         )
         data = np.array(
             [gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type
@@ -469,15 +469,15 @@ class BAMS:
         """Assemble a GenotypeArray for SNP2 directly from genotype table indices"""
         dtype = GenotypeDtype(self.snp2)
         gt_table_data = (
-            ((0, 0), np.nan),
-            ((0, 0), np.nan),
-            ((0, 0), np.nan),
-            ((0, 1), np.nan),
-            ((0, 1), np.nan),
-            ((0, 1), np.nan),
-            ((1, 1), np.nan),
-            ((1, 1), np.nan),
-            ((1, 1), np.nan),
+            ((0, 0), MISSING_IDX),
+            ((0, 0), MISSING_IDX),
+            ((0, 0), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((0, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
+            ((1, 1), MISSING_IDX),
         )
         data = np.array(
             [gt_table_data[i] for i in gt_table_idxs], dtype=dtype._record_type

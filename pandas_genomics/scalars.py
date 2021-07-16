@@ -12,9 +12,7 @@ This module contains scalar types used in the ExtensionArrays.  They may also be
 import uuid
 from typing import Optional, List, Tuple, Union
 
-MISSING_IDX = (
-    255  # Integer indicating a missing allele.  Each variant must have 254 alleles max.
-)
+MISSING_IDX = 255  # Integer indicating a missing allele or genotype score.  Each variant must have 254 alleles max and the maximum genotype score is 254.
 
 
 class Variant:
@@ -359,7 +357,7 @@ class Genotype:
     allele_idxs: List[int]
         Alleles encoded as indexes into the variant allele list
     score: int, optional
-        A quality score for the Genotype.  No assumptions are made about the meaning.
+        A quality score for the Genotype between 0 and 254.  255 or < 0 is treated as missing.
 
     Examples
     --------
@@ -398,9 +396,13 @@ class Genotype:
 
         self.variant = variant
         self.allele_idxs = allele_idxs
-        self.score = None
         if score is not None:
-            self.score = int(score)
+            score = int(score)
+            if score < 0 or score > 255:
+                raise ValueError("The score must be between 0 and 255, inclusive")
+            elif score == 255:
+                score = None
+        self.score = score
 
         # Validate parameters
         for a in self.allele_idxs:
@@ -502,8 +504,8 @@ class Genotype:
 
     @property
     def _float_score(self):
-        """Convenience method for storing score as a float"""
+        """Convenience method for storing score as a uint8"""
         if self.score is None:
-            return float("NaN")
+            return 255
         else:
-            return float(self.score)
+            return self.score
