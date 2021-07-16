@@ -67,7 +67,11 @@ def from_vcf(
         allele_idxs = np.array(vcf_variant.genotypes)[:, :2]
         allele_idxs = np.where(allele_idxs == -1, MISSING_IDX, allele_idxs)
         gt_scores = vcf_variant.gt_quals
-        gt_scores = np.where(gt_scores == -1, np.nan, gt_scores)
+        # Convert genotype scores from float values to uint8 values
+        gt_scores = np.where(gt_scores > 254, 254, gt_scores)  # Max Score
+        gt_scores = np.where(gt_scores < 0, 255, gt_scores)  # Min Score (<0 is missing)
+        gt_scores = np.where(gt_scores == -1, 255, gt_scores)  # Missing values
+        gt_scores = gt_scores.round().astype("uint8")
         values = np.array(list(zip(allele_idxs, gt_scores)), dtype=dtype._record_type)
 
         # Make the GenotypeArray

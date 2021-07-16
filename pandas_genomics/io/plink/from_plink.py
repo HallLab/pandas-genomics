@@ -187,8 +187,7 @@ def create_gt_array(num_samples, variant_gt_bytes, variant):
     genotypes[het_gt] = (0, 1)
     # Create GenotypeArray representation of the data
     dtype = GenotypeDtype(variant)
-    scores = np.empty(num_samples)
-    scores[:] = np.nan
+    scores = np.ones(num_samples) * MISSING_IDX  # Missing Scores
     data = np.array(list(zip(genotypes, scores)), dtype=dtype._record_type)
     gt_array = GenotypeArray(values=data, dtype=dtype)
     return gt_array

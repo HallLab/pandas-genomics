@@ -78,11 +78,11 @@ class GenotypeDtype(PandasExtensionDtype):
 
         # Data backing the GenotypeArray is stored as a numpy structured array
         # An unsigned integer for each allele in the genotype indexing the list of possible alleles
-        # A float value for the genotype score (nan if missing)
+        # An unsigned integer for the genotype score (255 if missing)
         self._record_type = np.dtype(
             [
                 ("allele_idxs", np.uint8, (self.variant.ploidy,)),
-                ("gt_score", np.float64),
+                ("gt_score", np.uint8),
             ]
         )
 
@@ -665,7 +665,9 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         """
         Return the genotype score for each genotype (as a float)
         """
-        return self._data["gt_score"]
+        scores = self._data["gt_score"].copy().astype("float")
+        scores[scores == MISSING_IDX] = np.nan
+        return scores
 
     # Operations
     # Note: genotypes are compared by first allele then second, using the order of alleles in the variant
