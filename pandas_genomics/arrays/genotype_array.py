@@ -85,6 +85,7 @@ class GenotypeDtype(PandasExtensionDtype):
                 ("gt_score", np.uint8),
             ]
         )
+        self.itemsize = self._record_type.itemsize
 
     # ExtensionDtype Methods
     # -------------------------

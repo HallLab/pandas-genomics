@@ -1,6 +1,8 @@
 """
 Test various calculations performed by GenotypeArray
 """
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -132,3 +134,8 @@ def test_HWE(ga_inhwe, ga_nothwe):
         * 50,
     )
     assert ga_triploid.hwe_pval is np.nan
+
+
+def test_size(ga_AA_Aa_aa_BB_Bb_bb):
+    # gts and scores (6*3 = 18)
+    assert ga_AA_Aa_aa_BB_Bb_bb._data.nbytes == 18

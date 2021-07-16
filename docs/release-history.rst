@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.10.1 (2021-07-16)
+--------------------
+
+Fixed an issue reporting the size of GenotypeDtype in memory
+
 v0.10.0 (2021-07-16)
 --------------------
 

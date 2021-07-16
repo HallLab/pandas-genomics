@@ -66,3 +66,15 @@ def test_from_str(input_str, variant):
     """Test creating GenotypeDtype from str"""
     gtdtype = GenotypeDtype.construct_from_string(input_str)
     assert gtdtype.variant == variant
+
+
+@pytest.mark.parametrize(
+    "input_str,size",
+    [
+        ("genotype(2n)[12; 112161652; rs12462; T; C]", 3),
+        ("genotype(3n)[12; 112161652; rs12462; T; C]", 4),
+    ],
+)
+def test_size(input_str, size):
+    gtdtype = GenotypeDtype.construct_from_string(input_str)
+    assert gtdtype.itemsize == size
