@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.10.0 (2021-07-16)
+--------------------
+
+Change genotype scores to be a unit8 (255=missing) instead of float64, to save ~70% of memory usage
+
 v0.9.1 (2021-07-13)
 -------------------
 
