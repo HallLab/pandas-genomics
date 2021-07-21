@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.11.0 (2021-07-21)
+--------------------
+
+Add a *Region* scalar with support for loading from BED files and filtering
+
 v0.10.1 (2021-07-16)
 --------------------
 

@@ -1,9 +1,10 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import pandas as pd
 
 from .utils import calculate_edge_alphas
 from pandas_genomics.arrays import GenotypeDtype
+from ..scalars import Region
 
 
 @pd.api.extensions.register_series_accessor("genomics")
@@ -72,9 +73,6 @@ class GenotypeSeriesAccessor:
         See :py:attr:`GenotypeArray.maf`"""
         return self._array.maf
 
-    #########################
-    # Calculated Properties #
-    #########################
     @property
     def hwe_pval(self):
         """Return the probability that the samples are in HWE
@@ -226,3 +224,29 @@ class GenotypeSeriesAccessor:
     ##############
     # QC Methods #
     ##############
+
+    # TODO
+
+    #################
+    # Other Methods #
+    #################
+
+    def contained_by(self, regions: Union[Region, List[Region]]):
+        """
+        True if the variant is contained within the specified region(s)
+
+        Parameters
+        ----------
+        regions: Region or List[Region]
+
+        Returns
+        -------
+        bool
+        """
+        if isinstance(regions, Region):
+            return regions.contains_variant(self.variant)
+        else:
+            for r in regions:
+                if r.contains_variant(self.variant):
+                    return True
+            return False

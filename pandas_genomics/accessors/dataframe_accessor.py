@@ -1,11 +1,12 @@
 from collections import Counter
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import numpy as np
 import pandas as pd
 
 from .utils import calculate_edge_alphas
 from pandas_genomics.arrays import GenotypeDtype
+from ..scalars import Region
 
 
 @pd.api.extensions.register_dataframe_accessor("genomics")
@@ -299,4 +300,54 @@ class GenotypeDataframeAccessor:
         removed = genotypes.loc[
             :, (genotype_hwe_pval < cutoff) & ~np.isnan(genotype_hwe_pval)
         ].columns
+        return self._obj.drop(columns=removed)
+
+    def in_regions(self, regions: Union[Region, List[Region]]):
+        """
+        Keep variants that exist in one or more of the specified regions
+
+        Parameters
+        ----------
+        regions: Region or List[Region]
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        if isinstance(regions, Region):
+            regions = [
+                regions,
+            ]
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        boolean_array = genotypes.apply(lambda s: False)
+        for r in regions:
+            boolean_array = boolean_array | genotypes.apply(
+                lambda s: s.genomics.contained_by(r)
+            )
+        removed = boolean_array[~boolean_array].index  # Remove where False
+        return self._obj.drop(columns=removed)
+
+    def not_in_regions(self, regions: Union[Region, List[Region]]):
+        """
+        Remove variants that exist in one or more of the specified regions
+
+        Parameters
+        ----------
+        regions: Region or List[Region]
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        if isinstance(regions, Region):
+            regions = [
+                regions,
+            ]
+        genotypes = self._obj.select_dtypes([GenotypeDtype])
+        boolean_array = genotypes.apply(lambda s: False)
+        for r in regions:
+            boolean_array = boolean_array | genotypes.apply(
+                lambda s: s.genomics.contained_by(r)
+            )
+        removed = boolean_array[boolean_array].index  # Remove where True
         return self._obj.drop(columns=removed)
