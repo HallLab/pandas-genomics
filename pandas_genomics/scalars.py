@@ -1,18 +1,22 @@
 """
 Scalars
 -------
-This module contains scalar types used in the ExtensionArrays.  They may also be useful on their own.
+This module contains scalar types, some of which are used in the ExtensionArrays.  They may also be useful on their own.
 
 .. autosummary::
      :toctree: scalars
 
      Variant
      Genotype
+     Region
 """
 import uuid
+from dataclasses import dataclass
 from typing import Optional, List, Tuple, Union
 
-MISSING_IDX = 255  # Integer indicating a missing allele or genotype score.  Each variant must have 254 alleles max and the maximum genotype score is 254.
+# Integer indicating a missing allele or genotype score.
+# Each variant must have 254 alleles max and the maximum genotype score is 254.
+MISSING_IDX = 255
 
 
 class Variant:
@@ -509,3 +513,51 @@ class Genotype:
             return 255
         else:
             return self.score
+
+
+@dataclass(order=True)
+class Region:
+    chromosome: str
+    start: int
+    end: int
+    name: str = ""
+    """
+    Information associated with a genomic region.
+
+    Parameters
+    ----------
+    chomosome: str
+    start, end: int
+        1-based, open-ended (includes start, not end)
+    name: str
+        name/comment for the region
+
+    Examples
+    --------
+    >>> region1 = Region('chr12', 12345, 12387)
+    >>> region2 = Region('chr12', 5236373, 5246380)
+    >>> print(region1 < region2)
+    True
+    """
+
+    def __post_init__(self):
+        """Run after init, use to validate input"""
+        if not isinstance(self.chromosome, str):
+            raise TypeError(f"chromosome should be a str, not {type(self.chromosome)}")
+        if not isinstance(self.start, int) or not isinstance(self.end, int):
+            raise TypeError("start and end must be integers")
+        if self.start < 1 or self.end < 1:
+            raise ValueError("start and end must both be > 0 (1-based indexing)")
+        if self.start >= self.end:
+            raise ValueError(
+                "start must be <= end, since the start is included and the end is not."
+            )
+
+    def contains_variant(self, var: Variant):
+        if var.chromosome != self.chromosome:
+            return False
+        if var.position < self.start:
+            return False
+        if var.position >= self.end:
+            return False
+        return True

@@ -6,7 +6,11 @@ import pandas as pd
 import pytest
 from pandas._testing import (
     assert_series_equal,
+    assert_frame_equal,
 )
+
+from pandas_genomics import GenotypeArray
+from pandas_genomics.scalars import Variant, Region
 
 
 def test_variant_score(data, data_for_encoding):
@@ -59,3 +63,52 @@ def test_filter_hwe(ga_inhwe, ga_nothwe, filter_value, num_cols_left):
     else:
         result = data.genomics.filter_variants_hwe(filter_value)
     assert len(result.columns) == num_cols_left + 1
+
+
+def test_region_series():
+    var = Variant("chr1", position=999, ref="A", alt=["a"])
+    s = pd.Series(
+        GenotypeArray(
+            [
+                var.make_genotype_from_str("A/A"),
+            ]
+            * 10
+        )
+    )
+    assert s.genomics.contained_by(Region("chr1", 900, 1000))
+    assert not s.genomics.contained_by(Region("chr2", 900, 1000))
+    assert not s.genomics.contained_by(Region("chr1", 900, 999))
+
+
+def test_region_df():
+    var1 = Variant("chr1", position=999, ref="A", alt=["a"])
+    var2 = Variant("chr1", position=6789, ref="A", alt=["a"])
+    var3 = Variant("chr2", position=999, ref="A", alt=["a"])
+    var4 = Variant("chr3", position=25622, ref="A", alt=["a"])
+    df = pd.DataFrame(
+        {
+            f"var{idx+1}": GenotypeArray(
+                [
+                    var.make_genotype_from_str("A/A"),
+                ]
+                * 10
+            )
+            for idx, var in enumerate([var1, var2, var3, var4])
+        }
+    )
+    assert_frame_equal(
+        df.genomics.in_regions(Region("chr1", 900, 1000)),
+        df[
+            [
+                "var1",
+            ]
+        ],
+    )
+    assert_frame_equal(
+        df.genomics.not_in_regions(Region("chr1", 900, 1000)),
+        df[["var2", "var3", "var4"]],
+    )
+    assert_frame_equal(
+        df.genomics.in_regions([Region("chr1", 900, 1000), Region("chr2", 900, 1000)]),
+        df[["var1", "var3"]],
+    )
