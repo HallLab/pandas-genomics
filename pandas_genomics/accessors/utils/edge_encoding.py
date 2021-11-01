@@ -151,9 +151,6 @@ def calculate_edge_alphas(
         y, X = patsy.dmatrices(formula, df, return_type="dataframe", NA_action="drop")
         y = fix_names(y)
         X = fix_names(X)
-        # Drop the intercept column
-        # This can be done in the formula, but causes issues with the dummy variable encoding
-        X = X.drop(columns=["Intercept"])
 
         # Run Regression
         est = sm.GLM(y, X, family=family).fit(use_t=use_t)
