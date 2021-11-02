@@ -253,7 +253,7 @@ def test_generated_encodings_plink(genotypearray_df):
     expected = pd.DataFrame(
         {
             "Variant ID": ["nullA_18"],
-            "Alpha Value": [0.0],
+            "Alpha Value": [-0.034879],
             "Ref Allele": ["D"],
             "Alt Allele": ["d"],
             "Minor Allele Frequency": [40 / 3000],
