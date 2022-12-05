@@ -2,6 +2,11 @@
 Release History
 ===============
 
+v0.11.1 (2022-12-05)
+--------------------
+
+Fix EDGE encoding to keep Control as 0 and Case as 1
+
 v0.11.0 (2021-07-21)
 --------------------
 

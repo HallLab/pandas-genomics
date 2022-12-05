@@ -4,13 +4,10 @@ Test GenotypeArray Accessors
 import numpy as np
 import pandas as pd
 import pytest
-from pandas._testing import (
-    assert_series_equal,
-    assert_frame_equal,
-)
+from pandas._testing import assert_frame_equal, assert_series_equal
 
-from pandas_genomics import GenotypeArray
-from pandas_genomics.scalars import Variant, Region
+from pandas_genomics import GenotypeArray, sim
+from pandas_genomics.scalars import Region, Variant
 
 
 def test_variant_score(data, data_for_encoding):
@@ -37,8 +34,8 @@ def test_maf(data):
     assert_series_equal(df.genomics.maf, expected)
 
 
-def test_hwe(data):
-    assert pd.Series(data).genomics.hwe_pval == data.hwe_pval
+# def test_hwe(data):
+#     assert pd.Series(data).genomics.hwe_pval == data.hwe_pval
 
 
 @pytest.mark.parametrize(
@@ -112,3 +109,21 @@ def test_region_df():
         df.genomics.in_regions([Region("chr1", 900, 1000), Region("chr2", 900, 1000)]),
         df[["var1", "var3"]],
     )
+
+
+def test_routine_case_control():
+    # Additive Main Effect for SNP1 without interaction
+    train = sim.BAMS.from_model(
+        eff1=sim.SNPEffectEncodings.ADDITIVE,
+        eff2=sim.SNPEffectEncodings.ADDITIVE,
+        penetrance_base=0.45,
+        main1=1,
+        main2=0,
+        interaction=0,
+        random_seed=2021,
+    )
+    train_cases = train.generate_case_control(n_cases=5000, n_controls=5000)
+    edge = train_cases.genomics.calculate_edge_encoding_values(
+        data=train_cases["Outcome"], outcome_variable="Outcome"
+    )
+    assert edge["Variant ID"][0] == "rs1"

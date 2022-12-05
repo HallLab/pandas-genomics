@@ -1,5 +1,5 @@
-from typing import Union, Optional, List
 import re
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -63,7 +63,7 @@ def calculate_edge_alphas(
     if isinstance(data, pd.Series):
         if data.name != outcome_variable:
             raise ValueError(
-                f"The data is a Series but it's name doesn't match the outcome variable"
+                "The data is a Series but it's name doesn't match the outcome variable"
             )
         data = pd.DataFrame(
             data
@@ -90,6 +90,9 @@ def calculate_edge_alphas(
         # Use the order according to the categorical
         counts = data[outcome_variable].value_counts().to_dict()
         categories = data[outcome_variable].cat.categories
+        # Sort reverse to keep control as 0 and case as 1
+        if categories[0] == "Case" and categories[1] == "Control":
+            categories = sorted(categories, reverse=True)
         codes, categories = zip(*enumerate(categories))
         data[outcome_variable].replace(categories, codes, inplace=True)
         print(

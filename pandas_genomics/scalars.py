@@ -12,7 +12,7 @@ This module contains scalar types, some of which are used in the ExtensionArrays
 """
 import uuid
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 # Integer indicating a missing allele or genotype score.
 # Each variant must have 254 alleles max and the maximum genotype score is 254.
@@ -109,7 +109,7 @@ class Variant:
             raise ValueError(
                 f"The chromosome cannot contain ';' or ',': '{self.chromosome}'"
             )
-        if self.position > ((2 ** 31) - 2):
+        if self.position > ((2**31) - 2):
             raise ValueError(
                 f"The 'position' value may not exceed 2^31-2, {self.position:,} was specified"
             )
@@ -163,7 +163,7 @@ class Variant:
 
         """
         if allele in self.alleles:
-            raise ValueError(f"Allele already exists in the variant")
+            raise ValueError("Allele already exists in the variant")
         if len(self.alleles) < MISSING_IDX:
             self.alleles.append(allele)
         else:
