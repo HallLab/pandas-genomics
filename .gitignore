@@ -80,6 +80,7 @@ target/
 .vscode/
 .venv
 .python-version
+.python-version
 
 #Ipython Notebook
 .ipynb_checkpoints
