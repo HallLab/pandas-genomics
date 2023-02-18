@@ -2,16 +2,16 @@
 Test GenotypeArray Encoding methods and accessors to those functions
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 from numpy.testing import assert_array_equal
 from pandas._testing import (
     assert_extension_array_equal,
-    assert_series_equal,
     assert_frame_equal,
+    assert_series_equal,
 )
 
-import numpy as np
 from pandas_genomics import GenotypeArray
 from pandas_genomics.scalars import Variant
 from pandas_genomics.sim import BAMS, SNPEffectEncodings
@@ -326,3 +326,33 @@ def test_generated_encodings_bams(bam, expected_alphas):
         data, outcome_variable="Outcome"
     )
     assert np.isclose(result["Alpha Value"], expected_alphas, atol=1e-07).all()
+
+
+def test_andre():
+    from pandas_genomics import sim
+
+    # Additive Main Effect for SNP1 without interaction
+    train = sim.BAMS.from_model(
+        eff1=sim.SNPEffectEncodings.ADDITIVE,
+        eff2=sim.SNPEffectEncodings.ADDITIVE,
+        penetrance_base=0.45,
+        main1=1,
+        main2=0,
+        interaction=0,
+        random_seed=2021,
+    )
+    test = sim.BAMS.from_model(
+        eff1=sim.SNPEffectEncodings.ADDITIVE,
+        eff2=sim.SNPEffectEncodings.ADDITIVE,
+        penetrance_base=0.45,
+        main1=1,
+        main2=0,
+        interaction=0,
+    )
+    train_add = train.generate_case_control(n_cases=5000, n_controls=5000)
+    test_add = test.generate_case_control(n_cases=5000, n_controls=5000)
+    edge_weights = train_add.genomics.calculate_edge_encoding_values(
+        data=train_add["Outcome"], outcome_variable="Outcome"
+    )
+
+    assert 2 == 2
