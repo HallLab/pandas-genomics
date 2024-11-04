@@ -23,11 +23,12 @@ author = "John McGuigan"
 
 import pandas_genomics
 
-# The short X.Y version.
-version = pandas_genomics.__version__
-# The full version, including alpha/beta/rc tags.
-release = pandas_genomics.__version__
-
+# # The short X.Y version.
+# version = pandas_genomics.__version__
+# # The full version, including alpha/beta/rc tags.
+# release = pandas_genomics.__version__
+version = "0.12"
+release = '1'
 
 # -- General configuration ---------------------------------------------------
 

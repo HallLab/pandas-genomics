@@ -1,0 +1,437 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pandas_genomics.arrays.GenotypeArray &mdash; pandas-genomics 1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pandas_genomics.accessors.GenotypeSeriesAccessor" href="../accessors/pandas_genomics.accessors.GenotypeSeriesAccessor.html" />
+    <link rel="prev" title="pandas_genomics.arrays.GenotypeDtype" href="pandas_genomics.arrays.GenotypeDtype.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.12
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://halllab.github.io/">Hall Lab Homepage</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/HallLab/pandas-genomics">Pandas-Genomics Github Repo</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#input-output">Input/Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#scalars">Scalars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#simulation">Simulation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#arrays">Arrays</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="pandas_genomics.arrays.GenotypeDtype.html">pandas_genomics.arrays.GenotypeDtype</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pandas_genomics.arrays.GenotypeArray</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#accessors">Accessors</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-history.html">Release History</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pandas-genomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
+      <li>pandas_genomics.arrays.GenotypeArray</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/arrays/pandas_genomics.arrays.GenotypeArray.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="pandas-genomics-arrays-genotypearray">
+<h1>pandas_genomics.arrays.GenotypeArray<a class="headerlink" href="#pandas-genomics-arrays-genotypearray" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="pandas_genomics.arrays.GenotypeArray">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pandas_genomics.arrays.</span></span><span class="sig-name descname"><span class="pre">GenotypeArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../scalars/pandas_genomics.scalars.Genotype.html#pandas_genomics.scalars.Genotype" title="pandas_genomics.scalars.Genotype"><span class="pre">pandas_genomics.scalars.Genotype</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#pandas_genomics.arrays.GenotypeArray" title="pandas_genomics.arrays.genotype_array.GenotypeArray"><span class="pre">pandas_genomics.arrays.genotype_array.GenotypeArray</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="pandas_genomics.arrays.GenotypeDtype.html#pandas_genomics.arrays.GenotypeDtype" title="pandas_genomics.arrays.genotype_array.GenotypeDtype"><span class="pre">pandas_genomics.arrays.genotype_array.GenotypeDtype</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pandas_genomics/arrays/genotype_array.html#GenotypeArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pandas_genomics.arrays.GenotypeArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holder for genotypes</p>
+<p>Variant information is stored as part of the type, and the genotype is stored as a pair of integer arrays</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>values</strong><span class="classifier">list-like</span></dt><dd><p>The values of the genotypes.</p>
+</dd>
+<dt><strong>dtype</strong><span class="classifier">GenotypeDtype</span></dt><dd><p>The specific parametized type.  Optional (if possible to infer from <cite>values</cite>)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dtype: GenotypeDtype</strong></dt><dd><p>The specific parametized type</p>
+</dd>
+<dt><strong>data: np.dtype(“u8”) with shape (&lt;genotypes&gt;, &lt;ploidy&gt;)</strong></dt><dd><p>The genotype values encoded as indices into the allele list of the dtype</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pandas_genomics.arrays.GenotypeArray.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../scalars/pandas_genomics.scalars.Genotype.html#pandas_genomics.scalars.Genotype" title="pandas_genomics.scalars.Genotype"><span class="pre">pandas_genomics.scalars.Genotype</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#pandas_genomics.arrays.GenotypeArray" title="pandas_genomics.arrays.genotype_array.GenotypeArray"><span class="pre">pandas_genomics.arrays.genotype_array.GenotypeArray</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="pandas_genomics.arrays.GenotypeDtype.html#pandas_genomics.arrays.GenotypeDtype" title="pandas_genomics.arrays.genotype_array.GenotypeDtype"><span class="pre">pandas_genomics.arrays.genotype_array.GenotypeDtype</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pandas_genomics/arrays/genotype_array.html#GenotypeArray.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pandas_genomics.arrays.GenotypeArray.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize assuming values is a GenotypeArray or a numpy array with the correct underlying shape</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pandas_genomics.arrays.GenotypeArray.__init__" title="pandas_genomics.arrays.GenotypeArray.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(values[, dtype, copy])</p></td>
+<td><p>Initialize assuming values is a GenotypeArray or a numpy array with the correct underlying shape</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">argmax</span></code>([skipna])</p></td>
+<td><p>Return the index of maximum value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">argmin</span></code>([skipna])</p></td>
+<td><p>Return the index of minimum value.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">argsort</span></code>(*args[, ascending, kind, na_position])</p></td>
+<td><p>Return the indices that would sort this array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">astype</span></code>(dtype[, copy])</p></td>
+<td><p>Cast to a NumPy array or ExtensionArray with 'dtype'.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>()</p></td>
+<td><p>Return a copy of the array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>(loc)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dropna</span></code>()</p></td>
+<td><p>Return ExtensionArray without NA values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode_additive</span></code>()</p></td>
+<td><p>Additive Encoding</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode_codominant</span></code>()</p></td>
+<td><p>This encodes the genotype into three categories.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode_dominant</span></code>()</p></td>
+<td><p>Dominant Encoding</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode_edge</span></code>(alpha_value, ref_allele, ...)</p></td>
+<td><p>Perform EDGE (weighted) encoding.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode_recessive</span></code>()</p></td>
+<td><p>Recessive Encoding</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">equals</span></code>(other)</p></td>
+<td><p>Return if another array is equivalent to this array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">factorize</span></code>([na_sentinel])</p></td>
+<td><p>Return an array of ints indexing unique values</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">fillna</span></code>([value, method, limit])</p></td>
+<td><p>Fill NA/NaN values using the specified method.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert</span></code>(loc, item)</p></td>
+<td><p>Insert an item at the given position.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_genotype_array</span></code>(other)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isin</span></code>(values)</p></td>
+<td><p>Pointwise comparison for set containment in the given values.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isna</span></code>()</p></td>
+<td><p>A 1-D array indicating if each value is missing</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ravel</span></code>([order])</p></td>
+<td><p>Return a flattened view on this array.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">repeat</span></code>(repeats[, axis])</p></td>
+<td><p>Repeat elements of a ExtensionArray.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">searchsorted</span></code>(value[, side, sorter])</p></td>
+<td><p>Find indices where elements should be inserted to maintain order.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_reference</span></code>(allele)</p></td>
+<td><p>Change the reference allele (in-place) by specifying an allele index value or an allele string</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shift</span></code>([periods, fill_value])</p></td>
+<td><p>Shift values by desired number.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">take</span></code>(indexer[, allow_fill, fill_value])</p></td>
+<td><p>Take elements from an array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_numpy</span></code>([dtype, copy, na_value])</p></td>
+<td><p>Convert to a NumPy ndarray.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tolist</span></code>()</p></td>
+<td><p>Return a list of the values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transpose</span></code>(*axes)</p></td>
+<td><p>Return a transposed view on this array.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">unique</span></code>()</p></td>
+<td><p>Return a GenotypeArray of unique values</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">value_counts</span></code>([dropna])</p></td>
+<td><p>Return a Series of unique counts with a GenotypeArray index</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">view</span></code>([dtype])</p></td>
+<td><p>Return a view on the array.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">allele_idxs</span></code></p></td>
+<td><p>Return the allele indices for each genotype</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype</span></code></p></td>
+<td><p>The specific parametized type</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gt_scores</span></code></p></td>
+<td><p>Return the genotype score for each genotype (as a float)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hwe_pval</span></code></p></td>
+<td><p>Calculate the probability that the samples are in HWE for diploid variants</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_heterozygous</span></code></p></td>
+<td><p>Boolean array: True if the sample is heterozygous for any alleles</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_homozygous</span></code></p></td>
+<td><p>Boolean array: True if the sample is homozygous for any allele</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_homozygous_alt</span></code></p></td>
+<td><p>Boolean array: True if the sample is homozygous for any non-reference allele</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_homozygous_ref</span></code></p></td>
+<td><p>Boolean array: True if the sample is homozygous for the reference allele</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_missing</span></code></p></td>
+<td><p>Boolean array: True if the sample is missing all alleles</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">maf</span></code></p></td>
+<td><p>Calculate the Minor Allele Frequency (MAF) for the most-frequent alternate allele.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nbytes</span></code></p></td>
+<td><p>How many bytes to store this object in memory</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndim</span></code></p></td>
+<td><p>Extension Arrays are only allowed to be 1-dimensional.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code></p></td>
+<td><p>Return a tuple of the array dimensions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td><p>The number of elements in the array.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">variant</span></code></p></td>
+<td><p>Return the variant identifier</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../accessors/pandas_genomics.accessors.GenotypeSeriesAccessor.html" class="btn btn-neutral float-right" title="pandas_genomics.accessors.GenotypeSeriesAccessor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="pandas_genomics.arrays.GenotypeDtype.html" class="btn btn-neutral float-left" title="pandas_genomics.arrays.GenotypeDtype" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, John McGuigan.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

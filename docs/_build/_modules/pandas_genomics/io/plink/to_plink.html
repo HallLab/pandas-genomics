@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pandas_genomics.io.plink.to_plink &mdash; pandas-genomics 1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html">
+          
+
+          
+            
+            <img src="../../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.12
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://halllab.github.io/">Hall Lab Homepage</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/HallLab/pandas-genomics">Pandas-Genomics Github Repo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api.html">API Reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../release-history.html">Release History</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pandas-genomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pandas_genomics.io.plink.to_plink</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pandas_genomics.io.plink.to_plink</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pandas.api.types</span> <span class="kn">import</span> <span class="n">is_numeric_dtype</span>
+
+<span class="kn">from</span> <span class="nn">pandas_genomics.arrays</span> <span class="kn">import</span> <span class="n">GenotypeDtype</span>
+
+
+<div class="viewcode-block" id="to_plink"><a class="viewcode-back" href="../../../../io/pandas_genomics.io.to_plink.html#pandas_genomics.io.to_plink">[docs]</a><span class="k">def</span> <span class="nf">to_plink</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">phenotype_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">phenotype_case</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">phenotype_control</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">id_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sample&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save genetic data to plink v1 files (.bed, .bim, and .fam)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data: pd.DataFrame</span>
+<span class="sd">        DataFrame containing GenotypeArrays to be saved.</span>
+<span class="sd">    output: str</span>
+<span class="sd">        Name to use for the output .bed, .bim, and .fam files</span>
+<span class="sd">    phenotype_name: str, default None</span>
+<span class="sd">        Optional column in `data` to be saved as the phenotype value in the .fam file.</span>
+<span class="sd">    phenotype_case, phenotype_control</span>
+<span class="sd">        String values indicating the category to be used as &quot;case&quot; or &quot;control&quot; for binary phenotypes.</span>
+<span class="sd">        If provided, the phenotype must be categorical.</span>
+<span class="sd">        If not provided, the phenotype is not encoded at all (assumed to be quantitative).</span>
+<span class="sd">    id_prefix:</span>
+<span class="sd">        If the data index is an integer index, this prefix will be added to generate IDs.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    If the data index has the required columns (FID, IID, IID_father, IID_mother, sex, phenotype) the fam file will be created based on the index.</span>
+<span class="sd">    If a phenotype name is provided, this will override any phenotype information in the index.</span>
+<span class="sd">    If the data has a single index column this will be used (with the prefix) for FID and IID.  Defaults will be used for other .fam data</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving genotype data to </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">save_fam</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">output</span> <span class="o">+</span> <span class="s2">&quot;.fam&quot;</span><span class="p">,</span>
+        <span class="n">phenotype_name</span><span class="p">,</span>
+        <span class="n">phenotype_case</span><span class="p">,</span>
+        <span class="n">phenotype_control</span><span class="p">,</span>
+        <span class="n">id_prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">save_bim</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output</span> <span class="o">+</span> <span class="s2">&quot;.bim&quot;</span><span class="p">)</span>
+    <span class="n">save_bed</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output</span> <span class="o">+</span> <span class="s2">&quot;.bed&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">save_fam</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">output_fam</span><span class="p">,</span> <span class="n">phenotype_name</span><span class="p">,</span> <span class="n">phenotype_case</span><span class="p">,</span> <span class="n">phenotype_control</span><span class="p">,</span> <span class="n">id_prefix</span>
+<span class="p">):</span>
+    <span class="c1"># Validate phenotype, if provided</span>
+    <span class="k">if</span> <span class="n">phenotype_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">phenotype_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The phenotype (</span><span class="si">{</span><span class="n">phenotype_name</span><span class="si">}</span><span class="s2">) was not found in the data&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">phenotype_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">phenotype_name</span><span class="p">]</span>
+
+    <span class="c1"># Check for full plink-style index, or create one</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">==</span> <span class="p">[</span>
+        <span class="s2">&quot;FID&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;IID&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;IID_father&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;IID_mother&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sex&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;phenotype&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="c1"># Recode sex</span>
+        <span class="n">fam_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+        <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;sex&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">rename_categories</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;male&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;female&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="c1"># Update phenotype if provided</span>
+        <span class="k">if</span> <span class="n">phenotype_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;phenotype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">phenotype_data</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">id_prefix</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">fam_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;FID&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+                <span class="s2">&quot;IID&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+                <span class="s2">&quot;IID_father&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                <span class="s2">&quot;IID_mother&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                <span class="s2">&quot;sex&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">phenotype_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;phenotype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mi">9</span>  <span class="c1"># -9 is missing</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;phenotype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">phenotype_data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The data index must contain all 6 .fam file columns, or a single column&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Optionally Encode phenotype</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">phenotype_control</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">phenotype_case</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;phenotype&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;category&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The phenotype must be categorical to utilize &#39;phenotype_control&#39; and &#39;phenotype_case&#39; parameters&quot;</span>
+            <span class="p">)</span>
+        <span class="n">pheno_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">phenotype_control</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="n">phenotype_case</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+        <span class="n">fam_data</span><span class="p">[</span><span class="s2">&quot;phenotype&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">rename_categories</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">pheno_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+    <span class="n">fam_data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_fam</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Saved information for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fam_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples to </span><span class="si">{</span><span class="n">output_fam</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">save_bim</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_bim</span><span class="p">):</span>
+    <span class="n">variants</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">col_val</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">variant</span>
+        <span class="k">for</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">col_val</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">col_val</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variants</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Variant </span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is not bialleleic (it has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span><span class="si">}</span><span class="s2"> alleles) and therefore can&#39;t be saved in plink format.&quot;</span>
+            <span class="p">)</span>
+    <span class="n">var_dicts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;chromosome&quot;</span><span class="p">:</span> <span class="n">var</span><span class="o">.</span><span class="n">chromosome</span><span class="p">,</span>
+            <span class="s2">&quot;variant_id&quot;</span><span class="p">:</span> <span class="n">var</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;coordinate&quot;</span><span class="p">:</span> <span class="n">var</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+            <span class="s2">&quot;allele1&quot;</span><span class="p">:</span> <span class="n">var</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># alt</span>
+            <span class="s2">&quot;allele2&quot;</span><span class="p">:</span> <span class="n">var</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># ref</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variants</span>
+    <span class="p">]</span>
+    <span class="n">bim_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">var_dicts</span><span class="p">)</span>
+    <span class="n">bim_data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_bim</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Saved information for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bim_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> variants to </span><span class="si">{</span><span class="n">output_bim</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">save_bed</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_bed</span><span class="p">):</span>
+    <span class="c1"># Get an array of bytes for each variant</span>
+    <span class="nb">bytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">gt_array_to_plink_bits</span><span class="p">(</span><span class="n">col_val</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">col_val</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">col_val</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="c1"># flatten into a single array</span>
+    <span class="nb">bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="c1"># Add the first 3 bytes</span>
+    <span class="n">CORRECT_FIRST_BYTES</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">108</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;uint8&quot;</span><span class="p">)</span>
+    <span class="nb">bytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">CORRECT_FIRST_BYTES</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span>
+    <span class="c1"># Write to file</span>
+    <span class="nb">bytes</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">output_bed</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Saved genotypes to </span><span class="si">{</span><span class="n">output_bed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">gt_array_to_plink_bits</span><span class="p">(</span><span class="n">gt_series</span><span class="p">):</span>
+    <span class="n">allele_ids</span> <span class="o">=</span> <span class="n">gt_series</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">allele_idxs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="c1"># Replace missing with 0,1</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">gt_series</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">is_missing</span>
+    <span class="n">allele_ids</span><span class="p">[</span><span class="n">missing</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Replace het with 1,0</span>
+    <span class="n">het_gt</span> <span class="o">=</span> <span class="n">allele_ids</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">allele_ids</span><span class="p">[</span><span class="n">het_gt</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Pad with zeros so it is divisible by 4</span>
+    <span class="n">pad_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">allele_ids</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
+    <span class="n">allele_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">allele_ids</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">pad_samples</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)])</span>
+    <span class="c1"># Reshape into groups of 4 and flip each group</span>
+    <span class="n">allele_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">allele_ids</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Flatten into a single array and pack bits into bytes</span>
+    <span class="n">allele_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">packbits</span><span class="p">(</span><span class="n">allele_ids</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">allele_ids</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    allele_ids = gt_array.genomics.allele_idxs</span>
+<span class="sd">gt_bytes = np.fromfile(bed_file, dtype=&quot;uint8&quot;)</span>
+<span class="sd">    # Ensure the file is valid</span>
+<span class="sd">    CORRECT_FIRST_BYTES = np.array([108, 27, 1], dtype=&quot;uint8&quot;)</span>
+<span class="sd">    if not (gt_bytes[:3] == CORRECT_FIRST_BYTES).all():</span>
+<span class="sd">        raise ValueError(</span>
+<span class="sd">            f&quot;The first 3 bytes {bed_file.name} were not correct.  The file may be corrupted.&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">    gt_bytes = gt_bytes[3:]</span>
+<span class="sd">    # Divide array into one row per variant</span>
+<span class="sd">    chunk_size = num_samples // 4</span>
+<span class="sd">    if num_samples % 4 &gt; 0:</span>
+<span class="sd">        chunk_size += 1</span>
+<span class="sd">    gt_bytes = gt_bytes.reshape(-1, chunk_size)</span>
+<span class="sd">    # Process each variant</span>
+<span class="sd">    gt_array_dict = {}</span>
+<span class="sd">    for v_idx, variant in enumerate(variant_list):</span>
+<span class="sd">        variant_gt_bytes = gt_bytes[v_idx]</span>
+<span class="sd">        gt_array = create_gt_array(num_samples, variant_gt_bytes, variant)</span>
+<span class="sd">        if swap_alleles:</span>
+<span class="sd">            gt_array.set_reference(1)</span>
+<span class="sd">        gt_array_dict[f&quot;{v_idx}_{gt_array.variant.id}&quot;] = gt_array</span>
+<span class="sd">    print(f&quot;\tLoaded genotypes from &#39;{bed_file.name}&#39;&quot;)</span>
+<span class="sd">    return gt_array_dict</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, John McGuigan.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

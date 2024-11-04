@@ -1,0 +1,573 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pandas_genomics.accessors.dataframe_accessor &mdash; pandas-genomics 1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html">
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.12
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://halllab.github.io/">Hall Lab Homepage</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/HallLab/pandas-genomics">Pandas-Genomics Github Repo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../release-history.html">Release History</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pandas-genomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pandas_genomics.accessors.dataframe_accessor</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pandas_genomics.accessors.dataframe_accessor</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">calculate_edge_alphas</span>
+<span class="kn">from</span> <span class="nn">pandas_genomics.arrays</span> <span class="kn">import</span> <span class="n">GenotypeDtype</span>
+<span class="kn">from</span> <span class="nn">..scalars</span> <span class="kn">import</span> <span class="n">Region</span>
+
+
+<div class="viewcode-block" id="GenotypeDataframeAccessor"><a class="viewcode-back" href="../../../accessors/pandas_genomics.accessors.GenotypeDataframeAccessor.html#pandas_genomics.accessors.GenotypeDataframeAccessor">[docs]</a><span class="nd">@pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">register_dataframe_accessor</span><span class="p">(</span><span class="s2">&quot;genomics&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">GenotypeDataframeAccessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DataFrame accessor for GenotypeArray methods</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        df.genomics.variant_info</span>
+<span class="sd">        df.genomics.encode_additive()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GenotypeDataframeAccessor.__init__"><a class="viewcode-back" href="../../../accessors/pandas_genomics.accessors.GenotypeDataframeAccessor.html#pandas_genomics.accessors.GenotypeDataframeAccessor.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pandas_obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pandas_obj</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">dt</span><span class="p">:</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s2">&quot;Incompatible datatypes: at least one column must be a GenotypeDtype.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">id_counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">pandas_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">id_counts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">pandas_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">duplicates</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">id_counts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Duplicate Variant IDs.  Column names may differ from variant IDs, but variant IDs must be unique.</span><span class="se">\n\t</span><span class="s2">Duplicates: &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dupe</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">count</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">dupe</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">duplicates</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span> <span class="o">=</span> <span class="n">pandas_obj</span></div>
+
+    <span class="c1">######################</span>
+    <span class="c1"># Variant Properties #</span>
+    <span class="c1">######################</span>
+    <span class="c1"># These methods generally only return a result for each GenotypeArray column, ignoring other columns</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">variant_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a DataFrame with variant info indexed by the column name (one row per GenotypeArray)&quot;&quot;&quot;</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">colname</span><span class="p">:</span> <span class="n">series</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">variant_info</span>
+                <span class="k">for</span> <span class="n">colname</span><span class="p">,</span> <span class="n">series</span> <span class="ow">in</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">maf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the minor allele frequency of each variant</span>
+
+<span class="sd">        See :py:attr:`GenotypeArray.maf`&quot;&quot;&quot;</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">maf</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hwe_pval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the probability that the samples are in HWE</span>
+
+<span class="sd">        See :py:attr:`GenotypeArray.hwe_pval`&quot;&quot;&quot;</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">hwe_pval</span><span class="p">)</span>
+
+    <span class="c1">############</span>
+    <span class="c1"># Encoding #</span>
+    <span class="c1">############</span>
+    <span class="c1"># These methods generally return encoded values for any GenotypeArray columns without modifying other columns</span>
+
+    <span class="k">def</span> <span class="nf">encode_additive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Additive encoding of genotypes.</span>
+
+<span class="sd">        See :meth:`GenotypeArray.encode_additive`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">encode_additive</span><span class="p">()</span> <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">encode_dominant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dominant encoding of genotypes.</span>
+
+<span class="sd">        See :meth:`GenotypeArray.encode_dominant`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">encode_dominant</span><span class="p">()</span> <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">encode_recessive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recessive encoding of genotypes.</span>
+
+<span class="sd">        See :meth:`GenotypeArray.encode_recessive`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">encode_recessive</span><span class="p">()</span> <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">encode_codominant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Codominant encoding of genotypes.</span>
+
+<span class="sd">        See :meth:`GenotypeArray.encode_codominant`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">encode_codominant</span><span class="p">()</span> <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">encode_edge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoding_info</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;EDGE (weighted) encoding of genotypes.</span>
+
+<span class="sd">        See :meth:`GenotypeArray.encode_edge`</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        encoding_info: pd.DataFrame</span>
+<span class="sd">            columns:</span>
+<span class="sd">                - Variant ID - used to match variants</span>
+<span class="sd">                - Alpha Value - used for heterozygous genotypes</span>
+<span class="sd">                - Ref Allele - which allele is considered reference</span>
+<span class="sd">                - Alt Allele - which allele is considered alternate</span>
+<span class="sd">                - Minor Allele Frequency - MAF of data used during calculation of alpha values</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate the input DataFrame</span>
+        <span class="k">for</span> <span class="n">required_col</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;Variant ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Alpha Value&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ref Allele&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Alt Allele&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Minor Allele Frequency&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="n">required_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">encoding_info</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Missing one or more required columns in the encoding info: `</span><span class="si">{</span><span class="n">required_col</span><span class="si">}</span><span class="s2">`&quot;</span>
+                <span class="p">)</span>
+        <span class="n">id_counts</span> <span class="o">=</span> <span class="n">encoding_info</span><span class="p">[</span><span class="s2">&quot;Variant ID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">id_counts</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Duplicate IDs: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">v</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">id_counts</span><span class="p">[</span><span class="n">id_counts</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Rename the columns to match parameter names for simplicity</span>
+        <span class="n">encoding_info</span> <span class="o">=</span> <span class="n">encoding_info</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;Alpha Value&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha_value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Ref Allele&quot;</span><span class="p">:</span> <span class="s2">&quot;ref_allele&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Alt Allele&quot;</span><span class="p">:</span> <span class="s2">&quot;alt_allele&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Minor Allele Frequency&quot;</span><span class="p">:</span> <span class="s2">&quot;minor_allele_freq&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert the encoding info into a Dict(&quot;Variant ID&quot; = {param names : param values})</span>
+        <span class="n">encoding_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;Variant ID&quot;</span><span class="p">]:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;Variant ID&quot;</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">encoding_info</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Log messages for any warnings</span>
+        <span class="n">warnings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1"># Process each variant</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">encoding_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="p">[</span>
+                    <span class="n">s</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span>
+                <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;No matching information found in the encoding data&quot;</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">maf</span> <span class="o">/</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;minor_allele_freq&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">10e30</span><span class="p">:</span>
+                <span class="c1"># TODO: replace this with a reasonable comparison to the data MAF.  For now it is an always-pass criteria</span>
+                <span class="n">warnings</span><span class="p">[</span>
+                    <span class="n">s</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span>
+                <span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Large MAF Difference: </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">maf</span><span class="si">}</span><span class="s2"> in sample, </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;minor_allele_freq&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> in encoding data&quot;</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">encode_edge</span><span class="p">(</span><span class="o">**</span><span class="n">info</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="c1"># Print Warnings</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">warnings</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">warnings</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> Variables failed encoding&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">warning</span> <span class="ow">in</span> <span class="n">warnings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Concatenate results</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">calculate_edge_encoding_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">outcome_variable</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">covariates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate alpha values to be used in edge encoding</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data:</span>
+<span class="sd">            Data to be used in the regression, including the outcome and covariates</span>
+<span class="sd">        outcome_variable:</span>
+<span class="sd">            The variable to be used as the output (y) of the regression</span>
+<span class="sd">        covariates:</span>
+<span class="sd">            Other variables to be included in the regression formula</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Dict</span>
+<span class="sd">          Variant ID: str</span>
+<span class="sd">          Alpha Value - used for heterozygous genotypes</span>
+<span class="sd">          Ref Allele - which allele is considered reference</span>
+<span class="sd">          Alt Allele - which allele is considered alternate</span>
+<span class="sd">          Minor Allele Frequency - MAF of data used during calculation of alpha values</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        See [1]_ for more information about edge encoding.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        .. [1] Hall, Molly A., et al.</span>
+<span class="sd">               &quot;Novel EDGE encoding method enhances ability to identify genetic interactions.&quot;</span>
+<span class="sd">               PLoS genetics 17.6 (2021): e1009534.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">calculate_edge_alphas</span><span class="p">(</span>
+            <span class="n">genotypes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">]),</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">outcome_variable</span><span class="o">=</span><span class="n">outcome_variable</span><span class="p">,</span>
+            <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1">###########</span>
+    <span class="c1"># Filters #</span>
+    <span class="c1">###########</span>
+    <span class="c1"># These methods drop genotypes that fail the filter, ignoring other columns</span>
+
+    <span class="k">def</span> <span class="nf">filter_variants_maf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keep_min_freq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drop variants with a MAF less than the specified value (0.01 by default)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">maf</span> <span class="o">&lt;</span> <span class="n">keep_min_freq</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">removed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">filter_variants_hwe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drop variants with a probability of HWE less than the specified value (0.05 by default).</span>
+<span class="sd">        Keep np.nan results, which occur for non-diploid variants and insufficient sample sizes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="n">genotype_hwe_pval</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">hwe_pval</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="p">:,</span> <span class="p">(</span><span class="n">genotype_hwe_pval</span> <span class="o">&lt;</span> <span class="n">cutoff</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">genotype_hwe_pval</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">removed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">in_regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Region</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Region</span><span class="p">]]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Keep variants that exist in one or more of the specified regions</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regions: Region or List[Region]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">Region</span><span class="p">):</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">regions</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regions</span><span class="p">:</span>
+            <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">boolean_array</span> <span class="o">|</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">contained_by</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="n">boolean_array</span><span class="p">[</span><span class="o">~</span><span class="n">boolean_array</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># Remove where False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">removed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">not_in_regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Region</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Region</span><span class="p">]]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove variants that exist in one or more of the specified regions</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regions: Region or List[Region]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">Region</span><span class="p">):</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">regions</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="n">genotypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">([</span><span class="n">GenotypeDtype</span><span class="p">])</span>
+        <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regions</span><span class="p">:</span>
+            <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">boolean_array</span> <span class="o">|</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">genomics</span><span class="o">.</span><span class="n">contained_by</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="n">boolean_array</span><span class="p">[</span><span class="n">boolean_array</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># Remove where True</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">removed</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, John McGuigan.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

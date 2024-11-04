@@ -1,0 +1,1009 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pandas_genomics.arrays.genotype_array &mdash; pandas-genomics 1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html">
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.12
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://halllab.github.io/">Hall Lab Homepage</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/HallLab/pandas-genomics">Pandas-Genomics Github Repo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../release-history.html">Release History</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pandas-genomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pandas_genomics.arrays.genotype_array</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pandas_genomics.arrays.genotype_array</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Iterable</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pandas.core.arrays</span> <span class="kn">import</span> <span class="n">ExtensionArray</span><span class="p">,</span> <span class="n">BooleanArray</span><span class="p">,</span> <span class="n">IntegerArray</span>
+<span class="kn">from</span> <span class="nn">pandas.core.dtypes.dtypes</span> <span class="kn">import</span> <span class="n">register_extension_dtype</span><span class="p">,</span> <span class="n">PandasExtensionDtype</span>
+<span class="kn">from</span> <span class="nn">pandas.core.dtypes.inference</span> <span class="kn">import</span> <span class="n">is_list_like</span>
+
+<span class="kn">from</span> <span class="nn">pandas_genomics.arrays.encoding_mixin</span> <span class="kn">import</span> <span class="n">EncodingMixin</span>
+<span class="kn">from</span> <span class="nn">pandas_genomics.arrays.info_mixin</span> <span class="kn">import</span> <span class="n">InfoMixin</span>
+<span class="kn">from</span> <span class="nn">pandas_genomics.scalars</span> <span class="kn">import</span> <span class="n">Variant</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">,</span> <span class="n">MISSING_IDX</span>
+
+
+<div class="viewcode-block" id="GenotypeDtype"><a class="viewcode-back" href="../../../arrays/pandas_genomics.arrays.GenotypeDtype.html#pandas_genomics.arrays.GenotypeDtype">[docs]</a><span class="nd">@register_extension_dtype</span>
+<span class="k">class</span> <span class="nc">GenotypeDtype</span><span class="p">(</span><span class="n">PandasExtensionDtype</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ExtensionDtype for genotype data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    variant: Variant or None</span>
+<span class="sd">        The ~Variant associated with the genotype.</span>
+<span class="sd">        If None, use an anonymous variant</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    variant: Variant</span>
+<span class="sd">        The variant that the datatype is specific to</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    v = Variant(chromosome=&#39;12&#39;, position=112161652, id=&#39;rs12462&#39;, ref=&#39;T&#39;, alt=[&#39;C&#39;,], score=25)</span>
+<span class="sd">    &gt;&gt;&gt; GenotypeDtype(v)</span>
+<span class="sd">    genotype(2n)[12; 112161652; rs12462; T; C]Q25</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Internal attributes</span>
+    <span class="c1"># -------------------</span>
+    <span class="c1"># metadata field names</span>
+    <span class="n">_metadata</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;variant&quot;</span><span class="p">,)</span>
+    <span class="c1"># Regular expression</span>
+    <span class="c1"># TODO: Validate ref/alt more specifically</span>
+    <span class="n">_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;genotype\((?P&lt;ploidy&gt;[0-9]+)n\)\[&quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;chromosome&gt;.+); &quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;position&gt;[0-9]+); &quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;id&gt;.+); &quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;ref&gt;.+); &quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;alt&gt;.+)\]&quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(Q(?P&lt;score&gt;[0-9]+))?$&quot;</span>
+    <span class="p">)</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;O&quot;</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">Genotype</span>
+
+    <span class="c1"># ExtensionDtype Properties</span>
+    <span class="c1"># -------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">na_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the genotype with variant information but no alleles specified</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c1"># init</span>
+    <span class="c1"># ----</span>
+<div class="viewcode-block" id="GenotypeDtype.__init__"><a class="viewcode-back" href="../../../arrays/pandas_genomics.arrays.GenotypeDtype.html#pandas_genomics.arrays.GenotypeDtype.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variant</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Variant</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Set variant</span>
+        <span class="k">if</span> <span class="n">variant</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">variant</span> <span class="o">=</span> <span class="n">Variant</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variant</span> <span class="o">=</span> <span class="n">variant</span>
+
+        <span class="c1"># Data backing the GenotypeArray is stored as a numpy structured array</span>
+        <span class="c1"># An unsigned integer for each allele in the genotype indexing the list of possible alleles</span>
+        <span class="c1"># An unsigned integer for the genotype score (255 if missing)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">ploidy</span><span class="p">,)),</span>
+                <span class="p">(</span><span class="s2">&quot;gt_score&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_type</span><span class="o">.</span><span class="n">itemsize</span></div>
+
+    <span class="c1"># ExtensionDtype Methods</span>
+    <span class="c1"># -------------------------</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_array_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the array type associated with this dtype</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">GenotypeArray</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a GenotypeDtype from a string.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        string : str</span>
+<span class="sd">            The string alias for this GenotypeDtype.</span>
+<span class="sd">            Should be formatted like `genotype(&lt;ploidy&gt;n)[&lt;chromosome&gt;; &lt;position&gt;; &lt;id&gt;; &lt;ref&gt;; &lt;alt&gt;]`</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; GenotypeDtype.construct_from_string(&#39;genotype(2n)[chr1; 123456; rs12345; A; T,G]&#39;)</span>
+<span class="sd">        genotype(2n)[chr1; 123456; rs12345; A; T,G]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Cannot construct a &#39;GenotypeDtype&#39; from &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_match</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()</span>
+                    <span class="c1"># Score is optional, so it may be None</span>
+                    <span class="n">score</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">score</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+                    <span class="n">variant</span> <span class="o">=</span> <span class="n">Variant</span><span class="p">(</span>
+                        <span class="n">chromosome</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;chromosome&quot;</span><span class="p">],</span>
+                        <span class="n">position</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;position&quot;</span><span class="p">]),</span>
+                        <span class="nb">id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
+                        <span class="n">ref</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;ref&quot;</span><span class="p">],</span>
+                        <span class="n">alt</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;alt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">),</span>
+                        <span class="n">ploidy</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;ploidy&quot;</span><span class="p">]),</span>
+                        <span class="n">score</span><span class="o">=</span><span class="n">score</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="n">variant</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;construct_from_string&#39; expects a string, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">string</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_genotype</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a GenotypeDtype from a Genotype.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        genotype: Genotype</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; variant = Variant(&#39;12&#39;, 112161652, &#39;rs12462&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; genotype = variant.make_genotype_from_str(&#39;C/T&#39;, add_alleles=True)</span>
+<span class="sd">        &gt;&gt;&gt; GenotypeDtype.from_genotype(genotype)</span>
+<span class="sd">        genotype(2n)[12; 112161652; rs12462; ref=N; alt=T,C]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">variant</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">is_dtype</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a boolean if the passed type can be processed as this dtype</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dtype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;genotype(&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">construct_from_string</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="c1"># Other methods</span>
+    <span class="c1"># -------------</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">variant_score_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">variant_score_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Q</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">score</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;genotype(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">ploidy</span><span class="si">}</span><span class="s2">n)[&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">chromosome</span><span class="si">}</span><span class="s2">; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">position</span><span class="si">}</span><span class="s2">; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alt</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="o">+</span> <span class="n">variant_score_str</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a copy to avoid references to the same variant&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">GenotypeDtype</span><span class="p">(</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">other</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">GenotypeDtype</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">variant</span>
+
+    <span class="c1"># Pickle compatibility</span>
+    <span class="c1"># --------------------</span>
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="c1"># pickle support; we don&#39;t want to pickle the cache</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variant</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;variant&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Other internal methods</span>
+    <span class="c1"># ----------------------</span>
+
+    <span class="k">def</span> <span class="nf">unpack_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">genotype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Genotype</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">genotype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unpack_genotype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">na_value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">genotype</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The fill value must be None or a Genotype object, not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">genotype</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;NaN&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">genotype</span><span class="o">.</span><span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="n">genotype</span><span class="o">.</span><span class="n">score</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">score</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_record_type</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenotypeArray"><a class="viewcode-back" href="../../../arrays/pandas_genomics.arrays.GenotypeArray.html#pandas_genomics.arrays.GenotypeArray">[docs]</a><span class="k">class</span> <span class="nc">GenotypeArray</span><span class="p">(</span><span class="n">ExtensionArray</span><span class="p">,</span> <span class="n">EncodingMixin</span><span class="p">,</span> <span class="n">InfoMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Holder for genotypes</span>
+
+<span class="sd">    Variant information is stored as part of the type, and the genotype is stored as a pair of integer arrays</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    values : list-like</span>
+<span class="sd">        The values of the genotypes.</span>
+<span class="sd">    dtype : GenotypeDtype</span>
+<span class="sd">        The specific parametized type.  Optional (if possible to infer from `values`)</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dtype: GenotypeDtype</span>
+<span class="sd">        The specific parametized type</span>
+<span class="sd">    data: np.dtype(&quot;u8&quot;) with shape (&lt;genotypes&gt;, &lt;ploidy&gt;)</span>
+<span class="sd">        The genotype values encoded as indices into the allele list of the dtype</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># array priority higher than numpy scalars</span>
+    <span class="n">__array_priority__</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<div class="viewcode-block" id="GenotypeArray.__init__"><a class="viewcode-back" href="../../../arrays/pandas_genomics.arrays.GenotypeArray.html#pandas_genomics.arrays.GenotypeArray.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Genotype</span><span class="p">],</span> <span class="s2">&quot;GenotypeArray&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GenotypeDtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize assuming values is a GenotypeArray or a numpy array with the correct underlying shape&quot;&quot;&quot;</span>
+        <span class="c1"># If the dtype is passed, ensure it is the correct type</span>
+        <span class="k">if</span> <span class="n">GenotypeDtype</span><span class="o">.</span><span class="n">is_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="k">elif</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The passed dtype &#39;</span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&#39; is not a GenotypeDtype&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Load the values</span>
+        <span class="c1"># ---------------</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_list_like</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="o">.</span><span class="n">_record_type</span>
+        <span class="p">):</span>
+            <span class="c1"># Stored data format</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">values</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_genotype_array</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="c1"># values is a GenotypeArray, simply check the dtype and return</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;The provided dtype </span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> doesn&#39;t match&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; the dtype of the provided values </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Take dtype from the values</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="c1"># Get the data</span>
+            <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">_data</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Return an empty Genotype Array with the given GenotypeDtype</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="o">.</span><span class="n">_record_type</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">all</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="n">Genotype</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]):</span>
+            <span class="c1"># Sequence of Genotype objects</span>
+            <span class="n">genotype_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_sequence</span><span class="p">(</span><span class="n">scalars</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">copy</span><span class="p">)</span>
+            <span class="c1"># Replace self with the created array</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">genotype_array</span><span class="o">.</span><span class="n">_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">genotype_array</span><span class="o">.</span><span class="n">_dtype</span>
+
+        <span class="k">elif</span> <span class="nb">all</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]):</span>
+            <span class="c1"># List of Strings</span>
+            <span class="n">genotype_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_sequence_of_strings</span><span class="p">(</span>
+                <span class="n">strings</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">copy</span>
+            <span class="p">)</span>
+            <span class="c1"># Replace self with the created array</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">genotype_array</span><span class="o">.</span><span class="n">_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">genotype_array</span><span class="o">.</span><span class="n">_dtype</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported `values` type passed to __init__: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Set an anonymous dtype if one was not set</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">GenotypeDtype</span><span class="p">()</span></div>
+
+    <span class="c1"># ExtensionArray Initialization Methods</span>
+    <span class="c1"># -------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_sequence</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">scalars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Genotype</span><span class="p">]],</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GenotypeDtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GenotypeArray&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a new GenotypeArray from a sequence of Genotypes.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scalars : Sequence of Genotype objects</span>
+<span class="sd">        dtype : dtype, optional</span>
+<span class="sd">            Optional GenotypeDtype that must be compatible with the Genotypes</span>
+<span class="sd">        copy : boolean, default False</span>
+<span class="sd">            If True, copy the underlying data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        GenotypeArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">scalars</span><span class="p">)</span> <span class="o">==</span> <span class="n">Genotype</span><span class="p">:</span>
+            <span class="c1"># Despite the documentation, scalars is not always a sequence of objects, sometimes it is just one</span>
+            <span class="n">scalars</span> <span class="o">=</span> <span class="p">[</span><span class="n">scalars</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scalars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Pass the scalars object anyway, in case it is an empty GenotypeArray</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">scalars</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Use variant from first genotype</span>
+            <span class="n">variant</span> <span class="o">=</span> <span class="n">scalars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">variant</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use the dtype variant</span>
+            <span class="n">variant</span> <span class="o">=</span> <span class="n">dtype</span><span class="o">.</span><span class="n">variant</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">gt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scalars</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">variant</span><span class="o">.</span><span class="n">is_same_position</span><span class="p">(</span><span class="n">gt</span><span class="o">.</span><span class="n">variant</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Variant for Genotype </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">scalars</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">gt</span><span class="o">.</span><span class="n">variant</span><span class="si">}</span><span class="s2">) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;is not compatible with the prior ones (</span><span class="si">{</span><span class="n">variant</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">variant</span><span class="o">.</span><span class="n">score</span> <span class="o">!=</span> <span class="n">gt</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">score</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Variant for Genotype </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">scalars</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">gt</span><span class="o">.</span><span class="n">variant</span><span class="si">}</span><span class="s2">) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;is compatible, but has a different variant score&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">gt</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">,</span> <span class="n">gt</span><span class="o">.</span><span class="n">_float_score</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="p">[],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">GenotypeDtype</span><span class="p">(</span><span class="n">variant</span><span class="p">))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">_dtype</span><span class="o">.</span><span class="n">_record_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_sequence_of_strings</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">strings</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a new ExtensionArray from a sequence of strings.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        strings : Sequence</span>
+<span class="sd">            A list of genotype strings, like &quot;A/C&quot;, &quot;G/delG&quot;, etc</span>
+<span class="sd">        dtype : dtype, optional</span>
+<span class="sd">            GenotypeDtype with variant information used to process the strings</span>
+<span class="sd">        copy : boolean, default False</span>
+<span class="sd">            If True, copy the underlying data.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        This will not allow the use of genotype scores as they are not encoded in genotype strings</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        GenotypeArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">variant</span> <span class="o">=</span> <span class="n">dtype</span><span class="o">.</span><span class="n">variant</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_sequence</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">variant</span><span class="o">.</span><span class="n">make_genotype_from_str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">],</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_factorized</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">original</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reconstruct an ExtensionArray after factorization.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            An integer ndarray with the factorized values.</span>
+<span class="sd">        original : ExtensionArray</span>
+<span class="sd">            The original ExtensionArray that factorize was called on.</span>
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        factorize</span>
+<span class="sd">        ExtensionArray.factorize</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">original</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">is_genotype_array</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Attributes</span>
+    <span class="c1"># ----------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenotypeDtype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The specific parametized type&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nbytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;How many bytes to store this object in memory&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Select a subset of self.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        index : int, slice, or ndarray</span>
+<span class="sd">            * int: The position in &#39;self&#39; to get.</span>
+<span class="sd">            * slice: A slice object, where &#39;start&#39;, &#39;stop&#39;, and &#39;step&#39; are</span>
+<span class="sd">              integers or None</span>
+<span class="sd">            * ndarray: A 1-d boolean NumPy ndarray the same length as &#39;self&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        item : Genotype or GenotypeArray</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check and convert the index</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">indexers</span><span class="o">.</span><span class="n">check_array_indexer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">getitem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">void</span><span class="p">):</span>
+            <span class="n">variant</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">variant</span>
+            <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">variant</span><span class="o">=</span><span class="n">variant</span><span class="p">,</span>
+                <span class="n">allele_idxs</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">],</span>
+                <span class="n">score</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;gt_score&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;gt_score&quot;</span><span class="p">])</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Indexing error- unexpected type&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,</span> <span class="s2">&quot;GenotypeArray&quot;</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Genotype</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1"># Convert list to genotype array, throwing an error if it doesn&#39;t work</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c1"># Validate the key</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Cannot index with an integer indexer containing NA values&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">BooleanArray</span><span class="p">):</span>
+            <span class="c1"># Convert to a normal boolean array after making NaN rows False</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;bool&quot;</span><span class="p">)</span>
+        <span class="c1"># Handle pandas IntegerArray</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">IntegerArray</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Raise an error if there are any NA values</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Cannot index with an integer indexer containing NA values&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Convert to a regular numpy array of ints</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">)</span>
+        <span class="c1"># Ensure a mask doesn&#39;t have an incorrect length</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;wrong length&quot;</span><span class="p">)</span>
+        <span class="c1"># Update allele values directly</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">value</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">_float_score</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">GenotypeArray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">GenotypeArray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Can&#39;t set the value in a GenotypeArray with &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indexer</span><span class="p">,</span> <span class="n">allow_fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">indexer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">indexer</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;Index is out of bounds or cannot do a &quot;</span>
+            <span class="s2">&quot;non-empty take from an empty array.&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">allow_fill</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fill_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fill_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">na_value</span>
+            <span class="c1"># bounds check</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">indexer</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">loc</span><span class="p">]</span> <span class="k">if</span> <span class="n">loc</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">fill_value</span> <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="n">indexer</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">loc</span><span class="p">]</span> <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="n">indexer</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_sequence</span><span class="p">(</span><span class="n">scalars</span><span class="o">=</span><span class="n">output</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">factorize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">na_sentinel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="s2">&quot;GenotypeArray&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an array of ints indexing unique values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="bp">self</span>
+
+        <span class="n">codes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># Get list of unique genotypes in order they appear (not counting scores)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">uniques</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">idx</span><span class="p">)]</span>
+        <span class="n">uniques</span> <span class="o">=</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">uniques</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c1"># Update codes for unique values, not including NA</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">gt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">gt</span> <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">uniques</span> <span class="k">if</span> <span class="n">gt</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">na_value</span><span class="p">]):</span>
+            <span class="n">codes</span><span class="p">[</span><span class="bp">self</span> <span class="o">==</span> <span class="n">gt</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx</span>
+
+        <span class="c1"># Update codes for NA values</span>
+        <span class="n">codes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span> <span class="o">=</span> <span class="n">na_sentinel</span>
+
+        <span class="c1"># Return the codes and unique values (not including NA)</span>
+        <span class="k">return</span> <span class="n">codes</span><span class="p">,</span> <span class="n">uniques</span><span class="p">[</span><span class="o">~</span><span class="n">uniques</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">unique</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GenotypeArray&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a GenotypeArray of unique values&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">value_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dropna</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a Series of unique counts with a GenotypeArray index&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">unique_idx</span><span class="p">,</span> <span class="n">unique_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+            <span class="n">unique_counts</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">unique_idx</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">dropna</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">index</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">na_value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">astype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">GenotypeDtype</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+                <span class="bp">self</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GenotypeArray</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">isna</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A 1-D array indicating if each value is missing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">==</span> <span class="n">MISSING_IDX</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_concat_same_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">to_concat</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Concatenate multiple array</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        to_concat : sequence of this type</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ExtensionArray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check dtypes</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">to_concat</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;to_concat must have the same dtype for all values&quot;</span><span class="p">,</span> <span class="n">dtypes</span>
+            <span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">ga</span><span class="o">.</span><span class="n">_data</span> <span class="k">for</span> <span class="n">ga</span> <span class="ow">in</span> <span class="n">to_concat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Properties for accessing array metadata</span>
+    <span class="c1"># ----------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">variant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the variant identifier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="o">.</span><span class="n">variant</span>
+
+    <span class="c1"># Properties for accessing individual portions of the internal _data array</span>
+    <span class="c1"># ------------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allele_idxs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the allele indices for each genotype</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">gt_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the genotype score for each genotype (as a float)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;gt_score&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">[</span><span class="n">scores</span> <span class="o">==</span> <span class="n">MISSING_IDX</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="c1"># Operations</span>
+    <span class="c1"># Note: genotypes are compared by first allele then second, using the order of alleles in the variant</span>
+    <span class="c1"># ----------</span>
+    <span class="k">def</span> <span class="nf">_get_alleles_for_ops</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the scalar allele values (Genotype or str)</span>
+<span class="sd">                or arrays of allele values (GenotypeArray)</span>
+<span class="sd">                or None (NotImplemented)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">GenotypeArray</span><span class="p">):</span>
+            <span class="c1"># Get scalar values for alleles</span>
+            <span class="n">allele_idxs</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">allele_idxs</span>
+            <span class="c1"># Ensure the comparison is using the same variant</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">variant</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">allele_idxs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">get_idx_from_allele</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">allele_idxs</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">==</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">!=</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&lt;=</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&lt;</span> <span class="n">allele_idxs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&lt;=</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&gt;=</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&gt;</span> <span class="n">allele_idxs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">allele_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alleles_for_ops</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">allele_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allele_idxs</span> <span class="o">&gt;=</span> <span class="n">allele_idxs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1">###################</span>
+    <span class="c1"># Utility Methods #</span>
+    <span class="c1">###################</span>
+    <span class="k">def</span> <span class="nf">set_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allele</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the reference allele (in-place) by specifying an allele index value or an allele string</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        allele: int or str</span>
+<span class="sd">            The allele that will be set as the reference allele.</span>
+<span class="sd">            Either the allele string, or the index into the variant allele list</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the allele as an integer and as a string</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">allele_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">get_idx_from_allele</span><span class="p">(</span><span class="n">allele</span><span class="p">,</span> <span class="n">add</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">allele_str</span> <span class="o">=</span> <span class="n">allele</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">is_valid_allele_idx</span><span class="p">(</span><span class="n">allele</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">allele</span><span class="si">}</span><span class="s2"> is not a valid allele index,&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; the variant has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span><span class="si">}</span><span class="s2"> alleles.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">allele_idx</span> <span class="o">=</span> <span class="n">allele</span>
+            <span class="n">allele_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="n">allele</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The `allele` must be a str or int, not an instance of &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">allele_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Nothing to do, this is already the reference</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="c1"># Update the list of alleles</span>
+        <span class="n">old_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Replace existing value with the old ref</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="n">allele_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">old_ref</span>
+        <span class="c1"># Add new ref to the beginning and remove the old ref</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">allele_str</span><span class="p">,</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant</span><span class="o">.</span><span class="n">alleles</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="c1"># Update stored alleles</span>
+        <span class="n">was_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">was_allele</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">allele_idx</span>
+        <span class="c1"># What was the reference is now the new reference position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">][</span><span class="n">was_ref</span><span class="p">]</span> <span class="o">=</span> <span class="n">allele_idx</span>
+        <span class="c1"># What was the allele is now reference (0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;allele_idxs&quot;</span><span class="p">][</span><span class="n">was_allele</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, John McGuigan.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

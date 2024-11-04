@@ -1,0 +1,705 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pandas_genomics.sim.biallelic_model_simulator &mdash; pandas-genomics 1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html">
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.12
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://halllab.github.io/">Hall Lab Homepage</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/HallLab/pandas-genomics">Pandas-Genomics Github Repo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../release-history.html">Release History</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pandas-genomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pandas_genomics.sim.biallelic_model_simulator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pandas_genomics.sim.biallelic_model_simulator</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">patsy</span>
+<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
+<span class="kn">from</span> <span class="nn">numpy.random._generator</span> <span class="kn">import</span> <span class="n">default_rng</span>
+
+<span class="kn">from</span> <span class="nn">pandas_genomics.arrays</span> <span class="kn">import</span> <span class="n">GenotypeArray</span><span class="p">,</span> <span class="n">GenotypeDtype</span>
+<span class="kn">from</span> <span class="nn">pandas_genomics.scalars</span> <span class="kn">import</span> <span class="n">Variant</span><span class="p">,</span> <span class="n">MISSING_IDX</span>
+
+
+<div class="viewcode-block" id="SNPEffectEncodings"><a class="viewcode-back" href="../../../sim/pandas_genomics.sim.SNPEffectEncodings.html#pandas_genomics.sim.SNPEffectEncodings">[docs]</a><span class="k">class</span> <span class="nc">SNPEffectEncodings</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enum: Normalized SNP Effects encoded as 3-length tuples&quot;&quot;&quot;</span>
+
+    <span class="n">DOMINANT</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">SUPER_ADDITIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ADDITIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">SUB_ADDITIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">RECESSIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">HET</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PenetranceTables"><a class="viewcode-back" href="../../../sim/pandas_genomics.sim.PenetranceTables.html#pandas_genomics.sim.PenetranceTables">[docs]</a><span class="k">class</span> <span class="nc">PenetranceTables</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enum: Penetrance Tables for Simple Models&quot;&quot;&quot;</span>
+
+    <span class="n">HR_HR</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Homozygous Referent X Homozygous Referent</span>
+    <span class="n">HR_HET</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Homozygous Referent X Heterozygous</span>
+    <span class="n">HR_HA</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Homozygous Referent X Homozygous Alternate</span>
+    <span class="n">HET_HET</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Heterozygous X Heterozygous</span>
+    <span class="n">HET_HA</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Heterozygous X Homozygous Alternate</span>
+    <span class="n">XOR</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># XOR Model</span>
+    <span class="n">HYP</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Hyperbolic Model</span>
+    <span class="n">RHYP</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Hyperbolic Model</span>
+    <span class="n">NULL</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>  <span class="c1"># Null Model (Always 50/50)</span></div>
+
+
+<div class="viewcode-block" id="BAMS"><a class="viewcode-back" href="../../../sim/pandas_genomics.sim.BAMS.html#pandas_genomics.sim.BAMS">[docs]</a><span class="k">class</span> <span class="nc">BAMS</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Biallelic Model Simulator.  Used to simulate two SNPs with phenotype data based on a penetrance table.</span>
+
+<span class="sd">    It can be initialized using the PenetranceTables enum or using `from_model` with values from the SNPEffectEncodings enum.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BAMS.__init__"><a class="viewcode-back" href="../../../sim/pandas_genomics.sim.BAMS.html#pandas_genomics.sim.BAMS.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pen_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">PenetranceTables</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]]</span>
+        <span class="p">),</span>
+        <span class="n">penetrance_base</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">penetrance_diff</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">snp1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Variant</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">snp2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Variant</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1855</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pen_table: 3x3 np array or PenetranceTables enum</span>
+<span class="sd">            Penetrance values.  Will be scaled between 0 and 1 if needed.</span>
+<span class="sd">        penetrance_base: float, default 0.25</span>
+<span class="sd">            Baseline to use in the final penetrance table, must be in [0,1]</span>
+<span class="sd">        penetrance_diff: optional float, default None (use 1-2*penetrance_base)</span>
+<span class="sd">            Difference between minimum and maximimum probabilities in the penetrance table.</span>
+<span class="sd">            penetrance_base + penetrance_diff must be in [0,1]</span>
+<span class="sd">        snp1: Optional[Variant]</span>
+<span class="sd">        snp2: Optional[Variant]</span>
+<span class="sd">        random_seed: int, default 1855</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pen_table</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">(</span>
+            <span class="n">pen_table</span><span class="p">,</span> <span class="n">penetrance_base</span><span class="p">,</span> <span class="n">penetrance_diff</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pen_table</span> <span class="o">=</span> <span class="n">pen_table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snp1</span> <span class="o">=</span> <span class="n">snp1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snp2</span> <span class="o">=</span> <span class="n">snp2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span> <span class="o">=</span> <span class="n">random_seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pen_table_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pen_table</span><span class="p">)</span>
+        <span class="n">pen_table_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_genotype_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp1</span><span class="p">)</span>
+        <span class="n">pen_table_df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_genotype_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;SNP1 = </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp1</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;SNP2 = </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp2</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Penetrance Table:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;----------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pen_table_df</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;----------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Random Seed = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">NotImplemented</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pen_table</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">pen_table</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp1</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">snp1</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp2</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">snp2</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_random_seed</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span>
+
+    <span class="k">def</span> <span class="nf">set_random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset the random number generator with the specified seed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span> <span class="o">=</span> <span class="n">new_seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_validate_params</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">penetrance_base</span><span class="p">,</span> <span class="n">penetrance_diff</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate parameters and calculate final penetrance table&quot;&quot;&quot;</span>
+        <span class="c1"># Process Enum</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">pen_table</span><span class="p">)</span> <span class="ow">is</span> <span class="n">PenetranceTables</span><span class="p">:</span>
+            <span class="n">pen_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pen_table</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incorrect shape for pen_table, must be 3x3&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;pen_table must be a 3x3 numpy array or PenetranceTables enum, not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">pen_table</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Penetrance table values cannot be negative.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Scale penetrance table if needed</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">pen_table</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">pen_table_min</span> <span class="o">=</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+            <span class="n">pen_table_range</span> <span class="o">=</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">pen_table_min</span>
+            <span class="k">if</span> <span class="n">pen_table_range</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pen_table</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">-</span> <span class="n">pen_table_min</span><span class="p">)</span> <span class="o">/</span> <span class="n">pen_table_range</span>
+                <span class="c1"># Otherwise the penetrance table is flat, i.e. a null model</span>
+
+        <span class="c1"># Process base and diff</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">penetrance_base</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">penetrance_base</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;penetrance_base must be in [0,1], </span><span class="si">{</span><span class="n">penetrance_base</span><span class="si">}</span><span class="s2"> was outside this range&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">penetrance_diff</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">penetrance_diff</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">penetrance_base</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">penetrance_diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;penetrance_diff must be &gt; 0&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">penetrance_diff</span> <span class="o">+</span> <span class="n">penetrance_base</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;penetrance_base + penetrance_diff must be &lt;= 1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># SNPs</span>
+        <span class="k">if</span> <span class="n">snp1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">snp1</span> <span class="o">=</span> <span class="n">Variant</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rs1&quot;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">alt</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">snp2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">snp2</span> <span class="o">=</span> <span class="n">Variant</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rs2&quot;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">alt</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snp1</span><span class="o">.</span><span class="n">alt</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNP1 is not Bialleleic: </span><span class="si">{</span><span class="n">snp1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snp2</span><span class="o">.</span><span class="n">alt</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNP2 is not Bialleleic: </span><span class="si">{</span><span class="n">snp2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create final pen_table</span>
+        <span class="n">pen_table</span> <span class="o">=</span> <span class="n">penetrance_base</span> <span class="o">+</span> <span class="n">penetrance_diff</span> <span class="o">*</span> <span class="n">pen_table</span>
+
+        <span class="k">return</span> <span class="n">pen_table</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_model</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">eff1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">SNPEffectEncodings</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">SNPEffectEncodings</span><span class="o">.</span><span class="n">RECESSIVE</span><span class="p">,</span>
+        <span class="n">eff2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">SNPEffectEncodings</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">SNPEffectEncodings</span><span class="o">.</span><span class="n">RECESSIVE</span><span class="p">,</span>
+        <span class="n">penetrance_base</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">penetrance_diff</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">main1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">main2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">interaction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">snp1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Variant</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">snp2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Variant</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1855</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a BiallelicSimulation with a Penetrance Table based on a fully specified model</span>
+<span class="sd">        y = β0 + β1(eff1) + β2(eff2) + β3(eff1*eff2)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eff1: tuple of 3 floats</span>
+<span class="sd">            Normalized effect of SNP1</span>
+<span class="sd">            May be passed a value from the `Effects` enum</span>
+<span class="sd">        eff2: tuple of 3 floats</span>
+<span class="sd">            Normalized effect of SNP2</span>
+<span class="sd">            May be passed a value from the `Effects` enum</span>
+<span class="sd">        penetrance_base: float, default 0.25</span>
+<span class="sd">            β0 in the formula</span>
+<span class="sd">        penetrance_diff: Optional[float] = None</span>
+<span class="sd">            Difference between min and max probabilities in the penetrance table, 1-(2*baseline) if not specified</span>
+<span class="sd">        main1: float, default 1.0</span>
+<span class="sd">            Main effect of SNP1, β1 in the formula</span>
+<span class="sd">        main2: float, default 1.0</span>
+<span class="sd">            Main effect of SNP2, β2 in the formula</span>
+<span class="sd">        interaction: float, default 0.0</span>
+<span class="sd">            Interaction effect, β3 in the formula</span>
+<span class="sd">        snp1: Variant, default is None</span>
+<span class="sd">            First SNP, one will be created by default if not specified</span>
+<span class="sd">        snp2: Variant, default is None</span>
+<span class="sd">            Second SNP, one will be created by default if not specified</span>
+<span class="sd">        random_seed: int, default is 1855</span>
+<span class="sd">            Random seed used during simulation</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        BAMS</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: Add more validation</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eff1</span><span class="p">)</span> <span class="ow">is</span> <span class="n">SNPEffectEncodings</span><span class="p">:</span>
+            <span class="n">eff1</span> <span class="o">=</span> <span class="n">eff1</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eff2</span><span class="p">)</span> <span class="ow">is</span> <span class="n">SNPEffectEncodings</span><span class="p">:</span>
+            <span class="n">eff2</span> <span class="o">=</span> <span class="n">eff2</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="c1"># Shape effects and scale if needed</span>
+        <span class="n">eff1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eff1</span><span class="p">])</span>  <span class="c1"># SNP1 = columns</span>
+        <span class="n">eff2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eff2</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>  <span class="c1"># SNP2 = rows</span>
+        <span class="k">if</span> <span class="n">eff1</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">eff1</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scaling eff1&quot;</span><span class="p">)</span>
+            <span class="n">eff1</span> <span class="o">=</span> <span class="p">(</span><span class="n">eff1</span> <span class="o">-</span> <span class="n">eff1</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">eff1</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">eff1</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">eff2</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">eff2</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scaling eff2&quot;</span><span class="p">)</span>
+            <span class="n">eff2</span> <span class="o">=</span> <span class="p">(</span><span class="n">eff2</span> <span class="o">-</span> <span class="n">eff2</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">eff2</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">eff2</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+
+        <span class="n">pen_table</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="o">+</span><span class="n">main1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">eff1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">main2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">eff2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">interaction</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">eff2</span><span class="p">,</span> <span class="n">eff1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">penetrance_base</span><span class="p">,</span> <span class="n">penetrance_diff</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span><span class="p">,</span> <span class="n">random_seed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_case_control</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_cases</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">n_controls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">maf1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.30</span><span class="p">,</span>
+        <span class="n">maf2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.30</span><span class="p">,</span>
+        <span class="n">snr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulate genotypes with the specified number of &#39;case&#39; and &#39;control&#39; phenotypes</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_cases: int, default 1000</span>
+<span class="sd">        n_controls: int, default 1000</span>
+<span class="sd">        maf1: float, default 0.30</span>
+<span class="sd">            Minor Allele Frequency to use for SNP1</span>
+<span class="sd">        maf2: float, default 0.30</span>
+<span class="sd">            Minor Allele Frequency to use for SNP2</span>
+<span class="sd">        snr: float, default 1.0</span>
+<span class="sd">            Signal-to-noise ratio</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.Dataframe</span>
+<span class="sd">            Dataframe with 3 columns: Outcome (categorical), SNP1 (GenotypeArray), and SNP2 (GenotypeArray)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate params</span>
+        <span class="k">if</span> <span class="n">n_cases</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">n_controls</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Simulation must include at least one case and at least one control&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create table of Prob(GT) based on MAF, assuming HWE</span>
+        <span class="n">prob_snp1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">maf1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf1</span><span class="p">),</span> <span class="p">(</span><span class="n">maf1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">prob_snp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">maf2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf2</span><span class="p">),</span> <span class="p">(</span><span class="n">maf2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="n">prob_gt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">prob_snp2</span><span class="p">,</span> <span class="n">prob_snp1</span><span class="p">)</span>
+
+        <span class="n">pen_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pen_table</span>
+        <span class="k">if</span> <span class="n">snr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Scale penetrance table from 0 to 1</span>
+            <span class="n">pen_table</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">-</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="n">pen_table</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># Calcualte sigma</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_sigma</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">prob_gt</span><span class="p">)</span>
+            <span class="c1"># Scale the penetrance by the amount of unexplained variance</span>
+            <span class="c1"># Odds Ratio = exp(SNP/Sigma)</span>
+            <span class="n">min_p</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">snr</span><span class="p">))</span>
+            <span class="n">p_diff</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">min_p</span>
+            <span class="c1"># Adjust the penetrance</span>
+            <span class="n">pen_table</span> <span class="o">=</span> <span class="n">min_p</span> <span class="o">+</span> <span class="n">pen_table</span> <span class="o">*</span> <span class="n">p_diff</span>
+
+        <span class="c1">#                     P(Case|GT) * P(GT)</span>
+        <span class="c1"># Bayes: P(GT|Case) = ------------------</span>
+        <span class="c1">#                           P(Case)</span>
+
+        <span class="c1"># Prob(Case|GT) = pen_table</span>
+        <span class="c1"># Prob(Case) = sum(Prob(Case|GTi) * Prob(GTi) for each GT i)</span>
+        <span class="n">prob_case</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">*</span> <span class="n">prob_gt</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="c1"># Prob(GT|Case)</span>
+        <span class="n">prob_gt_given_case</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">*</span> <span class="n">prob_gt</span><span class="p">)</span> <span class="o">/</span> <span class="n">prob_case</span>
+
+        <span class="c1"># Prob(Control|GT) = 1-pen_table</span>
+        <span class="c1"># Prob(Control) = sum(Prob(Control|GTi) * Prob(GTi) for each GT i)</span>
+        <span class="n">prob_control</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">pen_table</span><span class="p">)</span> <span class="o">*</span> <span class="n">prob_gt</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="c1"># Prob(GT|Control)</span>
+        <span class="n">prob_gt_given_control</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">pen_table</span><span class="p">)</span> <span class="o">*</span> <span class="n">prob_gt</span><span class="p">)</span> <span class="o">/</span> <span class="n">prob_control</span>
+
+        <span class="c1"># Generate genotypes based on the simulated cases and controls</span>
+        <span class="c1"># Pick int index into the table (0 through 8) counted left to right then top to bottom (due to flatten())</span>
+        <span class="n">case_gt_table_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">n_cases</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">prob_gt_given_case</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">control_gt_table_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">n_controls</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">prob_gt_given_control</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create GenotypeArrays</span>
+        <span class="n">snp1_case_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp1_gt_array</span><span class="p">(</span><span class="n">case_gt_table_idxs</span><span class="p">))</span>
+        <span class="n">snp2_case_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp2_gt_array</span><span class="p">(</span><span class="n">case_gt_table_idxs</span><span class="p">))</span>
+        <span class="n">snp1_control_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp1_gt_array</span><span class="p">(</span><span class="n">control_gt_table_idxs</span><span class="p">))</span>
+        <span class="n">snp2_control_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp2_gt_array</span><span class="p">(</span><span class="n">control_gt_table_idxs</span><span class="p">))</span>
+
+        <span class="c1"># Merge data together</span>
+        <span class="n">snp1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">snp1_case_array</span><span class="p">,</span> <span class="n">snp1_control_array</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">snp2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">snp2_case_array</span><span class="p">,</span> <span class="n">snp2_control_array</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Generate outcome</span>
+        <span class="n">outcome</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="s2">&quot;Case&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_cases</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Control&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_controls</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="s2">&quot;category&quot;</span>
+        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">outcome</span><span class="p">,</span> <span class="n">snp1</span><span class="p">,</span> <span class="n">snp2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Outcome&quot;</span><span class="p">,</span> <span class="s2">&quot;SNP1&quot;</span><span class="p">,</span> <span class="s2">&quot;SNP2&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Scramble outcome so cases and controls are mixed</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_random_seed</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+            <span class="n">drop</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">generate_quantitative</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">maf1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.30</span><span class="p">,</span>
+        <span class="n">maf2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.30</span><span class="p">,</span>
+        <span class="n">snr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulate genotypes with a quantitative outcome (mean = probability based on genotypes, sd = 1)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_samples: int, default 1000</span>
+<span class="sd">        maf1: float, default 0.30</span>
+<span class="sd">            Minor Allele Frequency to use for SNP1</span>
+<span class="sd">        maf2: float, default 0.30</span>
+<span class="sd">            Minor Allele Frequency to use for SNP2</span>
+<span class="sd">        snr: float, default 1.0</span>
+<span class="sd">            Signal-to-noise ratio</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.Dataframe</span>
+<span class="sd">            Dataframe with 3 columns: Outcome, SNP1 (GenotypeArray), and SNP2 (GenotypeArray)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pen_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pen_table</span>
+
+        <span class="c1"># Create table of Prob(GT) based on MAF, assuming HWE</span>
+        <span class="n">prob_snp1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">maf1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf1</span><span class="p">),</span> <span class="p">(</span><span class="n">maf1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">prob_snp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">maf2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">maf2</span><span class="p">),</span> <span class="p">(</span><span class="n">maf2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="n">prob_gt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">prob_snp2</span><span class="p">,</span> <span class="n">prob_snp1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">snr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Scale penetrance table from 0 to 1</span>
+            <span class="n">pen_table</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">-</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="n">pen_table</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># Calculate sigma</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_sigma</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">prob_gt</span><span class="p">)</span>
+            <span class="c1"># Scale the penetrance by the amount of unexplained variance</span>
+            <span class="n">pen_table</span> <span class="o">=</span> <span class="p">(</span><span class="n">pen_table</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">*</span> <span class="n">snr</span>
+
+        <span class="c1"># Generate genotypes</span>
+        <span class="n">gt_table_idxs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">prob_gt</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="n">snp1_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp1_gt_array</span><span class="p">(</span><span class="n">gt_table_idxs</span><span class="p">))</span>
+        <span class="n">snp2_array</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_snp2_gt_array</span><span class="p">(</span><span class="n">gt_table_idxs</span><span class="p">))</span>
+
+        <span class="c1"># Calculate outcome: Normal distribution with mean=probability and sd = 1</span>
+        <span class="n">outcome</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">pen_table</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">gt_table_idxs</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">outcome</span><span class="p">,</span> <span class="n">snp1_array</span><span class="p">,</span> <span class="n">snp2_array</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Outcome&quot;</span><span class="p">,</span> <span class="s2">&quot;SNP1&quot;</span><span class="p">,</span> <span class="s2">&quot;SNP2&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_calculate_sigma</span><span class="p">(</span><span class="n">pen_table</span><span class="p">,</span> <span class="n">prob_gt</span><span class="p">):</span>
+        <span class="c1"># Set up a dataframe with the penetrance table outcome for each SNP combination (Encoded as codominant)</span>
+        <span class="n">cats</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Ref&quot;</span><span class="p">,</span> <span class="s2">&quot;Het&quot;</span><span class="p">,</span> <span class="s2">&quot;Hom&quot;</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;SNP1&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">cats</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">categories</span><span class="o">=</span><span class="n">cats</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="s2">&quot;SNP2&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cats</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">],</span>
+                    <span class="n">categories</span><span class="o">=</span><span class="n">cats</span><span class="p">,</span>
+                    <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;category&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pen_table</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="c1"># Get the weight vec as variance based on genotype probability</span>
+        <span class="n">wt_vec</span> <span class="o">=</span> <span class="p">(</span><span class="n">prob_gt</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob_gt</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="c1"># Regress the possible combinations of genotypes against the penetrance table, using the genotype frequency variance as weights</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">X</span> <span class="o">=</span> <span class="n">patsy</span><span class="o">.</span><span class="n">dmatrices</span><span class="p">(</span><span class="s2">&quot;y ~ 1 + SNP1 + SNP2&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">WLS</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">wt_vec</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+        <span class="c1"># If rsquared is 1, there is no interaction, so use constant endogenous values</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">rsquared</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">WLS</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">exog</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> <span class="n">weights</span><span class="o">=</span><span class="n">wt_vec</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>  <span class="c1"># sigma is sqrt of the dispersion (aka scale)</span>
+        <span class="k">return</span> <span class="n">sigma</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_genotype_strs</span><span class="p">(</span><span class="n">variant</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of homozygous-ref, het, and homozygous-alt&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="o">.</span><span class="n">ref</span><span class="si">}{</span><span class="n">variant</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="o">.</span><span class="n">ref</span><span class="si">}{</span><span class="n">variant</span><span class="o">.</span><span class="n">alt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant</span><span class="o">.</span><span class="n">alt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}{</span><span class="n">variant</span><span class="o">.</span><span class="n">alt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_get_snp1_gt_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gt_table_idxs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assemble a GenotypeArray for SNP1 directly from genotype table indices&quot;&quot;&quot;</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">GenotypeDtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp1</span><span class="p">)</span>
+        <span class="n">gt_table_data</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">gt_table_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gt_table_idxs</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="o">.</span><span class="n">_record_type</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_snp2_gt_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gt_table_idxs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assemble a GenotypeArray for SNP2 directly from genotype table indices&quot;&quot;&quot;</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">GenotypeDtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snp2</span><span class="p">)</span>
+        <span class="n">gt_table_data</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+            <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">MISSING_IDX</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">gt_table_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gt_table_idxs</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="o">.</span><span class="n">_record_type</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">GenotypeArray</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, John McGuigan.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
