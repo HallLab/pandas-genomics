@@ -25,7 +25,7 @@ numpydoc = {version = "^1.1.0", optional = true}
 sphinx-copybutton = {version = "^0.3.0", optional = true}
 ipython = {version = "^7.18.1", optional = true}
 importlib-metadata = {version = "^2.0", python = "<3.8"}
-statsmodels = "^0.13"
+statsmodels = "^0.14"
 scipy = "^1.9"
 sphinx = "^4.0.0"
 
@@ -38,6 +38,9 @@ black = ">=22"
 
 [tool.poetry.extras]
 docs = ["sphinx", "numpydoc", "sphinx_rtd_theme", "sphinx-copybutton", "ipython"]
+
+[tool.poetry.group.dev.dependencies]
+tox = "^4.26.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
