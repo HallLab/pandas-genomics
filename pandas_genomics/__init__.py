@@ -8,6 +8,7 @@ from .arrays import GenotypeDtype, GenotypeArray
 from .accessors import GenotypeSeriesAccessor, GenotypeDataframeAccessor
 
 # __version__ = importlib_metadata.version(__name__)
+__version__ = "1.0.1"
 
 __all__ = [
     # "__version__",

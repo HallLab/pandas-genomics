@@ -42,7 +42,9 @@ def from_vcf(
             continue
 
         # Skip variants below the minimum quality
-        if vcf_variant.QUAL < min_qual:
+        # Andre: Update to Python >= 3.10
+        # if vcf_variant.QUAL < min_qual:
+        if vcf_variant.QUAL is None or vcf_variant.QUAL < min_qual:
             continue
 
         if len(vcf_variant.ALT) >= MISSING_IDX:

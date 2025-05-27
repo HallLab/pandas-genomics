@@ -2,12 +2,18 @@ import operator
 import re
 from copy import copy
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
+# from pandas.arrays import BooleanArray
+from pandas.arrays import BooleanArray, IntegerArray
 
 import numpy as np
 import pandas as pd
-from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
-from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
-from pandas.core.dtypes.inference import is_list_like
+
+# Andre: Update to Python >=3.10
+# from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
+# from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
+# from pandas.core.dtypes.inference import is_list_like
+from pandas.api.extensions import ExtensionArray, register_extension_dtype, ExtensionDtype
+from pandas.api.types import is_list_like
 
 from pandas_genomics.arrays.encoding_mixin import EncodingMixin
 from pandas_genomics.arrays.info_mixin import InfoMixin
@@ -15,7 +21,8 @@ from pandas_genomics.scalars import Variant, Genotype, MISSING_IDX
 
 
 @register_extension_dtype
-class GenotypeDtype(PandasExtensionDtype):
+# class GenotypeDtype(PandasExtensionDtype):
+class GenotypeDtype(ExtensionDtype):
     """
     An ExtensionDtype for genotype data.
 
@@ -374,7 +381,15 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
             # Use the dtype variant
             variant = dtype.variant
         values = []
+
         for idx, gt in enumerate(scalars):
+
+            # Andre: Update to Python >= 3.10
+            if not isinstance(gt, Genotype):
+                raise TypeError(
+                    f"Expected Genotype instance at index {idx}, got {type(gt).__name__}"
+                )
+
             if not variant.is_same_position(gt.variant):
                 raise ValueError(
                     f"Variant for Genotype {idx} of {len(scalars)} ({gt.variant}) "
@@ -387,6 +402,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
                 )
             else:
                 values.append((gt.allele_idxs, gt._float_score))
+
         result = cls(values=[], dtype=GenotypeDtype(variant))
         result._data = np.array(values, dtype=result._dtype._record_type)
         return result
@@ -474,7 +490,15 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         # Check and convert the index
         index = pd.api.indexers.check_array_indexer(self._data, index)
 
-        result = operator.getitem(self._data, index)
+        # Andre: Update to Python >= 3.10
+        # result = operator.getitem(self._data, index)
+        try:
+            result = operator.getitem(self._data, index)
+        except (TypeError, ValueError) as e:
+            raise IndexError(
+                "only integers, slices (`:`), ellipsis (`...`), numpy.newaxis "
+                "(`None`) and integer or boolean arrays are valid indices"
+            ) from e
 
         if isinstance(result, np.ndarray):
             return GenotypeArray(values=result, dtype=self.dtype)
@@ -528,6 +552,11 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
             self._data[key] = value._data
         elif isinstance(value, pd.Series) and isinstance(value.values, GenotypeArray):
             self._data[key] = value.values._data
+        # Andre: Update to Python >= 3.10
+        elif isinstance(value, np.ndarray) and value.dtype == object:
+            # Convert to GenotypeArray assuming array of Genotype
+            value = self._from_sequence(value.tolist(), dtype=self.dtype)
+            self._data[key] = value._data
         else:
             raise ValueError(
                 f"Can't set the value in a GenotypeArray with '{type(value)}"
@@ -564,7 +593,13 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
     def copy(self):
         return GenotypeArray(self._data.copy(), copy(self.dtype))
 
-    def factorize(self, na_sentinel: int = -1) -> Tuple[np.ndarray, "GenotypeArray"]:
+    # Andre: Update to Python >= 3.10
+    # def factorize(self, na_sentinel: int = -1) -> Tuple[np.ndarray, "GenotypeArray"]:
+    def factorize(
+        self,
+        na_sentinel: int = -1,
+        use_na_sentinel: bool = True
+    ) -> Tuple[np.ndarray, "GenotypeArray"]:
         """
         Return an array of ints indexing unique values
         """
@@ -583,7 +618,15 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
             codes[self == gt] = idx
 
         # Update codes for NA values
-        codes[self.isna()] = na_sentinel
+        # Andre: Update to Python >= 3.10
+        # codes[self.isna()] = na_sentinel
+        # Handle NA values
+        if use_na_sentinel:
+            codes[self.isna()] = na_sentinel
+        else:
+            # NaNs se tornam parte dos códigos únicos
+            nan_idx = len(set(codes))  # ou: codes.max() + 1
+            codes[self.isna()] = nan_idx
 
         # Return the codes and unique values (not including NA)
         return codes, uniques[~uniques.isna()]

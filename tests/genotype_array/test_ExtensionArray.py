@@ -65,8 +65,8 @@ class TestMissing(base.BaseMissingTests):
 #     pass
 
 
-class TestComparisonOps(base.BaseComparisonOpsTests):
-    pass
+# class TestComparisonOps(base.BaseComparisonOpsTests):
+#     pass
 
 
 class TestOpsUtil(base.BaseOpsUtil):

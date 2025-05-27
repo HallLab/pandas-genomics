@@ -28,7 +28,9 @@ class GenotypeDataframeAccessor:
         id_counts = Counter(
             [
                 s.genomics.variant.id
-                for _, s in pandas_obj.iteritems()
+                # Andre: Update to Python >= 3.10
+                # for _, s in pandas_obj.iteritems()
+                for _, s in pandas_obj.items()
                 if GenotypeDtype.is_dtype(s)
             ]
         )
@@ -52,7 +54,8 @@ class GenotypeDataframeAccessor:
         return pd.DataFrame.from_dict(
             {
                 colname: series.genomics.variant_info
-                for colname, series in genotypes.iteritems()
+                # for colname, series in genotypes.iteritems()
+                for colname, series in genotypes.items()
             },
             orient="index",
         )
@@ -90,7 +93,8 @@ class GenotypeDataframeAccessor:
         return pd.concat(
             [
                 s.genomics.encode_additive() if GenotypeDtype.is_dtype(s) else s
-                for _, s in self._obj.iteritems()
+                # for _, s in self._obj.iteritems()
+                for _, s in self._obj.items()
             ],
             axis=1,
         )
@@ -107,7 +111,8 @@ class GenotypeDataframeAccessor:
         return pd.concat(
             [
                 s.genomics.encode_dominant() if GenotypeDtype.is_dtype(s) else s
-                for _, s in self._obj.iteritems()
+                # for _, s in self._obj.iteritems()
+                for _, s in self._obj.items()
             ],
             axis=1,
         )
@@ -124,7 +129,8 @@ class GenotypeDataframeAccessor:
         return pd.concat(
             [
                 s.genomics.encode_recessive() if GenotypeDtype.is_dtype(s) else s
-                for _, s in self._obj.iteritems()
+                # for _, s in self._obj.iteritems()
+                for _, s in self._obj.items()
             ],
             axis=1,
         )
@@ -141,7 +147,8 @@ class GenotypeDataframeAccessor:
         return pd.concat(
             [
                 s.genomics.encode_codominant() if GenotypeDtype.is_dtype(s) else s
-                for _, s in self._obj.iteritems()
+                # for _, s in self._obj.iteritems()
+                for _, s in self._obj.items()
             ],
             axis=1,
         )
@@ -204,7 +211,8 @@ class GenotypeDataframeAccessor:
 
         # Process each variant
         results = []
-        for _, s in self._obj.iteritems():
+        # for _, s in self._obj.iteritems():
+        for _, s in self._obj.items():
             if not GenotypeDtype.is_dtype(s):
                 results.append(s)
                 continue

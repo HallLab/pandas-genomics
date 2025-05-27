@@ -76,8 +76,12 @@ def save_fam(
     ]:
         # Recode sex
         fam_data = data.index.to_frame()
-        fam_data["sex"].cat.rename_categories(
-            {"male": 1, "female": 2, "unknown": 0}, inplace=True
+        # Andre: Update to Python >= 3.10
+        # fam_data["sex"].cat.rename_categories(
+        #     {"male": 1, "female": 2, "unknown": 0}, inplace=True
+        # )
+        fam_data["sex"] = fam_data["sex"].cat.rename_categories(
+            {"male": 1, "female": 2, "unknown": 0}
         )
         # Update phenotype if provided
         if phenotype_name is not None:
@@ -109,8 +113,12 @@ def save_fam(
                 "The phenotype must be categorical to utilize 'phenotype_control' and 'phenotype_case' parameters"
             )
         pheno_dict = {phenotype_control: 1, phenotype_case: 2}
-        fam_data["phenotype"].cat.rename_categories(
-            lambda c: pheno_dict.get(c, 0), inplace=True
+        # Andre: Update to Python >= 3.10
+        # fam_data["phenotype"].cat.rename_categories(
+        #     lambda c: pheno_dict.get(c, 0), inplace=True
+        # )
+        fam_data["phenotype"] = fam_data["phenotype"].cat.rename_categories(
+            lambda c: pheno_dict.get(c, 0)
         )
 
     fam_data.to_csv(output_fam, sep=" ", header=False, index=False)
@@ -120,7 +128,9 @@ def save_fam(
 def save_bim(data, output_bim):
     variants = [
         col_val.genomics.variant
-        for col_name, col_val in data.iteritems()
+        # Andre: Update to Python >= 3.10
+        # for col_name, col_val in data.iteritems()
+        for col_name, col_val in data.items()
         if GenotypeDtype.is_dtype(col_val.dtype)
     ]
     for var in variants:
@@ -149,7 +159,9 @@ def save_bed(data, output_bed):
     bytes = np.array(
         [
             gt_array_to_plink_bits(col_val)
-            for col_name, col_val in data.iteritems()
+            # Andre: Update to Python >= 3.10
+            # for col_name, col_val in data.iteritems()
+            for col_name, col_val in data.items()
             if GenotypeDtype.is_dtype(col_val.dtype)
         ]
     )

@@ -84,7 +84,11 @@ def load_sample_info(fam_file, categorical_phenotype):
     DEFAULT_CAT_MAP = {1: "Control", 2: "Case"}
     if categorical_phenotype:
         df["phenotype"] = df["phenotype"].astype("category")
-        df["phenotype"].cat.rename_categories(DEFAULT_CAT_MAP, inplace=True)
+
+        # Andre: Update to Python >= 3.10
+        # df["phenotype"].cat.rename_categories(DEFAULT_CAT_MAP, inplace=True)
+        df["phenotype"] = df["phenotype"].cat.rename_categories(DEFAULT_CAT_MAP)
+
         df.loc[~df["phenotype"].isin(DEFAULT_CAT_MAP.values()), "phenotype"] = None
     print(f"\tLoaded information for {len(df)} samples from '{fam_file.name}'")
     return df

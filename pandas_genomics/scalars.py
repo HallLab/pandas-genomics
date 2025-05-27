@@ -430,11 +430,20 @@ class Genotype:
     def __hash__(self):
         return hash(repr(self))
 
+    #     # Andre: Update to Python >= 3.10
+    # def __eq__(self, other):
+    #     if other.__class__ is not self.__class__:
+    #         return NotImplemented
+    #     # if self.variant != other.variant:
+    #     #     raise NotImplementedError("Can't compare different variants")
     def __eq__(self, other):
-        if other.__class__ is not self.__class__:
+        if not isinstance(other, Genotype):
             return NotImplemented
         if self.variant != other.variant:
-            raise NotImplementedError("Can't compare different variants")
+            return False
+        return self.allele_idxs == other.allele_idxs
+
+
         return self.allele_idxs == other.allele_idxs
 
     def __lt__(self, other):
