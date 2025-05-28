@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+
 # from pandas.api.types import is_numeric_dtype
 
 from pandas_genomics.arrays import GenotypeDtype
