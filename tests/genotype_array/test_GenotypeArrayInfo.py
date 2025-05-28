@@ -1,6 +1,7 @@
 """
 Test various calculations performed by GenotypeArray
 """
+
 import sys
 
 import numpy as np

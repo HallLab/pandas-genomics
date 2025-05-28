@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from ..arrays import GenotypeArray, GenotypeDtype
-from ..scalars import Variant, MISSING_IDX, Genotype
+from ..scalars import Variant, MISSING_IDX  # , Genotype
 
 
 def from_vcf(

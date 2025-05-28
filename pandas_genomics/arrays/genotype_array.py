@@ -2,6 +2,7 @@ import operator
 import re
 from copy import copy
 from typing import Dict, MutableMapping, Any, Optional, List, Union, Tuple, Iterable
+
 # from pandas.arrays import BooleanArray
 from pandas.arrays import BooleanArray, IntegerArray
 
@@ -12,7 +13,11 @@ import pandas as pd
 # from pandas.core.arrays import ExtensionArray, BooleanArray, IntegerArray
 # from pandas.core.dtypes.dtypes import register_extension_dtype, PandasExtensionDtype
 # from pandas.core.dtypes.inference import is_list_like
-from pandas.api.extensions import ExtensionArray, register_extension_dtype, ExtensionDtype
+from pandas.api.extensions import (
+    ExtensionArray,
+    register_extension_dtype,
+    ExtensionDtype,
+)
 from pandas.api.types import is_list_like
 
 from pandas_genomics.arrays.encoding_mixin import EncodingMixin
@@ -317,14 +322,14 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
             # Return an empty Genotype Array with the given GenotypeDtype
             self._data = np.array(values, dtype=self._dtype._record_type)
 
-        elif all([type(i) == Genotype for i in values]):
+        elif all([type(i) is Genotype for i in values]):
             # Sequence of Genotype objects
             genotype_array = self._from_sequence(scalars=values, dtype=dtype, copy=copy)
             # Replace self with the created array
             self._data = genotype_array._data
             self._dtype = genotype_array._dtype
 
-        elif all([type(i) == str for i in values]):
+        elif all([type(i) is str for i in values]):
             # List of Strings
             genotype_array = self._from_sequence_of_strings(
                 strings=values, dtype=dtype, copy=copy
@@ -366,7 +371,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         -------
         GenotypeArray
         """
-        if type(scalars) == Genotype:
+        if type(scalars) is Genotype:
             # Despite the documentation, scalars is not always a sequence of objects, sometimes it is just one
             scalars = [scalars]
 
@@ -596,9 +601,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
     # Andre: Update to Python >= 3.10
     # def factorize(self, na_sentinel: int = -1) -> Tuple[np.ndarray, "GenotypeArray"]:
     def factorize(
-        self,
-        na_sentinel: int = -1,
-        use_na_sentinel: bool = True
+        self, na_sentinel: int = -1, use_na_sentinel: bool = True
     ) -> Tuple[np.ndarray, "GenotypeArray"]:
         """
         Return an array of ints indexing unique values
@@ -728,7 +731,7 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
             # Ensure the comparison is using the same variant
             if self.variant != other.variant:
                 return None
-        elif type(other) == str:
+        elif type(other) is str:
             allele_idxs = tuple(
                 self.variant.get_idx_from_allele(a) for a in other.split("/")
             )
@@ -794,10 +797,10 @@ class GenotypeArray(ExtensionArray, EncodingMixin, InfoMixin):
         None
         """
         # Get the allele as an integer and as a string
-        if type(allele) == str:
+        if type(allele) is str:
             allele_idx = self.variant.get_idx_from_allele(allele, add=False)
             allele_str = allele
-        elif type(allele) == int:
+        elif type(allele) is int:
             if not self.variant.is_valid_allele_idx(allele):
                 raise ValueError(
                     f"{allele} is not a valid allele index,"

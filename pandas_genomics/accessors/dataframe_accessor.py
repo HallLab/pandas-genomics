@@ -37,7 +37,7 @@ class GenotypeDataframeAccessor:
         if len(id_counts) < len(pandas_obj.select_dtypes([GenotypeDtype]).columns):
             duplicates = [(k, v) for k, v in id_counts.items() if v >= 2]
             raise AttributeError(
-                f"Duplicate Variant IDs.  Column names may differ from variant IDs, but variant IDs must be unique.\n\tDuplicates: "
+                "Duplicate Variant IDs. Column names may differ from variant IDs, but variant IDs must be unique. Duplicates: "
                 + ", ".join([f"{dupe} ({count:,})" for dupe, count in duplicates])
             )
         self._obj = pandas_obj
@@ -218,15 +218,15 @@ class GenotypeDataframeAccessor:
                 continue
             info = encoding_info.get(s.array.variant.id, None)
             if info is None:
-                warnings[
-                    s.array.variant.id
-                ] = "No matching information found in the encoding data"
+                warnings[s.array.variant.id] = (
+                    "No matching information found in the encoding data"
+                )
                 continue
             elif (s.genomics.maf / info["minor_allele_freq"]) > 10e30:
                 # TODO: replace this with a reasonable comparison to the data MAF.  For now it is an always-pass criteria
-                warnings[
-                    s.array.variant.id
-                ] = f"Large MAF Difference: {s.genomics.maf} in sample, {info['minor_allele_freq']} in encoding data"
+                warnings[s.array.variant.id] = (
+                    f"Large MAF Difference: {s.genomics.maf} in sample, {info['minor_allele_freq']} in encoding data"
+                )
                 continue
             else:
                 try:

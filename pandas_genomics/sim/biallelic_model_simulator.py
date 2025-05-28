@@ -93,7 +93,7 @@ class BAMS:
 
     def __eq__(self, other):
         if type(other) is not type(self):
-            raise NotImplemented
+            raise NotImplementedError
         else:
             return (
                 (self.pen_table == other.pen_table).all()
@@ -121,14 +121,14 @@ class BAMS:
             pen_table = np.array(pen_table.value).reshape((3, 3))
         elif isinstance(pen_table, np.ndarray):
             if pen_table.shape != (3, 3):
-                raise ValueError(f"Incorrect shape for pen_table, must be 3x3")
+                raise ValueError("Incorrect shape for pen_table, must be 3x3")
         else:
             raise ValueError(
                 f"pen_table must be a 3x3 numpy array or PenetranceTables enum, not {type(pen_table)}"
             )
 
         if (pen_table < 0).any():
-            raise ValueError(f"Penetrance table values cannot be negative.")
+            raise ValueError("Penetrance table values cannot be negative.")
 
         # Scale penetrance table if needed
         if (pen_table.min() != 0) or (pen_table.max() != 1):
@@ -148,7 +148,7 @@ class BAMS:
         elif penetrance_diff < 0:
             raise ValueError("penetrance_diff must be > 0")
         elif (penetrance_diff + penetrance_base) > 1:
-            raise ValueError(f"penetrance_base + penetrance_diff must be <= 1")
+            raise ValueError("penetrance_base + penetrance_diff must be <= 1")
 
         # SNPs
         if snp1 is None:

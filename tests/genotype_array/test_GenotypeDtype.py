@@ -1,6 +1,7 @@
 """
 Test GenotypeDtype
 """
+
 import pandas as pd
 import pytest
 from pandas._testing import assert_series_equal, assert_extension_array_equal

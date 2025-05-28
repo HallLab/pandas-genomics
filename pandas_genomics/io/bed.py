@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 
-import pandas as pd
+# import pandas as pd
 
 from pandas_genomics.scalars import Region
 

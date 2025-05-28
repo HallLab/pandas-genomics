@@ -10,6 +10,7 @@ This module contains scalar types, some of which are used in the ExtensionArrays
      Genotype
      Region
 """
+
 import uuid
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
@@ -84,7 +85,7 @@ class Variant:
             ref = "N"
         if alt is None:
             alt = []
-        elif type(alt) == str:
+        elif type(alt) is str:
             alt = [
                 alt,
             ]
@@ -442,7 +443,6 @@ class Genotype:
         if self.variant != other.variant:
             return False
         return self.allele_idxs == other.allele_idxs
-
 
         return self.allele_idxs == other.allele_idxs
 

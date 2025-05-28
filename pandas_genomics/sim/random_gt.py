@@ -19,7 +19,7 @@ def generate_random_gt(
     ----------
     variant: Variant
     alt_allele_freq: float or List[float]
-      Allele frequencies for each alternate allele in the variant (Bialleleic variants may specify a single float value)
+    Allele frequencies for each alternate allele in the variant (Bialleleic variants may specify a single float value)
     n: int, default 1000
         How many genotypes to simulate
     random_seed: int, default 1855

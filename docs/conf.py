@@ -28,7 +28,7 @@ import pandas_genomics
 # # The full version, including alpha/beta/rc tags.
 # release = pandas_genomics.__version__
 version = "0.12"
-release = '1'
+release = "1"
 
 # -- General configuration ---------------------------------------------------
 

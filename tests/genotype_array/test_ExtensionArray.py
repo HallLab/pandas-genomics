@@ -1,6 +1,7 @@
 """
 Run ExtensionArray tests from Pandas on the GenotypeArray class
 """
+
 import pytest
 from pandas.tests.extension import base
 
